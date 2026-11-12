@@ -89,6 +89,19 @@ expect("фасад с зазором 2,5 от стенки", ch, "Фасад я�
 cab.Build.drawers = orig_dr
 _, ch = run({**BASE, "changer": "no"}, "fok")
 expect("фасад вплотную", ch, "Фасад ящика: вплотную", "пройдено")
+# 7. Проверка инструкции комода (13.11): левый уголок к стене под основанием столика
+orig_chest = MN.chest6
+def angle_under(o):
+    b = orig_chest(o)
+    if b.derived.get("wall_angles"):
+        b.derived["wall_angles"][0].update(x0=60, x1=100)
+    return b
+MN.NEW["ARV-NST-101"] = ("Комод на 6 ящиков", angle_under); MN.MODELS.update(MN.NEW)
+_, ch = run(BASE, "wa")
+expect("уголок под столиком", ch, "Уголки к стене", "ошибка")
+MN.NEW["ARV-NST-101"] = ("Комод на 6 ящиков", orig_chest); MN.MODELS.update(MN.NEW)
+_, ch = run(BASE, "wa2")
+expect("уголки свободны", ch, "Уголки к стене", "пройдено")
 for tag, name, want, got, good in res:
     print(f"{'✓' if good else '✗'} {tag:36s} | {name:28s} | ожидалось: {want:13s} | получено: {got}")
 print("ИТОГ:", "все совпали" if all(r[-1] for r in res) else "есть расхождения")

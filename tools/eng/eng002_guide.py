@@ -47,7 +47,8 @@ class Page(Sheet):
         ax.text(200, 289, title, fontsize=7, ha="right", weight="bold")
         ax.plot([10, 200], [286, 286], lw=0.6, c="k")
         ax.plot([10, 200], [11, 11], lw=0.6, c="k")
-        ax.text(10, 7, f"ARV-NST-101 · ящик · снимок {s['hash']} · инструкция сборщику (A4, печать 100 %)", fontsize=6)
+        ax.text(10, 7, f"ARV-NST-101 · {D.get('doc_label', 'ящик')} · снимок {s['hash']} · инструкция сборщику "
+                f"(A4, печать 100 %)", fontsize=6)
         ax.text(200, 7, f"{n} / {total}", fontsize=7, ha="right", weight="bold")
 
     def check_overlaps(self, tol=0.6):
@@ -218,9 +219,15 @@ def check_box(pg, x, y, w, lines):
     return y - h
 
 
-def step(pg, x, y, n, title):
-    E.step_head(pg, x, y, n, "")
-    pg.text(x + 18, y - 3, title, size=9.5, va="center", weight="bold")
+STEP_PREFIX = {"p": ""}           # «Я» внутри инструкции комода: шаги Я1…Я10 (сквозные ссылки)
+
+
+def step(pg, x, y, n, title, prefix=None):
+    lab = f"{STEP_PREFIX['p'] if prefix is None else prefix}{n}"
+    pg.ax.add_patch(Polygon([(x, y - 9), (x + 16, y - 9), (x + 16, y + 3), (x, y + 3)], fc="k", ec="k", zorder=5))
+    pg.text(x + 8, y - 3, lab, size=15 if len(lab) <= 2 else 11.5, ha="center", va="center", color="white",
+            weight="bold", zorder=6)
+    pg.text(x + 20, y - 3, title, size=9.5, va="center", weight="bold")
 
 
 def figure(pg, D, box, items, **kw):
@@ -468,7 +475,8 @@ def page_box7(D, n, total):
     check_box(pg, 16, 96, 104, ["оба замка щёлкнули;", "ящик не снимается без нажатия", "рычагов замков;",
                                 "ход до конца без касаний"])
     pg.text(16, 30, "Направляющие и TIP-ON BLUMOTION уже в корпусе: набор «Корпус» (6 саморезов 609.1500", size=7.5)
-    pg.text(16, 25, "на профиль, синхронизация по отрезу) — инструкция корпуса, шаги направляющих.", size=7.5)
+    pg.text(16, 25, "на профиль, синхронизация по отрезу) — " + STEP_PREFIX.get("rails", "инструкция корпуса, шаги направляющих")
+            + ".", size=7.5)
     return pg
 
 
@@ -506,7 +514,8 @@ def page_box8(D, n, total):
     pg.ax.add_patch(Rectangle((16, 22), 184, 34, fc="#fff3e0", ec="k", lw=1.2))
     pg.text(22, 47, "ПЕРВЫЙ ящик проверить целиком:", size=9, weight="bold")
     pg.text(22, 40, "нажатие открывает · мягко закрывается · фасад не задевает соседние", size=8)
-    pg.text(22, 32, f"Всё в порядке → повторить шаги 1–10 ещё {nd - 1} раз(а).", size=9, weight="bold")
+    P_ = STEP_PREFIX["p"]
+    pg.text(22, 32, f"Всё в порядке → повторить шаги {P_}1–{P_}10 ещё {nd - 1} раз(а).", size=9, weight="bold")
     pg.text(22, 26, "Нет — остановиться и сообщить Arvello.", size=8)
     return pg
 

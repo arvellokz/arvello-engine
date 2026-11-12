@@ -368,6 +368,11 @@ def chest6(o):
         b.derived["fits"] = [("матрас 700 × 500 внутри бортов", (700, 500), (L - 2 * T, Dt - T))]
         b.derived["mount_steps_after"] = ["Пеленальный столик: бортики к основанию конфирматами (узел В), поставить на "
                                           "крышку слева, 4 самореза 4 × 25 снизу через крышку (доступ — из верхнего ящика)."]
+    # уголки крепления к стене (В-48): на крышке у задней кромки, площадка 40 × 40 (кандидат). Со столиком основание
+    # занимает крышку слева (0 … 800) — левый уголок сдвигается вправо от основания (проверка ENG-002, 13.11).
+    aw = 40
+    xs = [80, W - 80] if not changer else [800 + 20 + aw / 2, W - 80]
+    b.derived["wall_angles"] = [{"x0": x - aw / 2, "x1": x + aw / 2, "y0": yc1 - aw, "y1": yc1, "z": H} for x in xs]
     Htot = H + T + Hr if changer else H
     b.derived.update(width=W, depth=D, height=Htot, plinth=PL, levels=[0, PL, H] + ([Htot] if changer else []))
     if changer:

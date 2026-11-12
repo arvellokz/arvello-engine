@@ -311,6 +311,18 @@ def verify_new(s, texts):
         add("Фасад ящика: вплотную к передней стенке, саморез изнутри — вход в фасад ≥ 6, остаток до лица ≥ 3",
             ERR if bad else OK, f"{len(drs_all)} ящ." if not bad else f"{bad[0]}; всего {len(bad)}")
 
+    # 16. Уголок крепления к стене не накрыт другой деталью (проверка инструкции комода, 13.11: столик на крышке)
+    wa = d.get("wall_angles", [])
+    if wa:
+        cov = []
+        for a_ in wa:
+            for p in boards:
+                if abs(p["z0"] - a_["z"]) < 0.6 and _ov(p["x0"], p["x1"], a_["x0"], a_["x1"]) > 0.01 and \
+                        _ov(p["y0"], p["y1"], a_["y0"], a_["y1"]) > 0.01:
+                    cov.append(f"уголок x {a_['x0']:g}…{a_['x1']:g} под {p['id']}")
+        add("Уголки к стене не накрыты другими деталями (столик, надстройки)", ERR if cov else OK,
+            f"{len(wa)} уголка свободны" if not cov else f"{cov[0]}; всего {len(cov)}")
+
     # 9. Текстура дубовых дверей — одним направлением (вертикально)
     gr = {d["parts_ext"].get(p["id"], {}).get("grain") for p in doors if p["finish"] == "O"}
     if gr:
