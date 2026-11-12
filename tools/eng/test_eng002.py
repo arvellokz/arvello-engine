@@ -42,6 +42,19 @@ res.append(("вид изнутри (сзади, без задней стенки
 # 4. весь пример листов: ни одной ошибки
 D2, _ = E.write("/tmp/eng002_test.pdf", OPTS)
 res.append(("пример листов целиком", not D2["view_errors"], D2["view_errors"][:1]))
+# 5. инструкция A4 (П11–П14): все проверки выпуска пройдены
+from eng import eng002_guide as G  # noqa: E402
+D3, r3 = G.write("/tmp/eng002_guide_test.pdf", OPTS)
+res.append(("инструкция A4: проверки выпуска", all(x[1] for x in r3), [x[0] for x in r3 if not x[1]]))
+# 6. негатив: круг-увеличение без сопрягаемой детали (только деталь входа) — проверка должна дать ошибку
+pg = G.Page(D3, 1, 1, "тест")
+h = E.joint_holes(D3, "BOT-", "screw_face")[0]
+z = G.zoom(pg, D3, h, 100, 150, keys=("BOT",))
+D3["zooms"] = [("тест", h, z)]
+D3["view_errors"] = []
+bad = [x for x in G.verify_guide(D3, []) if x[0].startswith("Круг") and not x[1]]
+res.append(("круг без сопрягаемой детали → ошибка", bool(bad), z["parts"]))
+G.plt.close(pg.fig)
 for name, ok, t in res:
     print(f"{'✓' if ok else '✗'} {name:44s} | {t}")
 print("ИТОГ:", "все совпали" if all(r[1] for r in res) else "есть расхождения")
