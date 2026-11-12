@@ -55,6 +55,15 @@ D3["view_errors"] = []
 bad = [x for x in G.verify_guide(D3, []) if x[0].startswith("Круг") and not x[1]]
 res.append(("круг без сопрягаемой детали → ошибка", bool(bad), z["parts"]))
 G.plt.close(pg.fig)
+# 7. инструкция на весь комод (П1): все проверки выпуска, в т. ч. крепёж в шагах = спецификации
+from eng import eng002_chest as C  # noqa: E402
+for ch in ("yes", "no"):
+    D4, r4 = C.write(f"/tmp/eng002_chest_{ch}.pdf", {**OPTS, "changer": ch})
+    res.append((f"комод, столик {ch}: проверки выпуска", all(x[1] for x in r4), [x for x in r4 if not x[1]][:1]))
+# 8. негатив: шаг «забыл» крепёж (задняя стенка не учтена) — сумма не совпадёт со спецификацией
+D4["used"].pop("SCREW-3.5x16", None)
+bad = C.verify_counts(D4)
+res.append(("крепёж шага не учтён → ошибка", bool(bad), bad[:1]))
 for name, ok, t in res:
     print(f"{'✓' if ok else '✗'} {name:44s} | {t}")
 print("ИТОГ:", "все совпали" if all(r[1] for r in res) else "есть расхождения")

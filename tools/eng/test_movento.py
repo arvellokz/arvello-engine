@@ -41,7 +41,8 @@ for NL, want in BLUM_PTS.items():
     size = lambda p: sorted(round(v, 1) for v in (p.x1 - p.x0, p.y1 - p.y0, p.z1 - p.z0))
     res.append((f"NL {NL}: боковина", size(sl) == sorted([16, 150, NL - 10]), size(sl)))
     res.append((f"NL {NL}: стенки", size(fp) == size(bp) == sorted([16, 121, 526]), size(fp)))
-    res.append((f"NL {NL}: дно", size(bt) == sorted([16, 536, NL - 10]), size(bt)))
+    bw = 536 - 2 * cab.TECH["bottom_clear"]          # раскрой Blum 536 минус наш зазор в пазах [М]
+    res.append((f"NL {NL}: дно (Blum 536 − 2 × зазор)", size(bt) == sorted([16, bw, NL - 10]), size(bt)))
     res.append((f"NL {NL}: артикул", f"760H{NL * 10:04d}S" in b.hw["SLIDES"]["spec"], b.hw["SLIDES"]["spec"][:30]))
 # NL 550 / 600 вне ряда генератора
 try:

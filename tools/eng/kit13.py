@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 from matplotlib.backends.backend_pdf import PdfPages  # noqa: E402
 
-from eng import boardkit  # noqa: E402
+from eng import boardkit, cab  # noqa: E402
 from eng.boardkit import EDGE_TXT, NAME, Frame, blank, detail, hole_rows, section  # noqa: E402
 from eng.catalog import default_options, materials, products  # noqa: E402
 from eng.core import bom, cut_plan, snapshot, to_model  # noqa: E402
@@ -730,6 +730,10 @@ def sheet_nodes(c):
         v = View(sh, 1, (x, y), (win[0], win[2]))
         section(v, s, cut, h[cut], uax, vv, win)
         tit, notes = NODE_TXT[L]
+        if L == "Н" and h.get("fastener") != "SCREW-4x25M":
+            pl = next((q for q in s["holes"] if q["joint"] == h["joint"] and q["kind"] == "pilot"), None)
+            if pl:
+                notes = [f"Ø{n_(h['d'])} насквозь с зенковкой;", f"засверловка Ø{n_(pl['d'])} гл. {n_(pl['depth'])}."]
         if L == "Ж" and any(r.get("sys") == "movento" for r in s["derived"].get("drawers", [])):
             tit = "Профиль Blum MOVENTO 760H"
             notes = ["Саморез Blum 609.1500 Ø3,5 × 15 по", "разметке, без сверления; ось — над", "низом профиля 38 (39, если профиль",
@@ -827,8 +831,8 @@ def control_new(c):
     if drs:
         if drs[0].get("sys") == "movento":
             rows.append([f"К{len(rows) + 1}", "Стенки и дно короба по ширине; паз под дно (до сборки)", "штангенциркуль",
-                         f"стенки {n_(drs[0]['inner_w'])}, дно {n_(drs[0]['inner_w'] + 10)}: −0,5 / +0; паз 16 × 5"
-                         " на 13 от низа — дно входит без люфта"])
+                         f"стенки {n_(drs[0]['inner_w'])}, дно {n_(drs[0]['inner_w'] + 10 - 2 * (drs[0].get('bottom_clear') or 0))}: "
+                         f"−0,5 / +0; паз {n_(16 + cab.TECH['groove_w_add'])} × 5 на 13 от низа — дно от руки, без люфта [О]"])
         else:
             rows.append([f"К{len(rows) + 1}", "Стенки и дно короба по ширине (до сборки)", "штангенциркуль",
                          f"{n_(drs[0]['inner_w'])} −0,5 / +0 — иначе короб выйдет за К ниже"])
@@ -1136,7 +1140,9 @@ def questions_for(s):
                  "Blum 2022/23 стр. 436; место в корпусе (низ дна → низ профиля 28,5, ось саморезов 38, над ящиком 7); места "
                  f"саморезов NL {r0['NL']}: {' / '.join(str(v) for v in r0['pts'])} от передней кромки, саморез 609.1500 "
                  "Ø3,5 × 15 (каталог 2024/25 с. 428, вариант A; DXF Blum); точка 28 — только у 766H; зазор фасада 2,5. Короб — "
-                 "раскрой конфигуратора Blum 12.11: стенки = боковина − 13 − 16 на дне, дно SKW + 10 в пазах 5")
+                 "раскрой конфигуратора Blum 12.11: стенки = боковина − 13 − 16 на дне, дно SKW + 10 в пазах 5; наши значения по "
+                 f"умолчанию [М]: паз {n_(16 + cab.TECH['groove_w_add'])}, зазор дна в пазу {n_(cab.TECH['bottom_clear'])} на сторону — "
+                 "проверить пробой")
             if len(mv) < len(drs):
                 t += "; остальные ящики — Blum TANDEM 560H"
         inn = [r for r in drs if r.get("setback_front")]
