@@ -11,9 +11,13 @@ import re
 OK, ERR, DATA = "пройдено", "ошибка", "требует данных"
 
 # Согласованные наборы «планка — отверстие — крепёж» (Blum CLIP, планки крестообразные 0 мм)
+# Каталог Blum 2024/25 с. 152–154 (docs/blum/2026-11-12_TANDEM_петли_TIP-ON-двери.md, п. 2.2):
+# евровинты Ø6 предустановлены только у 173L8100; 173H7100, 175H7100, 173L6100 — под саморезы Ø3,5 / Ø4, не под Ø5.
 PLATE_SET = {
-    "173H7100": {"d": 5.0, "fast": "SCREW-6.3x13", "txt": "евровинты предустановлены, Ø5 гл. 13"},
-    "173L6100": {"d": None, "fast": "SCREW-4x?", "txt": "саморезы по ДСП Ø4, без засверловки Ø5"},
+    "173L8100": {"d": 5.0, "fast": "SCREW-6.3x13", "txt": "системные винты Ø6 предустановлены, Ø5 гл. 13"},
+    "173H7100": {"d": None, "fast": "SCREW-4x?", "txt": "саморезы Ø3,5 / Ø4, без отверстий Ø5"},
+    "175H7100": {"d": None, "fast": "SCREW-4x?", "txt": "саморезы Ø3,5 / Ø4, без отверстий Ø5"},
+    "173L6100": {"d": None, "fast": "SCREW-4x?", "txt": "саморезы Ø3,5 / Ø4, без отверстий Ø5"},
 }
 SCREW_ON_CUPS = ("71B3550", "70T3550")       # чашка на саморезах: 2 самореза, схема 45 / 9,5
 PUSH_GAP_MIN = 2.0                           # кандидат: зазор дверь — корпус под TIP-ON (В-104)
@@ -253,9 +257,9 @@ def verify_new(s, texts):
     # 14. MOVENTO + TIP-ON BLUMOTION (каталог Blum 2022/23 стр. 436–437): зазор фасада, блок по массе и NL, точки профиля
     mv = [r for r in d.get("drawers", []) if r.get("sys") == "movento"]
     if mv:
-        # независимая копия таблицы стр. 437 (не из cab): от передней кромки корпуса, 37 + 32 / 160 / 224 / 256
-        ref = {270: [37, 69, 197], **{n: [37, 69, 261] for n in (300, 320, 350)},
-               **{n: [37, 69, 261, 293] for n in (380, 400, 420, 450, 480, 500, 520)}}
+        # независимая копия таблицы Blum 2024/25 с. 428 (не из cab): места саморезов A от передней кромки корпуса
+        ref = {270: [19, 37, 69, 197], **{n: [19, 37, 69, 243, 261] for n in (300, 320, 350)},
+               **{n: [19, 37, 69, 243, 261, 293] for n in (380, 400, 420, 450, 480, 500, 520)}}
         bad = []
         for r in mv:
             fr = P[r["front"]]
@@ -264,7 +268,9 @@ def verify_new(s, texts):
             if g < 2.5 - 0.01:
                 bad.append(f"{r['pre']}{r['n']}: зазор фасада {g:g} < 2,5")
             if ref.get(r["NL"]) != list(r["pts"]):
-                bad.append(f"{r['pre']}{r['n']}: точки {r['pts']} ≠ стр. 437 для NL {r['NL']}")
+                bad.append(f"{r['pre']}{r['n']}: точки {r['pts']} ≠ каталог с. 428 для NL {r['NL']}")
+            if any(h.get("fastener") != "SLIDE-SCREW-M" for h in holes if h["joint"].startswith(f"J-{r['pre']}RUNNER-{r['n']}-")):
+                bad.append(f"{r['pre']}{r['n']}: крепёж профиля не 609.1500 Ø3,5 × 15")
             m = [h for h in holes if h["joint"].startswith(f"J-{r['pre']}RUNNER-{r['n']}-")]
             ys = sorted({round(h["y"] - (fr["y1"] + g), 1) for h in m})
             if ys != sorted(float(v) for v in ref.get(r["NL"], [])):
@@ -276,7 +282,7 @@ def verify_new(s, texts):
             bad.append(f"блок TIP-ON BLUMOTION: нужен {want} (NL {nl}, {kg:g} кг)")
         if "760H" not in H.get("SLIDES", {}).get("spec", ""):
             bad.append("направляющая не 760H")
-        add("MOVENTO TIP-ON BLUMOTION: зазор фасада ≥ 2,5, точки профиля по стр. 437, блок по NL и массе", ERR if bad else OK,
+        add("MOVENTO TIP-ON BLUMOTION: зазор фасада ≥ 2,5, точки профиля по каталогу 2024 с. 428, блок по NL и массе", ERR if bad else OK,
             f"{len(mv)} ящ., NL {nl}, {kg:g} кг" if not bad else f"{bad[0]}; всего {len(bad)}")
 
     # 9. Текстура дубовых дверей — одним направлением (вертикально)

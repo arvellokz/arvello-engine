@@ -37,12 +37,21 @@ def expect(tag, checks, name, want):
 # 1. несовместимая планка: 173L6100 при отверстиях Ø5 под евровинт
 old = cab.Build.design
 def bad_design(self, *a, **k):
-    self.hw["HINGE"]["spec"] = self.hw["HINGE"]["spec"].replace("173H7100", "173L6100")
+    self.hw["HINGE"]["spec"] = self.hw["HINGE"]["spec"].replace("173L8100", "173L6100")
     return old(self, *a, **k)
 cab.Build.design = bad_design
 _, ch = run(BASE, "plate")
 expect("планка 173L6100 + Ø5", ch, "Петля: планка", "ошибка")
+# 1а. ошибка R01E: 173H7100 «с евровинтами» и отверстия Ø5 — по каталогу Blum 2024/25 с. 152 она на саморезах
+def bad_design_h(self, *a, **k):
+    self.hw["HINGE"]["spec"] = self.hw["HINGE"]["spec"].replace("173L8100", "173H7100")
+    return old(self, *a, **k)
+cab.Build.design = bad_design_h
+_, ch = run(BASE, "plateH")
+expect("планка 173H7100 + Ø5 (старая ошибка)", ch, "Петля: планка", "ошибка")
 cab.Build.design = old
+_, ch = run(BASE, "plateL8")
+expect("планка 173L8100 + Ø5", ch, "Петля: планка", "пройдено")
 # 2. нулевой ход TIP-ON
 MN.PUSH_GAP = 0
 _, ch = run(BASE, "gap0")

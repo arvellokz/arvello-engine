@@ -206,8 +206,8 @@ def verify(s, report=None, texts=None, known_q=()):
         nd = len(drs)
         hq = lambda k: hw.get(k, {}).get("qty", 0)
         add("Комплектность: пары направляющих = замки = ящики; саморезы замков 4 на ящик",
-            hq("SLIDES") == hq("SLIDE-LOCK") == nd and hq("LOCK-SCREW") == 4 * nd and hq("SLIDE-SCREW") == len(marks),
-            f"{hq('SLIDES')} / {hq('SLIDE-LOCK')} / {hq('LOCK-SCREW')} / {hq('SLIDE-SCREW')}")
+            hq("SLIDES") == hq("SLIDE-LOCK") == nd and hq("LOCK-SCREW") == 4 * nd and hq("SLIDE-SCREW") + hq("SLIDE-SCREW-M") == len(marks),
+            f"{hq('SLIDES')} / {hq('SLIDE-LOCK')} / {hq('LOCK-SCREW')} / {hq('SLIDE-SCREW') + hq('SLIDE-SCREW-M')}")
         if any(r["tipon"] for r in drs):
             add("TIP-ON: синхронизатор на каждый ящик (560H стр. 23; 760H каталог стр. 436)", hq("TIPON-SYNC") == sum(r["tipon"] for r in drs), f"{hq('TIPON-SYNC')}")
     # ---- металл

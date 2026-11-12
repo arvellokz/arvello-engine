@@ -1,8 +1,8 @@
 """MOVENTO 760H + TIP-ON BLUMOTION: точки профиля и короб сверяются с данными Blum для NL 350 / 400 / 450 / 500.
 
 Эталон — выписано вручную из документов Blum, не из cab.py:
-  каталог Blum 2022/23 (KA-150) стр. 437 «Hole spacing – runners 760H»: от передней кромки корпуса 37, 37 + 32,
-  задние 37 + 160 (NL 270), 37 + 224 (NL 300–350), 37 + 224 и 37 + 256 (NL 380–520); ось саморезов — низ профиля + 38;
+  каталог Blum 2024/25 с. 428 «Attachment of runners 760H – 40 kg», вариант A (саморез 609.1500 во все места):
+  NL 300–350 — 19, 37, 69, 243, 261; NL 380–600 — 19, 37, 69, 243, 261, 293; ось саморезов — низ профиля + 38;
   конфигуратор Blum 12.11 (LW 568, NL 450, боковина 150): стенки 526 × 121, дно 536 × 440, боковины 440 × 150.
 """
 from __future__ import annotations
@@ -13,7 +13,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from eng import cab  # noqa: E402
 
-BLUM_PTS = {350: [37, 69, 261], 400: [37, 69, 261, 293], 450: [37, 69, 261, 293], 500: [37, 69, 261, 293]}
+BLUM_PTS = {350: [19, 37, 69, 243, 261], 400: [19, 37, 69, 243, 261, 293], 450: [19, 37, 69, 243, 261, 293],
+            500: [19, 37, 69, 243, 261, 293]}
 res = []
 
 
@@ -42,12 +43,12 @@ for NL, want in BLUM_PTS.items():
     res.append((f"NL {NL}: стенки", size(fp) == size(bp) == sorted([16, 121, 526]), size(fp)))
     res.append((f"NL {NL}: дно", size(bt) == sorted([16, 536, NL - 10]), size(bt)))
     res.append((f"NL {NL}: артикул", f"760H{NL * 10:04d}S" in b.hw["SLIDES"]["spec"], b.hw["SLIDES"]["spec"][:30]))
-# NL 550 / 600: точка без размера — не выбирается
+# NL 550 / 600 вне ряда генератора
 try:
     cab.movento_points(550)
-    res.append(("NL 550 отклонена (В-107)", False, "принята"))
+    res.append(("NL 550 вне ряда", False, "принята"))
 except ValueError:
-    res.append(("NL 550 отклонена (В-107)", True, "ValueError"))
+    res.append(("NL 550 вне ряда", True, "ValueError"))
 for name, ok, t in res:
     print(f"{'✓' if ok else '✗'} {name:40s} | {t}")
 print("ИТОГ:", "все совпали" if all(r[1] for r in res) else "есть расхождения")
