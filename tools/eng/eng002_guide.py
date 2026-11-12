@@ -393,7 +393,7 @@ def page_box5(D, n, total):
     p, pos, hp = D["p"], D["pos"], D["hpos"]
     all5 = [p[k] for k in ("SL", "SR", "F", "B", "BOT")]
     sc = E.joint_holes(D, "BOT-", "screw_face")
-    step(pg, 12, 279, 6, f"Перевернуть ящик · {len(sc)} саморезов через дно {pos['BOT']}")
+    step(pg, 12, 279, 6, f"Перевернуть ящик · {len(sc)} самореза через дно {pos['BOT']}")
     ob = figure(pg, D, (16, 170, 196, 262), [(q, E.HL if q is p["BOT"] else E.DONE, {}) for q in all5], sgn=1, zs=-1)
     ob.fasteners(sc)
     E._check_view(D, ob, "A4 шаг 6")
@@ -402,7 +402,7 @@ def page_box5(D, n, total):
                  flip=True, face=(0.62, -0.28, "дно"))
     D["zooms"].append(("A4 шаг 6", sc[0], zinfo))
     pair_box(pg, 110, 96, 90, 46, head_ok, head_bad, "головка заподлицо", "выступает — заденет")
-    check_box(pg, 16, 78, 184, ["все 6 саморезов в готовых отверстиях Ø4,5 с зенковкой",
+    check_box(pg, 16, 78, 184, [f"все {len(sc)} самореза в готовых отверстиях Ø4,5 с зенковкой (4 на ящик — сокращено [М])",
                                 "засверловка в стенках Ø3 гл. 8 — наше значение по умолчанию [М], проба [О]"])
     return pg
 

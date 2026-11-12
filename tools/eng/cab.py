@@ -64,6 +64,9 @@ TECH = {
     # корпуса). Запас +1 держит минимум при допуске толщины плиты (±0,3 у разных поставщиков) и неровности дна и
     # покрывает оба порядка сборки. Это наше решение [М], Blum его не требует.
     "runner_lift": 1.0,
+    # крепёж комода ARV-NST-101 (13.11, решение владельца — сократить) [М]:
+    "back_step": 150,             # ХДФ: шаг саморезов ≈ 150 (к ближайшему), в двойную стойку — в одну половину
+    "drawer_bottom_screws": 2,    # дно ящика MOVENTO → стенка: 2 самореза на стенку (4 на ящик)
 }
 MOVENTO["bottom_clear"] = TECH["bottom_clear"]
 
@@ -162,6 +165,7 @@ class Build:
     def __init__(self, sku, rev, rev_status, options):
         self.sku, self.rev, self.rev_status, self.options = sku, rev, rev_status, options
         self.P, self.holes, self.joints = [], [], {}
+        self.back_opts = {}           # {"step", "round", "skip": [id]} — крепёж ХДФ модели; пусто — как у всех (шаг ≤ 150)
         self.hw = {}
         self.checks, self.warnings, self.notes, self.blockers = [], [], [], []
         self.derived = {"drawers": [], "doors": [], "frames": [], "welds": [], "carcasses": [], "modules": set()}
@@ -348,10 +352,12 @@ class Build:
         return {"ecc": [yc0 + v + shift for v in e], "dowel": [yc0 + v + shift for v in dw]}
 
     def _back_screws(self, pre, verts, horiz, yc1, z0, z1, x0, x1):
-        step, end = 150, 30
+        o = self.back_opts
+        step, end = o.get("step", 150), 30
+        verts = [V for V in verts if V.id not in o.get("skip", ())]
 
         def span(a, b):
-            k = max(1, math.ceil((b - a) / step))
+            k = max(1, (round if o.get("round") else math.ceil)((b - a) / step))
             return [round(a + (b - a) * i / k) for i in range(k + 1)]
         for V in verts:
             for z in span(V.z0 + end, V.z1 - end):
@@ -557,6 +563,8 @@ class Build:
             for panel in (fp, bp):
                 self.conf(side, panel, n, "z", [z0 + v for v in zc], f"J-{k}-{side.id[-2:]}-{panel.id[-1]}")
         xs = [bx0 + T + 80, (bx0 + bx1) / 2, bx1 - T - 80] if (bx1 - bx0 - 2 * T) >= 400 else [bx0 + T + 80, bx1 - T - 80]
+        if TECH["drawer_bottom_screws"] == 2:          # сокращено 13.11 [М]: 2 на стенку, 4 на ящик
+            xs = [bx0 + T + 80, bx1 - T - 80]
         for panel in (fp, bp):
             self.screws_into(bt, panel, "+z", "x", xs, "SCREW-4x25D", f"J-{k}-BOT-{panel.id[-1]}", pilot=(3, 8),
                              at=(panel.y0 + panel.y1) / 2)

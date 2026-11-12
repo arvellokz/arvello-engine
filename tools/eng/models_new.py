@@ -13,6 +13,7 @@
 """
 from __future__ import annotations
 
+from . import cab
 from .cab import GAP, T, TB, TF, TIPON_GAP, Build
 from .models13 import MODELS, REV, STATUS
 
@@ -323,6 +324,8 @@ def chest6(o):
     yc0, yc1 = TF + gap, D - TB
     # стойка двойная (2 × 16): саморезы профилей Blum 4 × 15 с двух сторон одной плиты 16 встретились бы
     # корпуса эксцентриков каждой стойки — со стороны своей колонны (к ним есть доступ после стыковки стоек)
+    # ХДФ: шаг ≈ 150, в двойную стойку — только в левую половину (обе под одной полосой ХДФ) [М], 13.11
+    b.back_opts = {"step": cab.TECH["back_step"], "round": True, "skip": ["PART-2"]}
     c = b.carcass("", 0, W, PL, H, yc0, yc1, color, partitions=[(W / 2 - T, T, "Стойка левая", "+"),
                                                                   (W / 2, T, "Стойка правая", "-")], label="корпус")
     st, st2 = c["parts"][0], c["parts"][1]

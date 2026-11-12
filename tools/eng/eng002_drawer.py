@@ -443,7 +443,7 @@ def sheet_steps_2(D, n, total):
                          f"номинал {skw:g} = LW − 42 [Д: Blum];",
                          "допуск +0 / −1,5 — Blum TD-132 / каталог [Д],", "наш допуск стенок −0,5 / +0 — [М][О];",
                          "диагонали сверху — разность ≤ 1 [М][О]."], size=8.8)
-    step_head(sh, 28, 138, 4, f"Перевернуть ящик: 6 саморезов 4 × 25 через дно поз. {pos['BOT']} в стенки")
+    step_head(sh, 28, 138, 4, f"Перевернуть ящик: {len(joint_holes(D, 'BOT-', 'screw_face'))} самореза 4 × 25 через дно поз. {pos['BOT']} в стенки")
     all5 = [p[k] for k in ("SL", "SR", "F", "B", "BOT")]
     ob2 = Oblique(sh, (40, 14, 230, 122), all5, sgn=1, zs=-1)
     ob2.draw([(q, DONE if q is not p["BOT"] else HL, {}) for q in all5])

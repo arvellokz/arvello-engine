@@ -110,6 +110,11 @@ expect("внутренний уголок в ящике", ch, "Уголки к �
 MN.NEW["ARV-NST-101"] = ("Комод на 6 ящиков", orig_chest); MN.MODELS.update(MN.NEW)
 _, ch = run(BASE, "wa2")
 expect("уголки свободны", ch, "Уголки к стене", "пройдено")
+# 8. Сокращение крепежа 13.11 [М]: ХДФ ≈ 34, дно ящика 4 на ящик; Blum не тронут
+s_, _ = run(BASE, "fx")
+Hq = {h["id"]: h["qty"] for h in s_["hardware"]}
+for k, want in (("SCREW-3.5x16", 34), ("SCREW-4x25D", 24), ("SLIDE-SCREW-M", 72), ("LOCK-SCREW", 24)):
+    res.append(("крепёж комода", k, str(want), str(Hq.get(k)), Hq.get(k) == want))
 for tag, name, want, got, good in res:
     print(f"{'✓' if good else '✗'} {tag:36s} | {name:28s} | ожидалось: {want:13s} | получено: {got}")
 print("ИТОГ:", "все совпали" if all(r[-1] for r in res) else "есть расхождения")
