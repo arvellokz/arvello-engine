@@ -67,6 +67,11 @@ KQ3 = {
     "В-102": ("Шкаф до потолка: монтажный зазор до потолка (принято 40 мм), планка-заглушка в цвет фасада и её крепление; "
               "подъём секций в помещение", "монтаж, вид сверху", "Arvello + монтажник", "замер высоты и диагонали проёма"),
 }
+KQ3["В-107"] = ("Blum MOVENTO 760H + TIP-ON BLUMOTION: (1) точка профиля 28 (37 − 9 на стр. 437 каталога) — нужна ли при "
+                "саморезах Ø4 × 15, сверить по инструкции MOVENTO / шаблону; (2) груз в ящике принят 10 кг — блок TIP-ON "
+                "BLUMOTION подобран по массе (L1 до 20 кг); (3) крючок Ø6 и замки — по шаблону T65.1000.02, проверить "
+                "на образце ящика; (4) NL 550 / 600 и внутренние ящики MOVENTO не используются — точки не сверены",
+                "ящики", "Arvello", "образец ящика с фурнитурой Blum, отчёт конфигуратора «Configuration details»")
 _MR.KQ2.update(KQ3)
 from .cab import FASTENERS as _F
 _F.update({"PULLROD-SCREW": ("Саморез выдвижной штанги 4 × 16", "в комплекте штанги (кандидат)", "кандидат", "В-101", "шт")})
@@ -118,10 +123,13 @@ def _adj_shelf(b, pre, k, c, x0, sw, yc0, yc1, z, color):
     return sp
 
 
-# MOVENTO + TIP-ON BLUMOTION (нажатие + мягкое закрытие) включится, когда будут сверены точки крепления профиля
-# MOVENTO 760H по каталогу Blum (стр. 419 каталога 2022/23 — рисунок не читается в веб-версии). До этого —
-# TANDEM 560H со встроенным TIP-ON: точки по документу Blum (стр. 40), без мягкого закрытия.
-USE_MOVENTO_TOB = False
+# MOVENTO 760H + TIP-ON BLUMOTION (нажатие + мягкое закрытие): точки профиля сверены по каталогу Blum 2022/23
+# стр. 437, короб — по раскрою конфигуратора Blum (12.11). Включено для накладных ящиков (комод ARV-NST-101).
+# Внутренние ящики за дверью (WRD-101) — пока TANDEM 560H со встроенным TIP-ON: у внутреннего ящика MOVENTO другие
+# точки (X + 23 / 18 на стр. 437), не сверены (В-107).
+USE_MOVENTO_TOB = True
+USE_MOVENTO_INNER = False
+DRAWER_LOAD = 10                              # груз в ящике комода, кг — принятый (одежда), В-107
 
 
 def _movento_tob(b):
@@ -206,7 +214,7 @@ def _sections_var(b, W, n, H, PL, top, D, color, pattern, push=False, inner_draw
                       front_t=16, front_unit="Передняя панель внутреннего ящика", setback=-7, box_max=150,
                       front_edges={"-x": "PVC04", "+x": "PVC04", "-z": "PVC04", "+z": "ABS2"})
             b.derived.setdefault("inner_gap", []).append(6)
-            if USE_MOVENTO_TOB:
+            if USE_MOVENTO_INNER:
                 _movento_tob(b)
         m = b.carcass(pre + "M-", x0, x0 + sw, top, H, yc0, yc1, color, label=f"антресоль {i + 1}")
         b.screws_into(c["TOP"], m["BOT"], "+z", "x", [x0 + 100, x0 + sw - 100], "SCREW-4x25M", f"J-{c['TOP'].id}-MEZ",
@@ -332,11 +340,13 @@ def chest6(o):
         for h in hs:
             fr.append((x0 + (GAP / 2 if k == 1 else GAP / 2), x1 - GAP / 2, z + GAP / 2, z + h - GAP / 2))
             z += h
+        mov = push and USE_MOVENTO_TOB
         b.drawers(f"C{k}-", c, cl, cr, fl, ce, fr, color, "INNER" if color != "W" else "W",
-                  handle=None if push else "bar128", tipon=push, box_max=170)
+                  handle=None if push else "bar128", tipon=push, box_max=150 if mov else 170, movento=mov,
+                  load=DRAWER_LOAD if mov else None)
     if push and USE_MOVENTO_TOB:
-        _movento_tob(b)
-        b.hw["SLIDES"]["spec"] = b.hw["SLIDES"]["spec"].replace("полное выдвижение", "полное выдвижение, зазор фасада 2,5")
+        b.derived["drawer_system"] = "MOVENTO TIP-ON BLUMOTION"
+        _MR._kq(b, "В-107")
     _MR._anti_tip(b, 2)
     if changer:
         L, Dt, Hr = 800, D, 150                  # борт 150: над матрасом 50 остаётся 100 (сверить с EN 12221, В-106)
@@ -380,8 +390,10 @@ def chest6(o):
     _check(b, "Ширина = 2 боковины + крышка", W, 2 * T + (c["TOP"].x1 - c["TOP"].x0))
     _check(b, "Высота = цоколь + боковина", H, PL + (c["L"].z1 - c["L"].z0))
     _check(b, "Глубина = фасад + зазор + корпус + ХДФ", D, TF + gap + (yc1 - yc0) + TB)
-    b.notes += [f"Комод {W} × {D} × {H}: 2 колонки по 3 ящика, Blum TANDEM " + ("со встроенным TIP-ON (нажатие)."
-                if push else "BLUMOTION с ручками (мягкое закрытие)."),
+    b.notes += [f"Комод {W} × {D} × {H}: 2 колонки по 3 ящика, " + (
+                "Blum MOVENTO 760H + TIP-ON BLUMOTION (нажатие и мягкое закрытие); короб — дно в пазах боковин."
+                if push and USE_MOVENTO_TOB else "Blum TANDEM со встроенным TIP-ON (нажатие)." if push else
+                "Blum TANDEM BLUMOTION с ручками (мягкое закрытие)."),
                 "Крепление к стене обязательно (детская комната): 2 уголка (В-48)."]
     _MR._kq(b, "В-48")
     return b

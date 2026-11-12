@@ -39,6 +39,35 @@ BLUM = {False: {"under": 27.5, "axis": 37, "art": "560H{:04d}B", "ref": "Blum TA
         True: {"under": 28.5, "axis": 38, "art": "560H{:04d}T", "ref": "Blum TANDEM стр. 23, 24, 40", "name": "встроенный TIP-ON"}}
 RECESS = 13
 TIPON_GAP = 3.5
+# Blum MOVENTO 760H…S + TIP-ON BLUMOTION (docs/blum/2026-11-12_MOVENTO_TIP-ON-BLUMOTION.md):
+#   каталог Blum 2022/23 (KA-150) стр. 436 — артикулы, набор TIP-ON BLUMOTION, синхронизация (LW − 267);
+#   стр. 437 «Hole spacing – runners 760H» — точки профиля от передней кромки корпуса: 37, 37 + 32 = 69 и задние
+#   37 + 160 / 224 / 256 по группам NL; «Space requirement» — низ дна → низ профиля 28,5, ось саморезов 38, над ящиком 7;
+#   TD-132 (06.22) стр. 13 — системный винт Ø6 × 14,5 «можно заменить саморезом Ø4 × 15»; зазор фасада 2,5 (стр. 15).
+#   Короб — раскрой конфигуратора Blum 12.11: стенки = боковина − утопление 13 − дно 16, дно SKW + 10 в пазах боковин.
+#   NL 550 / 600 не используются: самая задняя точка на рисунке стр. 437 без размера (В-107).
+MOV_SERIES = (270, 300, 320, 350, 380, 400, 420, 450, 480, 500, 520)
+_PTS_MOV = {270: (37, 69, 197), 300: (37, 69, 261), 320: (37, 69, 261), 350: (37, 69, 261),
+            **{nl: (37, 69, 261, 293) for nl in (380, 400, 420, 450, 480, 500, 520)}}
+MOVENTO = {"under": 28.5, "axis": 38, "art": "760H{:04d}S", "name": "TIP-ON BLUMOTION", "gap": 2.5,
+           "ref": "Blum каталог 2022/23 стр. 436–437, TD-132", "groove": 5}
+
+
+def _ru(x):
+    return format(x, "g").replace(".", ",")
+
+
+def movento_points(NL):
+    if NL not in _PTS_MOV:
+        raise ValueError(f"MOVENTO NL {NL}: точки профиля не сверены (В-107)")
+    return _PTS_MOV[NL]
+
+
+def tob_unit(NL, kg):
+    """Блок TIP-ON BLUMOTION по каталогу стр. 436: S0 / S1 для NL 270–320, L1 (≤ 20 кг) / L3 (15–40) для NL 350–600."""
+    if NL <= 320:
+        return ("S0", "T60L7040") if kg <= 10 else ("S1", "T60L7140")
+    return ("L1", "T60L7340") if kg <= 20 else ("L3", "T60L7540")
 
 
 def blum_points(NL, tipon):
@@ -47,9 +76,9 @@ def blum_points(NL, tipon):
     return next(p for (a, b), p in _PTS_BM if a <= NL <= b)
 
 
-def pick_nl(depth):
+def pick_nl(depth, series=NL_SERIES):
     """Наибольшая NL ряда Blum: NL + 3 ≤ глубина корпуса и NL ≤ глубина − 10 (как у «Самал»)."""
-    ok = [s for s in NL_SERIES if s + 3 <= depth and s <= depth - 10]
+    ok = [s for s in series if s + 3 <= depth and s <= depth - 10]
     if not ok:
         raise ValueError(f"глубина {depth}: направляющая Blum 560H не помещается")
     return max(ok)
@@ -77,7 +106,9 @@ FASTENERS = {
     "SCREW-4x25": ("Саморез 4 × 25", "потай, по ЛДСП: фасад — короб", "типовой", "", "шт"),
     "SCREW-3.5x16": ("Саморез 3,5 × 16", "с прессшайбой, для ХДФ", "типовой", "", "шт"),
     "SCREW-M4x22": ("Винт ручки M4 × 22", "в комплекте ручки", "кандидат", "", "шт"),
-    "SLIDE-SCREW": ("Саморез крепления профиля Blum", "Ø4 × 15 (тип A, Blum стр. 39 / 40)", "по документу", "", "шт"),
+    "SLIDE-SCREW": ("Саморез крепления профиля Blum", "Ø4 × 15 (TANDEM: тип A, стр. 39 / 40; MOVENTO: вместо системного "
+                    "винта Ø6 × 14,5, TD-132 стр. 13)", "по документу", "", "шт"),
+    "SCREW-4x25D": ("Саморез 4 × 25", "потай: снизу через дно ящика в стенку; вход 9", "типовой", "", "шт"),
     "SCREW-4x13": ("Саморез 4 × 13", "полукруглая головка, под ножку / колесо / раму (остаток плиты ≥ 3)", "типовой", "", "шт"),
     "SCREW-4x30": ("Саморез 4 × 30", "потай: крышка корпуса — столешница (вход в столешницу 14)", "типовой", "", "шт"),
     "SCREW-6.3x13": ("Евровинт 6,3 × 13", "предустановлен в планке 173H7100 (Ø5 гл. 13) — отдельно не заказывать",
@@ -366,17 +397,20 @@ class Build:
     # ------------------------------------------------------------------ фасады и ящики
     def drawers(self, pre, c, colL, colR, floor_z, ceil_z, fronts, color, inner_fin, handle="bar128", tipon=False,
                 front_mat="LDSP18", front_t=18, front_edges=None, front_unit="Фасад ящика", box_max=None,
-                handle_through=False, notch=None, caps=None, setback=0):
-        """Ящики Blum 560H в проёме между панелями colL (слева) и colR (справа).
-        fronts — [(fx0, fx1, fz0, fz1)] снизу вверх. Короба — по правилам «Самал» R02E (LW − 42, NL − 10, утопление 13)."""
-        sysd = BLUM[tipon]
+                handle_through=False, notch=None, caps=None, setback=0, movento=False, load=None):
+        """Ящики Blum 560H (или MOVENTO 760H + TIP-ON BLUMOTION при movento=True) в проёме между colL и colR.
+        fronts — [(fx0, fx1, fz0, fz1)] снизу вверх. Короба — по правилам «Самал» R02E (LW − 42, NL − 10, утопление 13);
+        MOVENTO — по раскрою конфигуратора Blum: стенки на дне, дно в пазах боковин. load — груз в ящике, кг (блок TOB)."""
+        if movento and (not tipon or handle or notch or setback):
+            raise ValueError("MOVENTO: только накладной ящик TIP-ON BLUMOTION без ручки и выреза")
+        sysd = MOVENTO if movento else BLUM[tipon]
         yc0, yc1 = colL.y0 + setback, colL.y1
         Dc = yc1 - yc0
-        NL = pick_nl(Dc)
+        NL = pick_nl(Dc, MOV_SERIES if movento else NL_SERIES)
         LW = colR.x0 - colL.x1
         bx0, bx1 = colL.x1 + 5, colR.x0 - 5
         by0, by1 = yc0, yc0 + NL - 10
-        pts = blum_points(NL, tipon)
+        pts = movento_points(NL) if movento else blum_points(NL, tipon)
         recs = []
         hz_all = []
         f0 = fronts[0][2]
@@ -408,10 +442,14 @@ class Build:
                            edges={"+z": "PVC04"})
             sr = self.part(f"{k}-SR", "Боковина ящика", bx1 - T, by0, z0, bx1, by1, z1, "LDSP16", inner_fin, "interior",
                            edges={"+z": "PVC04"})
-            fp = self.part(f"{k}-F", "Стенка ящика передняя", bx0 + T, by0, z0, bx1 - T, by0 + T, z1, "LDSP16", inner_fin,
-                           "interior", edges={"+z": "PVC04"})
+            if not movento:
+                fp = self.part(f"{k}-F", "Стенка ящика передняя", bx0 + T, by0, z0, bx1 - T, by0 + T, z1, "LDSP16", inner_fin,
+                               "interior", edges={"+z": "PVC04"})
             zc = [40, bh - 35] if bh >= 100 else [bh / 2]
-            if not notch:
+            if movento:
+                boxids = self._mov_box(k, sl, sr, bx0, bx1, by0, by1, z0, z1, inner_fin)
+                fp = self.get(boxids[2])
+            elif not notch:
                 bp = self.part(f"{k}-B", "Стенка ящика задняя", bx0 + T, by1 - T, z0, bx1 - T, by1, z1, "LDSP16", inner_fin,
                                "interior", edges={"+z": "PVC04"})
                 bt = self.part(f"{k}-BOT", "Дно ящика", bx0 + T, by0 + T, z0 + RECESS, bx1 - T, by1 - T, z0 + RECESS + T, "LDSP16",
@@ -426,7 +464,8 @@ class Build:
                 boxids = [sl.id, sr.id, fp.id, bp.id, bt.id]
             else:
                 boxids = self._u_box(k, sl, sr, fp, bx0, bx1, by0, by1, z0, z1, bh, zc, inner_fin, notch)
-            zs = [z0 + 55, z0 + bh - 15] if bh >= 100 else [z0 + 55]
+            lo = fp.z0 + 30 if movento else z0 + 55   # у MOVENTO передняя стенка стоит на дне
+            zs = [lo, z0 + bh - 15] if bh >= 100 else [lo]
             for x in (bx0 + T + 40, bx1 - T - 40):
                 for z in zs:
                     self.hole(fp.id, f"J-{pre}FRONT{n}-BOX{n}", "front_screw", x, fp.y1, z, "-y", 4.5, T, "SCREW-4x25",
@@ -455,8 +494,14 @@ class Build:
                          "inner_w": bx1 - bx0 - 2 * T, "box_l": NL - 10, "Dc": Dc, "colL": colL.id, "colR": colR.id,
                          "floor": floor_z, "ceil": ceil_z, "front": fr.id, "hz": hz, "pts": list(pts),
                          "box": boxids, "limit_top": limit, "through": handle_through, "notch": notch,
-                         "front_t": front_t, "setback_front": bool(setback)})
+                         "front_t": front_t, "setback_front": bool(setback), "sys": "movento" if movento else "tandem",
+                         "load": load})
         nd = len(fronts)
+        self.derived["drawers"] += recs
+        self.derived["modules"].add("tipon" if tipon else "blumotion")
+        if movento:
+            self._mov_hw(recs, NL, LW, load)
+            return recs
         self.buy("SLIDES", "Направляющая TANDEM plus 560H (пара Л/П)", f"Blum {sysd['art'].format(NL * 10)}, NL {NL}, 30 кг, "
                  f"{sysd['name']} ({sysd['ref'].split(',')[0]})", nd, "по документу", "крепёж и замки в комплект не входят", "компл")
         self.buy("SLIDE-LOCK", "Замок ящика (пара Л/П)", "Blum T51.1700.04 (стр. 20 / 23)", nd, "по документу", "", "компл")
@@ -467,9 +512,57 @@ class Build:
                      "по документу", "рекомендован при любой ширине корпуса", "шт")
         if handle:
             self.buy("HANDLE-128", "Ручка-скоба", "межосевое 128, чёрная матовая (как «Самал»)", nd, "кандидат", "", "шт")
-        self.derived["drawers"] += recs
-        self.derived["modules"].add("tipon" if tipon else "blumotion")
         return recs
+
+    def _mov_box(self, k, sl, sr, bx0, bx1, by0, by1, z0, z1, fin):
+        """Короб MOVENTO по раскрою конфигуратора Blum (12.11): боковины на всю высоту, передняя и задняя стенки
+        SKW × (h − 13 − 16) стоят на дне, дно (SKW + 10) × SKL в пазах боковин 16 × 5 на 13 от нижней кромки."""
+        g = MOVENTO["groove"]
+        zb0, zb1 = z0 + RECESS, z0 + RECESS + T
+        E = {"+z": "PVC04"}
+        fp = self.part(f"{k}-F", "Стенка ящика передняя", bx0 + T, by0, zb1, bx1 - T, by0 + T, z1, "LDSP16", fin, "interior", edges=E)
+        bp = self.part(f"{k}-B", "Стенка ящика задняя", bx0 + T, by1 - T, zb1, bx1 - T, by1, z1, "LDSP16", fin, "interior", edges=E)
+        bt = self.part(f"{k}-BOT", "Дно ящика", bx0 + T - g, by0, zb0, bx1 - T + g, by1, zb1, "LDSP16", fin, "interior")
+        gr = self.derived.setdefault("grooves", [])
+        for side, x0_, x1_ in ((sl, bx0 + T - g, bx0 + T), (sr, bx1 - T, bx1 - T + g)):
+            gr.append({"part": side.id, "with": bt.id, "x0": x0_, "x1": x1_, "y0": by0, "y1": by1, "z0": zb0, "z1": zb1,
+                       "w": T, "depth": g, "from_edge": RECESS,
+                       "note": f"паз {T} × {g} по всей длине, от нижней кромки {RECESS} — под дно ящика (Blum: дно SKW + 10)"})
+        zc = [(zb1 - z0) + 25, (z1 - z0) - 25] if (z1 - zb1) >= 90 else [(zb1 + z1) / 2 - z0]
+        for side, n in ((sl, "+x"), (sr, "-x")):
+            for panel in (fp, bp):
+                self.conf(side, panel, n, "z", [z0 + v for v in zc], f"J-{k}-{side.id[-2:]}-{panel.id[-1]}")
+        xs = [bx0 + T + 80, (bx0 + bx1) / 2, bx1 - T - 80] if (bx1 - bx0 - 2 * T) >= 400 else [bx0 + T + 80, bx1 - T - 80]
+        for panel in (fp, bp):
+            self.screws_into(bt, panel, "+z", "x", xs, "SCREW-4x25D", f"J-{k}-BOT-{panel.id[-1]}", pilot=(3, 8),
+                             at=(panel.y0 + panel.y1) / 2)
+        return [sl.id, sr.id, fp.id, bp.id, bt.id]
+
+    def _mov_hw(self, recs, NL, LW, load):
+        nd = len(recs)
+        dens = 650                                   # ЛДСП, как в массе изделия (design)
+        for r in recs:
+            ps = [self.get(i) for i in r["box"]] + [self.get(r["front"])]
+            own = sum((p.x1 - p.x0) * (p.y1 - p.y0) * (p.z1 - p.z0) / 1e9 * dens for p in ps)
+            r["kg_own"] = round(own, 1)
+            r["kg"] = round(own + (load or 0), 1)
+        kg = max(r["kg"] for r in recs)
+        unit, art = tob_unit(NL, kg)
+        self.derived["tob"] = {"unit": unit, "art": art, "kg": kg, "load": load, "NL": NL, "LW": LW}
+        self.buy("SLIDES", "Направляющая MOVENTO 760H BLUMOTION (пара Л/П) под TIP-ON BLUMOTION",
+                 f"Blum {MOVENTO['art'].format(NL * 10)}, NL {NL}, 40 кг, полное выдвижение, зазор фасада 2,5 "
+                 "(каталог Blum 2022/23 стр. 436, конфигуратор 12.11)", nd, "по документу", "крепёж и замки отдельно", "компл")
+        self.buy("SLIDE-LOCK", "Замок ящика MOVENTO (Л + П)", "Blum T51.7600 (конфигуратор 12.11; по отдельности — "
+                 "T51.7601 Л/П, TD-132 стр. 3); крепление и крючок — шаблон T65.1000.02", nd, "по документу", "", "компл")
+        self.buy("LOCK-SCREW", "Саморез крепления замка", "2 на замок (рисунок Blum); тип — по поставке Blum", 4 * nd,
+                 "по рисунку", "тип самореза в документе не указан")
+        sync = (f"синхронизация T60.1125W, отрез LW − 267 = {LW - 267:g}" if LW >= 314 else
+                f"синхронизация одной деталью T60.300D, отрез LW − 241 = {LW - 241:g}")
+        self.buy("TIPON-SYNC", "TIP-ON BLUMOTION: набор (блок + защёлка + адаптер) и синхронизация",
+                 f"Blum {art} (блок {unit}; ящик с фасадом {_ru(max(r['kg_own'] for r in recs))} кг + груз {_ru(load or 0)} кг = "
+                 f"{_ru(kg)} кг); {sync} (каталог стр. 436, монтаж TD-132 стр. 24)", nd,
+                 "кандидат", "блок — по массе; груз в ящике принят (В-107)", "компл")
+
 
     def _u_box(self, k, sl, sr, fp, bx0, bx1, by0, by1, z0, z1, bh, zc, fin, notch):
         """U-образный короб вокруг сифона: notch = (xc, ширина канала, y начала канала)."""

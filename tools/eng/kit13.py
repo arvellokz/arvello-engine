@@ -541,7 +541,15 @@ def _detail_block(c, sh, pid, x, y, sc, qty):
         sh.text(x + (ua + ub) / 2 / sc, y + (va_ + vb) / 2 / sc - 1.6,
                 f"центр от A: {n_(round((ua + ub) / 2, 1))} / {n_(round((va_ + vb) / 2, 1))}", size=5.0, ha="center",
                 va="center", color=RED)
+    for g in s["derived"].get("grooves", []):
+        if g["part"] != pid:
+            continue
+        u0, v0 = fr.uv(g["x0"], g["y0"], g["z0"])
+        u1, v1 = fr.uv(g["x1"], g["y1"], g["z1"])
+        ua, ub, va_, vb = min(u0, u1), max(u0, u1), min(v0, v1), max(v0, v1)
+        sh.rect(x + ua / sc, y + va_ / sc, x + ub / sc, y + vb / sc, dict(lw=0.7, color=RED, ls="--"))
     cus = [cu for cu in s["derived"].get("cutouts", []) if cu.get("draw") and cu["part"] == pid]
+    cus += [g for g in s["derived"].get("grooves", []) if g["part"] == pid]
     rows = hole_rows(s, pid, fr, lambda h: NODE.get(h["kind"], ""))
     yb = y - 12
     for i, cu in enumerate(cus):
@@ -722,6 +730,10 @@ def sheet_nodes(c):
         v = View(sh, 1, (x, y), (win[0], win[2]))
         section(v, s, cut, h[cut], uax, vv, win)
         tit, notes = NODE_TXT[L]
+        if L == "Ж" and any(r.get("sys") == "movento" for r in s["derived"].get("drawers", [])):
+            tit = "Профиль Blum MOVENTO 760H"
+            notes = ["Саморез Ø4 × 15 по разметке, без", "сверления (вместо системного винта,", "TD-132 стр. 13); ось — над низом",
+                     "профиля 38; точки — каталог стр. 437."]
         if L == "Н" and h.get("fastener") == "SCREW-4x25M":
             E = next((parts[q["part"]] for q in s["holes"] if q["joint"] == h["joint"] and q["kind"] == "pilot"), None)
             tit = "Антресоль на секцию"
@@ -813,8 +825,13 @@ def control_new(c):
     rows = [["К1", "Размеры деталей после кромки", "рулетка, штангенциркуль", f"по листам {c.detail_ref}; ±0,5 (В-10)"]]
     drs = d.get("drawers", [])
     if drs:
-        rows.append([f"К{len(rows) + 1}", "Стенки и дно короба по ширине (до сборки)", "штангенциркуль",
-                     f"{n_(drs[0]['inner_w'])} −0,5 / +0 — иначе короб выйдет за К ниже"])
+        if drs[0].get("sys") == "movento":
+            rows.append([f"К{len(rows) + 1}", "Стенки и дно короба по ширине; паз под дно (до сборки)", "штангенциркуль",
+                         f"стенки {n_(drs[0]['inner_w'])}, дно {n_(drs[0]['inner_w'] + 10)}: −0,5 / +0; паз 16 × 5"
+                         " на 13 от низа — дно входит без люфта"])
+        else:
+            rows.append([f"К{len(rows) + 1}", "Стенки и дно короба по ширине (до сборки)", "штангенциркуль",
+                         f"{n_(drs[0]['inner_w'])} −0,5 / +0 — иначе короб выйдет за К ниже"])
     groups = {}
     for cc in d.get("carcasses", []):
         lab = cc["label"]
@@ -868,8 +885,10 @@ def control_new(c):
         steps.append(f"{k}. Проставки направляющих: к боковинам секций с ящиками, саморезы 4 × 25 через проставку (узел Н);")
         steps.append("     передний торец проставки — за планкой петли (В-105)."); k += 1
     if drs:
+        box = (f"{k}. Короба: дно в пазы боковин, передняя и задняя стенки — на дно, конфирматы (узел В); дно к стенкам"
+               " саморезами 4 × 25 снизу (узел Н)." if drs[0].get("sys") == "movento" else f"{k}. Короба на конфирматах (узел В).")
         steps += ["Ящики",
-                  f"{k}. Короба на конфирматах (узел В). Сборщик после сборки короба: отверстия под задний крючок Ø6 и"
+                  box + " Сборщик после сборки короба: отверстия под задний крючок Ø6 и"
                   " замки — шаблоном Blum T65.1000.02 (в цехе не сверлятся); первый ящик собрать и проверить с фасадом.",
                   f"{k + 1}. Профили — саморезами Ø4 × 15 по точкам таблицы NL (узел Ж)" +
                   (" на проставки" if any("SPACER" in p["id"] for p in parts) else "") + "; установить короба."]
@@ -1108,14 +1127,24 @@ def questions_for(s):
         if to:
             t += ("; " if bm else "") + (" встроенный TIP-ON — артикулы и синхронизатор T57.1140S (раскрой LW − 31) стр. 23, место и "
                                           "короб стр. 24 (28,5 и 38, зазор фасада 3,5), точки профиля стр. 40")
+        mv = [r for r in drs if r.get("sys") == "movento"]
+        if mv:
+            r0 = mv[0]
+            t = ("Blum MOVENTO 760H + TIP-ON BLUMOTION: артикулы, набор TIP-ON BLUMOTION и синхронизация (LW − 267) — каталог "
+                 "Blum 2022/23 стр. 436; место в корпусе (низ дна → низ профиля 28,5, ось саморезов 38, над ящиком 7) и точки "
+                 f"профиля NL {r0['NL']}: {' / '.join(str(v) for v in r0['pts'])} от передней кромки — стр. 437; системный "
+                 "винт заменён саморезом Ø4 × 15 (TD-132 стр. 13); зазор фасада 2,5. Короб — раскрой конфигуратора Blum 12.11: "
+                 "стенки = боковина − 13 − 16 на дне, дно SKW + 10 в пазах 5")
+            if len(mv) < len(drs):
+                t += "; остальные ящики — Blum TANDEM 560H"
         inn = [r for r in drs if r.get("setback_front")]
         if inn:
             r0 = inn[0]
             t += (f"; внутренний ящик за дверью (стр. 24, 40): длина с передней панелью SKL + X = {r0['box_l']} + "
                   f"{n_(r0['front_t'])} = {n_(r0['box_l'] + r0['front_t'])}, место от передней панели NL + X + 7 = "
                   f"{n_(r0['NL'] + r0['front_t'] + 7)}")
-        t += ". Общее: SKW = LW − 42 (+0/−1,5), SKL = NL − 10, место NL + 3, утопление дна 12–15 (принято 13), замки T51.1700.04, " \
-             "крючок и замки — шаблон T65.1000.02. Ряд NL по глубине корпуса: " + ", ".join(sorted({str(r["NL"]) for r in drs})) + "."
+        t += ". Общее: SKW = LW − 42 (+0/−1,5), SKL = NL − 10, место NL + 3, утопление дна 12–15 (принято 13), замки " + \
+             ("T51.7600" if mv else "T51.1700.04") + ", крючок и замки — шаблон T65.1000.02. Ряд NL по глубине корпуса: " + ", ".join(sorted({str(r["NL"]) for r in drs})) + "."
         dec.append(("В-4", t))
     for qid in d.get("kq", []):
         if qid not in [q[0] for q in Q]:
@@ -1138,7 +1167,7 @@ def tech_req(s, c):
           f" — лист {c.no['nodes']:02d}.")]
     if d.get("drawers"):
         r = d["drawers"][0]
-        t += [f"4. Ящики Blum 560H NL {r['NL']}: профили по точкам NL (узел Ж);",
+        t += [f"4. Ящики Blum {'MOVENTO 760H' if r.get('sys') == 'movento' else '560H'} NL {r['NL']}: профили по точкам NL (узел Ж);",
               "   крючок и замки — шаблоном T65.1000.02."]
     t.append(f"5. Открытые вопросы — лист {c.no['questions']:02d}.")
     return t
@@ -1419,6 +1448,19 @@ def drill_rows(s, pid, pos):
         key = (boardkit.KIND_RU.get(h["kind"], h["kind"]), op, face, h["d"], dep, w, node)
         groups.setdefault(key, []).append((round(u, 1), round(v, 1)))
     rows = []
+    for g in s["derived"].get("grooves", []):
+        if g["part"] != pid:
+            continue
+        cx = ((g["x0"] + g["x1"]) / 2, (g["y0"] + g["y1"]) / 2, (g["z0"] + g["z1"]) / 2)
+        nax = next(ax for ax in "xyz" if g[ax + "1"] - g[ax + "0"] == g["depth"] and (abs(g[ax + "0"] - p[ax + "0"]) < 0.01
+                                                                                    or abs(g[ax + "1"] - p[ax + "1"]) < 0.01))
+        dv = boardkit.vec(("-" if abs(g[nax + "1"] - p[nax + "1"]) < 0.01 else "+") + nax)
+        face = "пласть на виде" if dv == boardkit.neg(fr.n) else "обратная пласть"
+        u0, v0 = fr.uv(g["x0"], g["y0"], g["z0"])
+        u1, v1 = fr.uv(g["x1"], g["y1"], g["z1"])
+        rows.append(["паз под дно ящика", "фрезерование паза, по всей длине", face, f"шир. {n_(g['w'])}", n_(g["depth"]),
+                     f"{n_(round(min(u0, u1), 1))}–{n_(round(max(u0, u1), 1))}",
+                     f"{n_(round(min(v0, v1), 1))}–{n_(round(max(v0, v1), 1))}", "1", ""])
     for (kind, op, face, dd, dep, w, node), pts in sorted(groups.items(), key=lambda kv: (kv[0][2], -kv[0][3], kv[0][0])):
         byu = {}
         for u, v in pts:

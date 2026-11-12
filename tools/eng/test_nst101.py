@@ -50,6 +50,31 @@ expect("исполнение со столиком", ch, "Доступ инст�
 s0, ch0 = run({**BASE, "changer": "no"}, "no")
 expect("без столика", ch0, "Помещается: матрас", "нет проверки")
 expect("без столика", ch0, "Высота изделия", "пройдено")
+# 3. MOVENTO: точки профиля TANDEM вместо таблицы стр. 437 каталога Blum
+orig_pts = cab.movento_points
+cab.movento_points = lambda NL: cab.blum_points(NL, True)
+_, ch = run({**BASE, "changer": "no"}, "mpts")
+expect("MOVENTO: точки TANDEM", ch, "MOVENTO TIP-ON BLUMOTION", "ошибка")
+cab.movento_points = orig_pts
+# 4. MOVENTO: тяжёлый ящик, а блок оставлен L1 (до 20 кг)
+orig_unit, orig_load = cab.tob_unit, MN.DRAWER_LOAD
+cab.tob_unit = lambda NL, kg: ("L1", "T60L7340")
+MN.DRAWER_LOAD = 30
+_, ch = run({**BASE, "changer": "no"}, "munit")
+expect("MOVENTO: груз 30 кг, блок L1", ch, "MOVENTO TIP-ON BLUMOTION", "ошибка")
+cab.tob_unit = orig_unit
+_, ch = run({**BASE, "changer": "no"}, "munit2")
+expect("MOVENTO: груз 30 кг, блок по массе", ch, "MOVENTO TIP-ON BLUMOTION", "пройдено")
+MN.DRAWER_LOAD = orig_load
+# 5. MOVENTO: старый короб — дно без пазов (между боковинами)
+cab.MOVENTO["groove"] = 0
+_, ch = run({**BASE, "changer": "no"}, "mgr")
+expect("MOVENTO: дно без пазов", ch, "MOVENTO (раскрой Blum", "ошибка")
+cab.MOVENTO["groove"] = 5
+_, ch = run(BASE, "mok")
+expect("MOVENTO: исполнение по Blum", ch, "MOVENTO (раскрой Blum", "пройдено")
+expect("MOVENTO: исполнение по Blum", ch, "MOVENTO TIP-ON BLUMOTION", "пройдено")
+expect("MOVENTO: исполнение по Blum", ch, "Детали не пересекаются", "пройдено")
 for tag, name, want, got, good in res:
     print(f"{'✓' if good else '✗'} {tag:36s} | {name:28s} | ожидалось: {want:13s} | получено: {got}")
 print("ИТОГ:", "все совпали" if all(r[-1] for r in res) else "есть расхождения")

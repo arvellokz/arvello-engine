@@ -250,6 +250,35 @@ def verify_new(s, texts):
     if not doors and re.search(r"[Дд]вер", " ".join(t for t in texts if "Контроль" in t or "Монтаж" in t or "Ящики" in t)):
         add("Нет шагов про двери у изделия без дверей", ERR, "в сборке / контроле упомянута дверь")
 
+    # 14. MOVENTO + TIP-ON BLUMOTION (каталог Blum 2022/23 стр. 436–437): зазор фасада, блок по массе и NL, точки профиля
+    mv = [r for r in d.get("drawers", []) if r.get("sys") == "movento"]
+    if mv:
+        # независимая копия таблицы стр. 437 (не из cab): от передней кромки корпуса, 37 + 32 / 160 / 224 / 256
+        ref = {270: [37, 69, 197], **{n: [37, 69, 261] for n in (300, 320, 350)},
+               **{n: [37, 69, 261, 293] for n in (380, 400, 420, 450, 480, 500, 520)}}
+        bad = []
+        for r in mv:
+            fr = P[r["front"]]
+            near = [c["y0"] for c in carc if _ov(c["x0"], c["x1"], fr["x0"], fr["x1"]) > 1 and _ov(c["z0"], c["z1"], fr["z0"], fr["z1"]) > 1]
+            g = min(near) - fr["y1"] if near else 99
+            if g < 2.5 - 0.01:
+                bad.append(f"{r['pre']}{r['n']}: зазор фасада {g:g} < 2,5")
+            if ref.get(r["NL"]) != list(r["pts"]):
+                bad.append(f"{r['pre']}{r['n']}: точки {r['pts']} ≠ стр. 437 для NL {r['NL']}")
+            m = [h for h in holes if h["joint"].startswith(f"J-{r['pre']}RUNNER-{r['n']}-")]
+            ys = sorted({round(h["y"] - (fr["y1"] + g), 1) for h in m})
+            if ys != sorted(float(v) for v in ref.get(r["NL"], [])):
+                bad.append(f"{r['pre']}{r['n']}: разметка {ys} от кромки корпуса")
+        spec = H.get("TIPON-SYNC", {}).get("spec", "")
+        nl, kg = mv[0]["NL"], max(r.get("kg", 0) for r in mv)
+        want = ("T60L7040" if kg <= 10 else "T60L7140") if nl <= 320 else ("T60L7340" if kg <= 20 else "T60L7540")
+        if want not in spec:
+            bad.append(f"блок TIP-ON BLUMOTION: нужен {want} (NL {nl}, {kg:g} кг)")
+        if "760H" not in H.get("SLIDES", {}).get("spec", ""):
+            bad.append("направляющая не 760H")
+        add("MOVENTO TIP-ON BLUMOTION: зазор фасада ≥ 2,5, точки профиля по стр. 437, блок по NL и массе", ERR if bad else OK,
+            f"{len(mv)} ящ., NL {nl}, {kg:g} кг" if not bad else f"{bad[0]}; всего {len(bad)}")
+
     # 9. Текстура дубовых дверей — одним направлением (вертикально)
     gr = {d["parts_ext"].get(p["id"], {}).get("grain") for p in doors if p["finish"] == "O"}
     if gr:

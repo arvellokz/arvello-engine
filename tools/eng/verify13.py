@@ -2,7 +2,7 @@
 verify(s) -> [(проверка, ok, подробности)]."""
 from __future__ import annotations
 
-from .cab import BLUM, NL_SERIES, RECESS, blum_points
+from .cab import BLUM, MOV_SERIES, MOVENTO, NL_SERIES, RECESS, blum_points, movento_points
 
 MADE = ("board", "tube", "plate")
 FACE = ("ecc_stem", "dowel_face", "conf_face")
@@ -38,11 +38,19 @@ def verify(s, report=None, texts=None, known_q=()):
         add(c["name"], c["ok"], f"{_n(c['expected'])} = {_n(c['actual'])}")
     # ---- детали не пересекаются
     clash = []
+    grooves = {}
+    for g in d.get("grooves", []):                # дно в пазу: пересечение ровно по объёму паза — не ошибка
+        grooves[frozenset((g["part"], g["with"]))] = g
     for i, a in enumerate(made):
         for b in made[i + 1:]:
-            if all(min(a[k + "1"], b[k + "1"]) - max(a[k + "0"], b[k + "0"]) > 0.01 for k in "xyz"):
+            ov = [min(a[k + "1"], b[k + "1"]) - max(a[k + "0"], b[k + "0"]) for k in "xyz"]
+            if all(o > 0.01 for o in ov):
+                g = grooves.get(frozenset((a["id"], b["id"])))
+                if g and all(abs(min(a[k + "1"], b[k + "1"], g[k + "1"]) - max(a[k + "0"], b[k + "0"], g[k + "0"]) - o) < 0.01
+                             and abs(g[k + "1"] - g[k + "0"] - o) < 0.01 for k, o in zip("xyz", ov)):
+                    continue
                 clash.append((a["id"], b["id"]))
-    add("Детали не пересекаются", not clash, "нет" if not clash else clash[:4])
+    add("Детали не пересекаются (дно в пазу — по объёму паза)", not clash, "нет" if not clash else clash[:4])
     # ---- отверстие на грани своей детали
     off = []
     for h in s["holes"]:
@@ -137,32 +145,59 @@ def verify(s, report=None, texts=None, known_q=()):
     drs = d.get("drawers", [])
     if drs:
         e = []
+        sys_of = lambda r: MOVENTO if r.get("sys") == "movento" else BLUM[r["tipon"]]
+        pts_of = lambda r: movento_points(r["NL"]) if r.get("sys") == "movento" else blum_points(r["NL"], r["tipon"])
         for r in drs:
-            sysd = BLUM[r["tipon"]]
+            sysd = sys_of(r)
             sl = parts[r["box"][0]]
             dims = sorted([sl["x1"] - sl["x0"], sl["y1"] - sl["y0"]])
             Lbox = dims[1]
             fp = parts[r["box"][2]]
             fdims = sorted([fp["x1"] - fp["x0"], fp["y1"] - fp["y0"]])
-            if r["NL"] not in NL_SERIES: e.append(f"NL {r['NL']}")
+            if r["NL"] not in (MOV_SERIES if r.get("sys") == "movento" else NL_SERIES): e.append(f"NL {r['NL']}")
             if abs(Lbox - (r["NL"] - 10)) > 0.01: e.append(f"{r['pre']}{r['n']}: SKL {Lbox}")
             if abs(fdims[1] - (r["LW"] - 42)) > 0.01: e.append(f"{r['pre']}{r['n']}: SKW {fdims[1]}")
             if abs(r["z0"] - (r["rb"] + sysd["under"] - RECESS)) > 0.01: e.append("низ дна")
             if r["Dc"] < r["NL"] + 3: e.append("NL+3")
             if r["limit_top"] - (r["z0"] + r["h"]) < 0 or r["limit_top"] < 0: e.append("над коробом")
             if abs(r["rb"] - (r["floor"] + 1)) > 0.01 and r["n"] == 1: e.append("профиль над дном")
-            if r["pts"] != list(blum_points(r["NL"], r["tipon"])): e.append("точки")
-        add("Blum 560H: SKL = NL − 10, SKW = LW − 42, место NL + 3, NL из ряда стр. 20/23", not e, f"{len(drs)} ящ." if not e else e[:4])
+            if r["pts"] != list(pts_of(r)): e.append("точки")
+        add("Blum 560H / 760H: SKL = NL − 10, SKW = LW − 42, место NL + 3, NL из ряда системы", not e,
+            f"{len(drs)} ящ." if not e else e[:4])
+        mv = [r for r in drs if r.get("sys") == "movento"]
+        if mv:
+            e = []
+            gl = d.get("grooves", [])
+            for r in mv:
+                sl, sr, fp, bp, bt = (parts[i] for i in r["box"])
+                h = sl["z1"] - sl["z0"]
+                wall = h - RECESS - 16
+                for w, nm in ((fp, "передняя"), (bp, "задняя")):
+                    if abs((w["z1"] - w["z0"]) - wall) > 0.01 or abs(w["z0"] - bt["z1"]) > 0.01:
+                        e.append(f"{r['pre']}{r['n']}: стенка {nm} {w['z1'] - w['z0']:g} ≠ {wall:g} или не на дне")
+                skw = r["LW"] - 42
+                if abs((bt["x1"] - bt["x0"]) - (skw + 10)) > 0.01:          # раскрой Blum: дно 536 при SKW 526
+                    e.append(f"{r['pre']}{r['n']}: дно {bt['x1'] - bt['x0']:g} ≠ SKW + 10 = {skw + 10:g}")
+                if abs((bt["y1"] - bt["y0"]) - (r["NL"] - 10)) > 0.01:
+                    e.append(f"{r['pre']}{r['n']}: длина дна ≠ SKL")
+                if abs(bt["z0"] - sl["z0"] - RECESS) > 0.01:
+                    e.append(f"{r['pre']}{r['n']}: утопление дна")
+                for S in (sl, sr):
+                    g = [x for x in gl if x["part"] == S["id"] and x["with"] == bt["id"]]
+                    if len(g) != 1 or abs(g[0]["depth"] - 5) > 0.01 or abs(g[0]["y1"] - g[0]["y0"] - (S["y1"] - S["y0"])) > 0.01:
+                        e.append(f"{S['id']}: паз под дно")
+            add("MOVENTO (раскрой Blum 12.11): стенки = h − 13 − 16 на дне, дно SKW + 10 × SKL в пазах 5, утопление 13",
+                not e, f"{len(mv)} ящ." if not e else e[:3])
         marks = [h for h in s["holes"] if h["kind"] == "runner_mark"]
         okm = True
         for r in drs:
-            sysd = BLUM[r["tipon"]]
+            sysd = sys_of(r)
             m = [h for h in marks if h["joint"].startswith(f"J-{r['pre']}RUNNER-{r['n']}-")]
             if len(m) != 2 * len(r["pts"]) or any(abs(h["z"] - r["rb"] - sysd["axis"]) > 0.01 for h in m):
                 okm = False
-        add("Blum стр. 22/24, 39/40: точки профиля по таблице NL, ось = низ профиля + 37 (38 TIP-ON)", okm,
-            f"{len(marks)} точек")
-        bot = all(r["z0"] + RECESS - r["rb"] in (BLUM[r["tipon"]]["under"],) for r in drs)
+        add("Blum: точки профиля по таблице NL (560H стр. 39/40, 760H каталог стр. 437), ось = низ профиля + 37 (38 TIP-ON)",
+            okm, f"{len(marks)} точек")
+        bot = all(r["z0"] + RECESS - r["rb"] in (sys_of(r)["under"],) for r in drs)
         add("Blum: низ дна − низ профиля = 27,5 (28,5 TIP-ON); утопление дна 13", bot, "все ящики")
         clear = [f"{r['pre']}{r['n']}" for r in drs if r["limit_top"] - (r["z0"] + r["h"]) < 0]
         add("Blum: над коробом ≥ 7 (до профиля следующего ящика / крышки)", not clear, "соблюдено" if not clear else clear)
@@ -174,7 +209,7 @@ def verify(s, report=None, texts=None, known_q=()):
             hq("SLIDES") == hq("SLIDE-LOCK") == nd and hq("LOCK-SCREW") == 4 * nd and hq("SLIDE-SCREW") == len(marks),
             f"{hq('SLIDES')} / {hq('SLIDE-LOCK')} / {hq('LOCK-SCREW')} / {hq('SLIDE-SCREW')}")
         if any(r["tipon"] for r in drs):
-            add("TIP-ON: синхронизатор на каждый ящик (стр. 23)", hq("TIPON-SYNC") == sum(r["tipon"] for r in drs), f"{hq('TIPON-SYNC')}")
+            add("TIP-ON: синхронизатор на каждый ящик (560H стр. 23; 760H каталог стр. 436)", hq("TIPON-SYNC") == sum(r["tipon"] for r in drs), f"{hq('TIPON-SYNC')}")
     # ---- металл
     tubes = [p for p in s["parts"] if p["kind"] == "tube"]
     if tubes:
