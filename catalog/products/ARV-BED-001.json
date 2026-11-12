@@ -1,0 +1,55 @@
+{
+ "sku": "ARV-BED-001",
+ "name": "Кровать «Самал»",
+ "category": "BED",
+ "builder": "bed_lift",
+ "product_en": "storage box bed",
+ "room_en": "bedroom",
+ "line": "STD",
+ "desc": "Кровать-короб из ЛДСП с подъёмным механизмом и бельевым ящиком.",
+ "sources": [
+  [
+   "Blum Cabinet Configurator",
+   "https://blum.com/nz/en/services/planning-construction-product-selection/cabinet-configurator"
+  ]
+ ],
+ "axes": [
+  {
+   "key": "size",
+   "label": "Спальное место",
+   "mode": "frame",
+   "values": [
+    1600,
+    1800
+   ],
+   "labels": {
+    "1600": "160 × 200",
+    "1800": "180 × 200"
+   }
+  },
+  {
+   "key": "color",
+   "label": "Цвет",
+   "mode": "frame",
+   "values": [
+    "W",
+    "C",
+    "O",
+    "G"
+   ],
+   "labels": {
+    "W": "белый",
+    "C": "кашемир",
+    "O": "дуб",
+    "G": "графит"
+   }
+  }
+ ],
+ "angles": [
+  "hero",
+  "front",
+  "side",
+  "detail",
+  "lifestyle"
+ ]
+}

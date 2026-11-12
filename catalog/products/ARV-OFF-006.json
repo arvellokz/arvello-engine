@@ -1,0 +1,55 @@
+{
+ "sku": "ARV-OFF-006",
+ "name": "Шкаф «Архив»",
+ "category": "OFF",
+ "builder": "office_cabinet",
+ "product_en": "office storage cabinet",
+ "room_en": "office",
+ "line": "Офис",
+ "desc": "Офисный шкаф под папки: закрытый или с открытым верхом.",
+ "sources": [
+  [
+   "Blum Cabinet Configurator",
+   "https://blum.com/nz/en/services/planning-construction-product-selection/cabinet-configurator"
+  ]
+ ],
+ "axes": [
+  {
+   "key": "type",
+   "label": "Исполнение",
+   "mode": "frame",
+   "values": [
+    "closed",
+    "open"
+   ],
+   "labels": {
+    "closed": "закрытый",
+    "open": "открытый верх"
+   }
+  },
+  {
+   "key": "color",
+   "label": "Цвет",
+   "mode": "frame",
+   "values": [
+    "W",
+    "C",
+    "O",
+    "G"
+   ],
+   "labels": {
+    "W": "белый",
+    "C": "кашемир",
+    "O": "дуб",
+    "G": "графит"
+   }
+  }
+ ],
+ "angles": [
+  "hero",
+  "front",
+  "side",
+  "detail",
+  "lifestyle"
+ ]
+}

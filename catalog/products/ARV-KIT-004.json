@@ -1,0 +1,64 @@
+{
+ "sku": "ARV-KIT-004",
+ "name": "Кухня «Монолит»",
+ "category": "KIT",
+ "builder": "kitchen_gola",
+ "product_en": "handleless kitchen",
+ "room_en": "kitchen",
+ "axes": [
+  {
+   "key": "length",
+   "label": "Длина",
+   "mode": "frame",
+   "values": [
+    2400,
+    3000,
+    3600
+   ],
+   "labels": {
+    "2400": "240 см",
+    "3000": "300 см",
+    "3600": "360 см"
+   }
+  },
+  {
+   "key": "base",
+   "label": "Низ",
+   "mode": "frame",
+   "values": [
+    "G",
+    "O",
+    "C"
+   ],
+   "labels": {
+    "G": "графит",
+    "O": "дуб",
+    "C": "кашемир"
+   }
+  },
+  {
+   "key": "top",
+   "label": "Верх и колонны",
+   "mode": "frame",
+   "values": [
+    "W",
+    "C"
+   ],
+   "labels": {
+    "W": "белый",
+    "C": "кашемир"
+   }
+  }
+ ],
+ "angles": [
+  "hero",
+  "front",
+  "side",
+  "detail",
+  "lifestyle"
+ ],
+ "lifestyle_only": {
+  "length": 3000
+ },
+ "line": "Тренд"
+}

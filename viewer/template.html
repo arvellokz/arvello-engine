@@ -1,0 +1,648 @@
+<title>Arvello 3D-каталог</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: рабочий стол чертёжника — светлая «студия» с моделью слева, панель параметров справа; на телефоне панель под сценой. */
+:root{
+  --bg:#f3f2ef; --panel:#fbfbf9; --fg:#1d2126; --muted:#69707a; --line:#dcdad4;
+  --accent:#2b4f8e; --accent-ink:#ffffff; --chip:#eceae5; --stage:#f6f6f4;
+  --ok:#2f7a4f; --warn:#9a5b12;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#17191c; --panel:#1e2125; --fg:#e8e9eb; --muted:#9aa1ab; --line:#30343a;
+  --accent:#7ea2e6; --accent-ink:#0f1726; --chip:#272b31; --stage:#f1f0ed; --ok:#6cc08f; --warn:#e2a25a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#17191c; --panel:#1e2125; --fg:#e8e9eb; --muted:#9aa1ab; --line:#30343a;
+  --accent:#7ea2e6; --accent-ink:#0f1726; --chip:#272b31; --stage:#f1f0ed; --ok:#6cc08f; --warn:#e2a25a; color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:14px;line-height:1.45}
+.app{display:grid;grid-template-rows:auto 1fr;height:100%;min-height:0}
+header{display:flex;flex-direction:column;gap:8px;padding-block:10px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  border-bottom:1px solid var(--line);background:var(--panel);min-width:0}
+.row{display:flex;gap:14px;align-items:center;min-width:0}
+.brand{font-weight:600;letter-spacing:.08em;text-transform:uppercase;font-size:12px;white-space:nowrap}
+.brand span{color:var(--muted);font-weight:400;letter-spacing:.02em;text-transform:none;margin-left:6px}
+.tabs{display:flex;gap:6px;overflow-x:auto;min-width:0;scrollbar-width:thin;padding-bottom:2px}
+.tab{border:1px solid var(--line);background:transparent;color:var(--fg);border-radius:999px;padding:5px 12px;
+  font:inherit;font-size:13px;white-space:nowrap;cursor:pointer}
+.tab small{color:var(--muted);margin-left:4px;font-size:11px}
+.tab[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.tab[aria-pressed="true"] small{color:inherit;opacity:.8}
+.cats .tab{border-radius:6px;font-weight:500}
+.tab:focus-visible,.seg button:focus-visible,.tg:focus-visible,.cam button:focus-visible,.btn:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+main{display:grid;grid-template-columns:minmax(0,1fr) 340px;min-height:0}
+.stage{position:relative;background:var(--stage);min-height:0;overflow:hidden}
+#c{display:block;width:100%;height:100%;touch-action:none}
+.frame45{position:absolute;inset:0;pointer-events:none;display:flex;align-items:center;justify-content:center}
+.frame45 i{height:94%;aspect-ratio:4/5;max-width:94%;border:1.5px dashed rgba(43,79,142,.75);box-shadow:0 0 0 9999px rgba(20,24,30,.10)}
+.cam{position:absolute;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.cam button{font:inherit;font-size:12.5px;border:1px solid #cfcdc7;background:rgba(255,255,255,.92);color:#1d2126;border-radius:8px;padding:6px 10px;cursor:pointer}
+.cam button[aria-pressed="true"]{background:#1d2126;color:#fff;border-color:#1d2126}
+.hint{position:absolute;top:10px;left:12px;font-size:12px;color:#6b7078;background:rgba(255,255,255,.8);padding:3px 8px;border-radius:6px}
+aside{background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;min-height:0;
+  padding:16px max(16px,env(safe-area-inset-right,0px)) 24px 16px;display:flex;flex-direction:column;gap:18px}
+h1{font-size:19px;font-weight:600;margin:0;text-wrap:balance}
+.sku{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;gap:8px;align-items:center}
+.badge{font-family:var(--sans);font-size:11px;letter-spacing:.04em;border:1px solid var(--line);border-radius:4px;padding:0 6px;color:var(--fg)}
+.desc{color:var(--muted);margin:4px 0 0}
+.dims{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.dims div{background:var(--panel);padding:8px 10px}
+.dims b{display:block;font-family:var(--mono);font-size:16px;font-weight:500;font-variant-numeric:tabular-nums}
+.dims small{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+.lbl{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px}
+.opts{display:flex;flex-direction:column;gap:12px}
+.seg{display:flex;flex-wrap:wrap;gap:4px}
+.seg button{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--chip);color:var(--fg);border-radius:6px;padding:5px 9px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.seg button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent);color:var(--accent-ink)}
+.sw{width:12px;height:12px;border-radius:3px;border:1px solid rgba(0,0,0,.25);display:inline-block}
+.toggles{display:flex;flex-wrap:wrap;gap:6px}
+.tg{font:inherit;font-size:13px;border:1px solid var(--line);background:transparent;color:var(--fg);border-radius:6px;padding:5px 9px;cursor:pointer}
+.tg[aria-pressed="true"]{background:var(--chip);border-color:var(--fg)}
+.checks{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+.checks li{display:grid;grid-template-columns:16px 1fr;gap:8px;align-items:start}
+.checks li::before{content:"";width:10px;height:10px;margin-top:5px;border:1.5px solid var(--ok);border-radius:2px}
+.src a{color:var(--accent)}
+.eng{border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.eng .st{font-size:12.5px;color:var(--warn)}
+.eng .hash{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.eng details summary{cursor:pointer;font-weight:500}
+.eng .tw{overflow-x:auto;margin-top:6px}
+.eng table{border-collapse:collapse;width:100%;font-size:12.5px}
+.eng td,.eng th{padding:4px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.eng th{font-weight:500;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+.eng td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.eng ul{margin:0;padding-left:18px;font-size:12.5px;color:var(--muted)}
+.src{display:flex;flex-direction:column;gap:4px;margin:0;padding:0;list-style:none}
+.btn{font:inherit;font-weight:500;border:0;background:var(--accent);color:var(--accent-ink);border-radius:8px;padding:9px 12px;cursor:pointer}
+.btn[disabled]{opacity:.55;cursor:progress}
+.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line)}
+.note{font-size:12px;color:var(--muted);margin:6px 0 0}
+.refbox{border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.refbox select{font:inherit;padding:6px 8px;border-radius:6px;border:1px solid var(--line);background:var(--chip);color:var(--fg)}
+progress{width:100%;height:8px;accent-color:var(--accent)}
+.status{font-size:12.5px;font-family:var(--mono);color:var(--muted);min-height:1.2em}
+.status.err{color:var(--warn)}
+[hidden]{display:none!important}
+.shot{position:fixed;inset:0;background:rgba(10,12,16,.72);display:flex;align-items:center;justify-content:center;z-index:20;
+  padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.shot figure{margin:0;background:var(--panel);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:10px;max-width:min(560px,100%);max-height:100%}
+.shot img{max-height:70vh;object-fit:contain;border-radius:6px;background:#fff}
+.shot figcaption{font-size:13px;color:var(--muted)}
+.dimlabel{font-family:var(--mono);font-size:12px;background:#1d2126;color:#fff;padding:1px 6px;border-radius:4px;white-space:nowrap}
+@media (max-width:820px){
+  main{grid-template-columns:1fr;grid-template-rows:minmax(340px,58vh) auto;overflow-y:auto}
+  aside{border-left:0;border-top:1px solid var(--line);overflow:visible}
+  .app{height:auto;min-height:100%}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="app">
+  <header>
+    <div class="row">
+      <div class="brand">Arvello<span>3D-каталог</span></div>
+      <nav class="tabs cats" id="cats" aria-label="Категории"></nav>
+    </div>
+    <nav class="tabs" id="tabs" aria-label="Товары"></nav>
+  </header>
+  <main>
+    <section class="stage" id="stage" aria-label="3D-вид товара">
+      <canvas id="c"></canvas>
+      <div class="frame45" id="frame45" hidden><i></i></div>
+      <div class="hint" id="hint">Вращать — перетащите, приблизить — колесо или щипок</div>
+      <div class="cam" id="cam"></div>
+    </section>
+    <aside>
+      <div>
+        <div class="sku"><span id="sku"></span><span class="badge" id="line"></span></div>
+        <h1 id="name"></h1>
+        <p class="desc" id="desc"></p>
+      </div>
+      <div class="dims" id="dims"></div>
+      <div class="eng" id="eng">
+        <div class="lbl" style="margin:0">Конструкция и спецификация</div>
+        <div><b id="engrev"></b> <span class="hash" id="enghash"></span></div>
+        <div class="st" id="engst"></div>
+        <details id="engbomd"><summary id="engbomsum">Детали</summary><div class="tw"><table><thead><tr><th>Деталь</th><th>Материал</th><th>Размер, мм</th><th>Кол.</th></tr></thead><tbody id="engbom"></tbody></table></div></details>
+        <details id="engbuyd"><summary id="engbuysum">Покупные</summary><div class="tw"><table><tbody id="engbuy"></tbody></table></div></details>
+        <ul id="engwarn"></ul>
+        <p class="note">Те же детали, что в 3D, на чертеже и в расчёте затрат — один снимок конфигурации.</p>
+      </div>
+      <div class="opts" id="opts"></div>
+      <div>
+        <div class="lbl">Показать</div>
+        <div class="toggles" id="toggles"></div>
+      </div>
+      <div>
+        <div class="lbl">Что должно быть на фото</div>
+        <ul class="checks" id="checks"></ul>
+      </div>
+      <div class="refbox">
+        <div class="lbl" style="margin:0">Референсы для генерации</div>
+        <label for="scope" class="note" style="margin:0">Что собрать</label>
+        <select id="scope">
+          <option value="product">Этот товар — все исполнения</option>
+          <option value="variant">Только текущее исполнение</option>
+          <option value="category">Вся категория</option>
+        </select>
+        <div class="status" id="refcount"></div>
+        <button class="btn" id="refgo" type="button">Собрать архив референсов</button>
+        <progress id="refprog" value="0" max="1" hidden></progress>
+        <div class="status" id="refstatus" role="status"></div>
+        <p class="note">Каждый кадр снимается тем же ракурсом, что у генератора: белый фон, 1200 × 1500. Распакуйте архив в папку генератора — <code>build_jobs.py</code> сам возьмёт эти снимки вместо схематичных.</p>
+      </div>
+      <div>
+        <button class="btn ghost" id="snap" type="button">Снимок текущего кадра</button>
+        <p class="note">С рамкой 4:5 снимок кадрируется как фото карточки.</p>
+      </div>
+      <div>
+        <div class="lbl">Откуда размеры</div>
+        <ul class="src" id="src"></ul>
+      </div>
+    </aside>
+  </main>
+</div>
+<div class="shot" id="shot" hidden>
+  <figure>
+    <img id="shotimg" alt="Снимок 3D-вида">
+    <figcaption id="shotcap">Сохраните картинку: правый клик → «Сохранить изображение как…», на телефоне — долгое нажатие.</figcaption>
+    <button class="btn" id="shotclose" type="button">Закрыть</button>
+  </figure>
+</div>
+
+<script type="application/json" id="data">__DATA__</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+import { CSS2DRenderer, CSS2DObject } from "three/addons/renderers/CSS2DRenderer.js";
+
+const D = JSON.parse(document.getElementById("data").textContent);
+const $ = id => document.getElementById(id);
+const stage = $("stage"), canvas = $("c");
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const STAGE_BG = new THREE.Color(0xf6f6f4), WHITE = new THREE.Color(0xffffff);
+
+// ---------- three
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const labels = new CSS2DRenderer();
+labels.domElement.style.cssText = "position:absolute;inset:0;pointer-events:none";
+stage.appendChild(labels.domElement);
+
+const scene = new THREE.Scene();
+scene.background = STAGE_BG.clone();
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+scene.add(new THREE.HemisphereLight(0xffffff, 0xe8e4dc, 0.35));
+const sun = new THREE.DirectionalLight(0xffffff, 1.6);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.bias = -0.0004;
+sun.shadow.normalBias = 2;
+scene.add(sun, sun.target);
+
+const camera = new THREE.PerspectiveCamera(30, 1, 10, 100000);
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true;
+controls.maxPolarAngle = Math.PI * 0.495;
+controls.addEventListener("start", () => { setCamPressed(null); $("hint").hidden = true; });
+
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(60000, 60000), new THREE.ShadowMaterial({ opacity: 0.16 }));
+floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+const wall = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshStandardMaterial({ color: 0xeceae6, roughness: 0.95 }));
+wall.receiveShadow = true; scene.add(wall);
+
+// ---------- materials
+function woodTexture() {
+  const c = document.createElement("canvas"); c.width = 512; c.height = 512;
+  const g = c.getContext("2d");
+  g.fillStyle = "#fff"; g.fillRect(0, 0, 512, 512);
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (let i = 0; i < 140; i++) {
+    const y = rnd() * 512, a = 0.04 + rnd() * 0.10, w = 0.6 + rnd() * 2.2;
+    g.strokeStyle = `rgba(70,40,15,${a})`; g.lineWidth = w; g.beginPath();
+    for (let x = 0; x <= 512; x += 16) g.lineTo(x, y + Math.sin(x / 90 + i) * 3 + Math.sin(x / 23 + i * 3) * 0.8);
+    g.stroke();
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+  return t;
+}
+const WOOD = woodTexture();
+const mats = D.palette.map(([r, g, b, kind]) => {
+  const color = new THREE.Color().setRGB(r / 255, g / 255, b / 255, THREE.SRGBColorSpace);
+  const base = { color };
+  if (kind === "wood") return new THREE.MeshStandardMaterial({ ...base, map: WOOD, roughness: 0.62, envMapIntensity: 0.6 });
+  if (kind === "metal") return new THREE.MeshStandardMaterial({ ...base, metalness: 0.55, roughness: 0.42 });
+  if (kind === "glass") return new THREE.MeshStandardMaterial({ ...base, metalness: 0.3, roughness: 0.12 });
+  if (kind === "tinted") return new THREE.MeshStandardMaterial({ ...base, metalness: 0.2, roughness: 0.06, transparent: true, opacity: 0.42, depthWrite: false });
+  if (kind === "mirror") return new THREE.MeshStandardMaterial({ color: 0xd9e1e6, metalness: 0.55, roughness: 0.12 });
+  if (kind === "led") return new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 1.6 });
+  if (kind === "fabric") return new THREE.MeshStandardMaterial({ ...base, roughness: 1, envMapIntensity: 0.5 });
+  return new THREE.MeshStandardMaterial({ ...base, roughness: 0.78, envMapIntensity: 0.55 });
+});
+const edgeMat = new THREE.LineBasicMaterial({ color: 0x20242a, transparent: true, opacity: 0.22 });
+
+function boxGeo(w, h, d) {
+  const geo = new THREE.BoxGeometry(w, h, d);
+  const uv = geo.attributes.uv;
+  const faces = [[d, h], [d, h], [w, d], [w, d], [w, h], [w, h]];
+  for (let f = 0; f < 6; f++) {
+    const [fu, fv] = faces[f]; const swap = fv > fu;
+    for (let k = 0; k < 4; k++) {
+      const i = f * 4 + k; let u = uv.getX(i) * fu / 900, v = uv.getY(i) * fv / 900;
+      if (swap) [u, v] = [v, u];
+      uv.setXY(i, u, v + f * 0.37);
+    }
+  }
+  return geo;
+}
+
+// ---------- state
+let prod = null, state = {}, root = null, bbox = null, camKey = "hero", busy = false;
+const toggles = { fronts: true, wall: true, human: false, dims: true, edges: true, frame: false };
+const TOGGLE_LABELS = { fronts: "Фасады", wall: "Стена", human: "Человек 175 см", dims: "Размеры", edges: "Контуры", frame: "Рамка 4:5" };
+const CAM_LABELS = { hero: "Главный", front: "Спереди", side: "Сбоку", detail: "Деталь", lifestyle: "Как в интерьере" };
+const HIDE_FOR_DIMS = new Set(["bedding", "decor"]);
+const CAT_NAME = Object.fromEntries(D.cats);
+
+function variantKey(st = state) { return prod.axes.map(a => String(st[a.key])).join("|"); }
+
+function build(opts = {}) {
+  const t = opts.studio ? { ...toggles, wall: false, human: false, dims: false, edges: false, fronts: true } : toggles;
+  if (root) {
+    scene.remove(root);
+    root.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.isCSS2DObject) o.element.remove(); });
+  }
+  labels.domElement.replaceChildren();
+  root = new THREE.Group(); scene.add(root);
+  const v = prod.variants[variantKey()];
+  const mn = [1e9, 1e9, 1e9], mx = [-1e9, -1e9, -1e9];
+  const grow = (x0, y0, z0, x1, y1, z1) => {
+    mn[0] = Math.min(mn[0], x0); mn[1] = Math.min(mn[1], y0); mn[2] = Math.min(mn[2], z0);
+    mx[0] = Math.max(mx[0], x1); mx[1] = Math.max(mx[1], y1); mx[2] = Math.max(mx[2], z1);
+  };
+  for (const [x0, y0, z0, x1, y1, z1, ci, gi] of v.parts) {
+    const group = D.groups[gi];
+    if (!HIDE_FOR_DIMS.has(group)) grow(x0, y0, z0, x1, y1, z1);
+    if (!t.fronts && group === "fronts") continue;
+    const w = Math.max(x1 - x0, 0.5), h = Math.max(z1 - z0, 0.5), d = Math.max(y1 - y0, 0.5);
+    const m = new THREE.Mesh(boxGeo(w, h, d), mats[ci]);
+    m.position.set((x0 + x1) / 2, (z0 + z1) / 2, -(y0 + y1) / 2);
+    m.castShadow = D.palette[ci][3] !== "led" && D.palette[ci][3] !== "tinted"; m.receiveShadow = true;
+    root.add(m);
+    if (t.edges && w * h * d > 2000) {
+      const e = new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry), edgeMat);
+      e.position.copy(m.position); root.add(e);
+    }
+  }
+  for (const [x0, y0, x1, y1, ci, blur] of v.glows) {
+    const c = document.createElement("canvas"); c.width = c.height = 256; const g = c.getContext("2d");
+    const [r, gg, b] = D.palette[ci];
+    const grd = g.createRadialGradient(128, 128, 20, 128, 128, 128);
+    grd.addColorStop(0, `rgba(${r},${gg},${b},0.95)`); grd.addColorStop(1, `rgba(${r},${gg},${b},0)`);
+    g.fillStyle = grd; g.fillRect(0, 0, 256, 256);
+    const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+    const p = new THREE.Mesh(new THREE.PlaneGeometry(x1 - x0 + blur * 2, y1 - y0 + blur * 2),
+      new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, opacity: 0.75 }));
+    p.rotation.x = -Math.PI / 2; p.position.set((x0 + x1) / 2, 2, -(y0 + y1) / 2); root.add(p);
+  }
+  bbox = { mn, mx };
+  wall.visible = t.wall && v.wall != null;
+  if (wall.visible) {
+    const W = mx[0] - mn[0] + 2400, H = Math.max(2700, mx[2] + 300);
+    wall.geometry.dispose(); wall.geometry = new THREE.PlaneGeometry(W, H);
+    wall.position.set((mn[0] + mx[0]) / 2, H / 2, -v.wall);
+  }
+  if (t.human) addHuman();
+  if (t.dims) addDims();
+  const span = Math.max(mx[0] - mn[0], mx[1] - mn[1], mx[2] - mn[2]);
+  const cx = (mn[0] + mx[0]) / 2, cz = -(mn[1] + mx[1]) / 2;
+  sun.position.set(cx - span * 0.9, span * 1.6, cz + span * 1.2); sun.target.position.set(cx, 0, cz);
+  const s = sun.shadow.camera; s.left = -span * 1.3; s.right = span * 1.3; s.top = span * 1.3; s.bottom = -span * 1.3;
+  s.near = 10; s.far = span * 5; s.updateProjectionMatrix();
+  if (!opts.studio) renderPanel(v);
+}
+
+function addHuman() {
+  const g = new THREE.Group(), mat = new THREE.MeshStandardMaterial({ color: 0x8f959c, roughness: 0.9 });
+  const body = new THREE.Mesh(new THREE.CapsuleGeometry(170, 1100, 8, 16), mat); body.position.y = 170 + 550 + 50;
+  body.scale.z = 0.6;
+  const head = new THREE.Mesh(new THREE.SphereGeometry(105, 24, 16), mat); head.position.y = 1750 - 105;
+  g.add(body, head); g.traverse(o => { o.castShadow = true; });
+  g.position.set(bbox.mx[0] + 450, 0, -Math.min(300, (bbox.mx[1] - bbox.mn[1]) / 2) - bbox.mn[1]);
+  root.add(g);
+}
+function dimLine(a, b, text, offset) {
+  const pts = [a.clone().add(offset), b.clone().add(offset)];
+  const g = new THREE.Group();
+  g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: 0x2b4f8e })));
+  for (const [p, q] of [[a, pts[0]], [b, pts[1]]])
+    g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([p, q]), new THREE.LineBasicMaterial({ color: 0x2b4f8e, transparent: true, opacity: 0.5 })));
+  const el = document.createElement("div"); el.className = "dimlabel"; el.textContent = text;
+  const lab = new CSS2DObject(el); lab.position.copy(pts[0].clone().lerp(pts[1], 0.5)); g.add(lab);
+  root.add(g);
+}
+function addDims() {
+  const { mn, mx } = bbox; const o = 180;
+  const P = (x, y, z) => new THREE.Vector3(x, z, -y);
+  dimLine(P(mn[0], mn[1], 0), P(mx[0], mn[1], 0), `${mx[0] - mn[0]}`, new THREE.Vector3(0, 0, o));
+  dimLine(P(mx[0], mn[1], 0), P(mx[0], mx[1], 0), `${mx[1] - mn[1]}`, new THREE.Vector3(o, 0, 0));
+  dimLine(P(mx[0], mn[1], 0), P(mx[0], mn[1], mx[2]), `${mx[2]}`, new THREE.Vector3(o, 0, o));
+}
+
+// ---------- камера (те же углы, что у генератора)
+function camFor(key, aspect) {
+  const A = D.angles[prod.category][key];
+  const { mn, mx } = bbox;
+  let lo = mn, hi = mx;
+  if (A.focus_box) {
+    const f = A.focus_box;
+    lo = [0, 1, 2].map(i => mn[i] + (mx[i] - mn[i]) * f[i]);
+    hi = [0, 1, 2].map(i => mn[i] + (mx[i] - mn[i]) * f[i + 3]);
+  }
+  const c = new THREE.Vector3((lo[0] + hi[0]) / 2, (lo[2] + hi[2]) / 2, -(lo[1] + hi[1]) / 2);
+  const r = 0.5 * Math.hypot(hi[0] - lo[0], hi[1] - lo[1], hi[2] - lo[2]);
+  const az = (prod.cam_flip ? -A.az : A.az) * Math.PI / 180, el = A.el * Math.PI / 180;   // cam_flip — камера с другой стороны (угловая кухня)
+  const vfov = 2 * Math.atan(24 / (2 * (A.lens || 50)));
+  const asp = aspect ?? (toggles.frame ? 0.8 : camera.aspect);
+  const hfov = 2 * Math.atan(Math.tan(vfov / 2) * asp);
+  const dist = r / Math.sin(Math.min(vfov, hfov) / 2) * (A.focus_box ? 0.8 : 0.92);
+  const dir = new THREE.Vector3(-Math.sin(az) * Math.cos(el), Math.sin(el), Math.cos(az) * Math.cos(el));
+  return { pos: c.clone().add(dir.multiplyScalar(dist)), target: c, fov: vfov * 180 / Math.PI };
+}
+let anim = null;
+function goCam(key, instant) {
+  if (!D.angles[prod.category][key]) key = "hero";
+  camKey = key; setCamPressed(key);
+  const t = camFor(key);
+  if (instant || reduce) {
+    camera.position.copy(t.pos); controls.target.copy(t.target); camera.fov = t.fov; camera.updateProjectionMatrix(); return;
+  }
+  anim = { t0: performance.now(), p0: camera.position.clone(), q0: controls.target.clone(), f0: camera.fov, ...t };
+}
+function setCamPressed(key) {
+  if (key === null) camKey = null;
+  for (const b of $("cam").children) b.setAttribute("aria-pressed", String(b.dataset.k === key));
+}
+
+// ---------- UI
+function renderTabs() {
+  $("cats").innerHTML = "";
+  for (const [code, name] of D.cats) {
+    const n = D.products.filter(p => p.category === code).length;
+    if (!n) continue;
+    const b = document.createElement("button"); b.className = "tab"; b.type = "button";
+    b.textContent = name; b.setAttribute("aria-pressed", String(prod.category === code));
+    b.onclick = () => select(D.products.find(p => p.category === code).sku);
+    $("cats").appendChild(b);
+  }
+  $("tabs").innerHTML = "";
+  for (const p of D.products.filter(p => p.category === prod.category)) {
+    const b = document.createElement("button"); b.className = "tab"; b.type = "button";
+    b.append(p.name.replace(/^[^«]*«/, "«"));
+    const s = document.createElement("small"); s.textContent = p.line; b.appendChild(s);
+    b.title = p.name; b.setAttribute("aria-pressed", String(p === prod));
+    b.onclick = () => select(p.sku);
+    $("tabs").appendChild(b);
+  }
+}
+function swatch(axisKey, val) {
+  if (!["color", "base", "top", "metal", "accent", "fabric"].includes(axisKey)) return null;
+  const map = { G: "#54565a", O: "#c4a076", W: "#eeece8", C: "#d6c8b8", black: "#262628", white: "#e4e4e2", beige: "#cec4b6", grey: "#969698" };
+  return map[val] || null;
+}
+function renderOpts() {
+  const box = $("opts"); box.innerHTML = "";
+  for (const a of prod.axes) {
+    if (a.values.length < 2) continue;
+    const wrap = document.createElement("div");
+    const l = document.createElement("div"); l.className = "lbl"; l.textContent = a.label; wrap.appendChild(l);
+    const seg = document.createElement("div"); seg.className = "seg"; seg.setAttribute("role", "group"); seg.setAttribute("aria-label", a.label);
+    for (const val of a.values) {
+      const b = document.createElement("button"); b.type = "button";
+      const sw = swatch(a.key, val);
+      if (sw) { const s = document.createElement("span"); s.className = "sw"; s.style.background = sw; b.appendChild(s); }
+      b.append(a.labels[String(val)] ?? String(val));
+      b.setAttribute("aria-pressed", String(state[a.key] === val));
+      b.onclick = () => { if (busy) return; state[a.key] = val; renderOpts(); build(); if (camKey) goCam(camKey, true); updateRefCount(); };
+      seg.appendChild(b);
+    }
+    wrap.appendChild(seg); box.appendChild(wrap);
+  }
+}
+function renderToggles() {
+  const box = $("toggles"); box.innerHTML = "";
+  for (const k of Object.keys(TOGGLE_LABELS)) {
+    const b = document.createElement("button"); b.type = "button"; b.className = "tg"; b.textContent = TOGGLE_LABELS[k];
+    b.setAttribute("aria-pressed", String(toggles[k]));
+    b.onclick = () => {
+      if (busy) return;
+      toggles[k] = !toggles[k]; renderToggles();
+      $("frame45").hidden = !toggles.frame;
+      if (k !== "frame") build();
+      if (camKey) goCam(camKey, k !== "frame");
+    };
+    box.appendChild(b);
+  }
+}
+function renderCams() {
+  $("cam").innerHTML = "";
+  for (const k of Object.keys(D.angles[prod.category])) {
+    const b = document.createElement("button"); b.type = "button"; b.dataset.k = k; b.textContent = CAM_LABELS[k] || k;
+    b.onclick = () => { if (!busy) goCam(k); };
+    $("cam").appendChild(b);
+  }
+}
+function renderPanel(v) {
+  $("sku").textContent = prod.sku; $("line").textContent = prod.line || "";
+  $("name").textContent = prod.name; $("desc").textContent = prod.desc;
+  const { mn, mx } = bbox;
+  $("dims").innerHTML = [["Ширина", mx[0] - mn[0]], ["Глубина", mx[1] - mn[1]], ["Высота", mx[2]]]
+    .map(([k, n]) => `<div><small>${k}</small><b>${n}</b></div>`).join("");
+  const e = v.eng;
+  if (e) {
+    $("engrev").textContent = "Ревизия " + e.rev; $("enghash").textContent = "· снимок " + e.h; $("engst").textContent = e.st;
+    const esc = t => String(t).replace(/[&<>]/g, ch => ({"&": "&amp;", "<": "&lt;", ">": "&gt;"}[ch]));
+    $("engbom").innerHTML = e.bom.map(r => `<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td>${esc(r[2])}</td><td class="n">${r[3]}</td></tr>`).join("");
+    $("engbomsum").textContent = `Детали: ${e.bom.reduce((s, r) => s + r[3], 0)} шт., ${e.bom.length} позиций` + (e.sheets ? ` · плит ≈ ${e.sheets} листов` : "");
+    $("engbuy").innerHTML = e.buy.map(r => `<tr><td>${esc(r[0])}</td><td class="n">${r[1]} ${esc(r[2])}</td></tr>`).join("");
+    $("engbuysum").textContent = `Покупные: ${e.buy.length} позиций`;
+    $("engbuyd").hidden = !e.buy.length;
+    $("engwarn").innerHTML = e.warn.map(w => `<li>${esc(w)}</li>`).join("");
+  }
+  $("checks").innerHTML = "";
+  for (const c of v.checks) { const li = document.createElement("li"); li.textContent = c; $("checks").appendChild(li); }
+  $("src").innerHTML = "";
+  for (const [t, u] of prod.sources) {
+    const li = document.createElement("li");
+    if (u) { const a = document.createElement("a"); a.href = u; a.target = "_blank"; a.rel = "noopener"; a.textContent = t; li.appendChild(a); }
+    else li.textContent = t;
+    $("src").appendChild(li);
+  }
+}
+
+function defaultState(p) {
+  const st = {};
+  for (const a of p.axes) st[a.key] = a.values[a.values.length > 4 ? Math.floor(a.values.length / 2) : 0];
+  return st;
+}
+function select(sku) {
+  if (busy) return;
+  prod = D.products.find(p => p.sku === sku) || D.products[0];
+  state = defaultState(prod);
+  if (location.hash.slice(1) !== prod.sku) { try { history.replaceState(null, "", "#" + prod.sku); } catch (e) {} }
+  renderTabs(); renderOpts(); renderCams(); build(); goCam("hero", true); updateRefCount();
+}
+
+// ---------- референсы для генерации
+function refJobs(scope) {
+  const list = scope === "category" ? D.products.filter(p => p.category === prod.category) : [prod];
+  const jobs = [];
+  for (const p of list) {
+    const combos = scope === "variant"
+      ? [p.ref.axes.map(a => state[a.key])]
+      : p.ref.axes.reduce((acc, a) => acc.flatMap(c => a.values.map(v => [...c, v])), [[]]);
+    for (const combo of combos) {
+      const st = { ...defaultState(p), ...p.ref.fixed };
+      p.ref.axes.forEach((a, i) => { st[a.key] = combo[i]; });
+      const vkey = p.ref.axes.map((a, i) => `${a.key}-${combo[i]}`).join("_");
+      for (const ang of p.ref.angles) if (D.angles[p.category][ang]) jobs.push({ p, st, vkey, ang });
+    }
+  }
+  return jobs;
+}
+function updateRefCount() {
+  const n = refJobs($("scope").value).length;
+  $("refcount").textContent = `${n} кадр${n % 10 === 1 && n % 100 !== 11 ? "" : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20)) ? "а" : "ов"} · ≈${Math.max(1, Math.round(n * 0.18))} МБ`;
+}
+$("scope").onchange = updateRefCount;
+
+let downloadsApi;
+const downloadsReady = (async () => {
+  try { downloadsApi = window.claude?.use ? await window.claude.use("downloads") : null; } catch (e) { downloadsApi = null; }
+})();
+
+function canvasBlob(cv, type, q) { return new Promise(res => cv.toBlob(res, type, q)); }
+
+// съёмка по списку исполнений (генератор фото): [{sku, vals, vkey, angles}]
+window.arvelloCapture = spec => {
+  const jobs = [];
+  for (const s of spec) {
+    const p = D.products.find(x => x.sku === s.sku);
+    if (!p) continue;
+    const st = { ...defaultState(p), ...p.ref.fixed, ...s.vals };
+    for (const ang of s.angles) if (D.angles[p.category][ang]) jobs.push({ p, st, vkey: s.vkey, ang });
+  }
+  window.__specJobs = jobs;
+  $("refgo").click();
+  return jobs.length;
+};
+$("refgo").onclick = async () => {
+  if (busy) return;
+  const jobs = window.__specJobs || refJobs($("scope").value);
+  window.__specJobs = null;
+  if (!jobs.length) return;
+  busy = true; $("refgo").disabled = true; $("refstatus").className = "status";
+  const keep = { prod, state: { ...state }, camKey, pos: camera.position.clone(), target: controls.target.clone(), fov: camera.fov };
+  const size = new THREE.Vector2(); renderer.getSize(size); const pr = renderer.getPixelRatio();
+  const prog = $("refprog"); prog.hidden = false; prog.max = jobs.length; prog.value = 0;
+  const zip = new JSZip();
+  const manifest = [];
+  try {
+    renderer.setPixelRatio(1); renderer.setSize(1200, 1500, false);
+    scene.background = WHITE;
+    let lastKey = "";
+    for (let i = 0; i < jobs.length; i++) {
+      const j = jobs[i];
+      prod = j.p; state = j.st;
+      const key = j.p.sku + variantKey();
+      if (key !== lastKey) { build({ studio: true }); lastKey = key; }
+      const t = camFor(j.ang, 0.8);
+      camera.aspect = 0.8; camera.fov = t.fov; camera.position.copy(t.pos); camera.lookAt(t.target); camera.updateProjectionMatrix();
+      renderer.render(scene, camera);
+      const blob = await canvasBlob(renderer.domElement, "image/jpeg", 0.92);
+      const path = `refs3d/${j.p.sku}/${j.vkey}/${j.ang}.jpg`;
+      zip.file(path, blob);
+      manifest.push({ sku: j.p.sku, variant_key: j.vkey, angle: j.ang, file: path });
+      prog.value = i + 1; $("refstatus").textContent = `Снимаю ${i + 1} / ${jobs.length}: ${j.p.sku} · ${j.ang}`;
+      if (i % 4 === 3) await new Promise(r => setTimeout(r, 0));
+    }
+    zip.file("refs3d/manifest.json", JSON.stringify({ made: new Date().toISOString(), images: manifest }, null, 1));
+    $("refstatus").textContent = "Упаковываю архив…";
+    const out = await zip.generateAsync({ type: "blob" });
+    const name = `arvello_refs3d_${$("scope").value === "category" ? keep.prod.category : keep.prod.sku}.zip`;
+    await downloadsReady;
+    if (downloadsApi) {
+      try {
+        await downloadsApi.save({ filename: name, data: out });
+        $("refstatus").textContent = `Готово: ${jobs.length} кадров, ${(out.size / 1048576).toFixed(1)} МБ`;
+      } catch (e) {
+        $("refstatus").className = "status err";
+        $("refstatus").textContent = e && e.code === "declined" ? "Сохранение отменено. Нажмите кнопку ещё раз, когда будете готовы." : `Не удалось сохранить архив (${e && e.code || "ошибка"}).`;
+      }
+    } else {
+      $("refstatus").className = "status err";
+      $("refstatus").textContent = "В этом окне скачивание файлов недоступно. Откройте 3D-каталог на claude.ai.";
+    }
+  } finally {
+    scene.background = STAGE_BG.clone();
+    renderer.setPixelRatio(pr); renderer.setSize(size.x, size.y, false);
+    prod = keep.prod; state = keep.state;
+    build(); resize();
+    camera.position.copy(keep.pos); controls.target.copy(keep.target); camera.fov = keep.fov; camera.updateProjectionMatrix();
+    camKey = keep.camKey; setCamPressed(camKey);
+    prog.hidden = true; busy = false; $("refgo").disabled = false;
+  }
+};
+
+// ---------- снимок
+$("snap").onclick = () => {
+  renderer.render(scene, camera);
+  const src = renderer.domElement; let out = src;
+  if (toggles.frame) {
+    const h = src.height * 0.94, w = Math.min(h * 0.8, src.width * 0.94);
+    out = document.createElement("canvas"); out.width = Math.round(w); out.height = Math.round(w / 0.8);
+    out.getContext("2d").drawImage(src, (src.width - w) / 2, (src.height - w / 0.8) / 2, w, w / 0.8, 0, 0, out.width, out.height);
+  }
+  $("shotimg").src = out.toDataURL("image/png"); $("shot").hidden = false; $("shotclose").focus();
+};
+$("shotclose").onclick = () => { $("shot").hidden = true; };
+$("shot").onclick = e => { if (e.target === $("shot")) $("shot").hidden = true; };
+
+// ---------- цикл
+function resize() {
+  const r = stage.getBoundingClientRect();
+  renderer.setSize(r.width, r.height, false); labels.setSize(r.width, r.height);
+  camera.aspect = r.width / Math.max(r.height, 1); camera.updateProjectionMatrix();
+}
+new ResizeObserver(() => { if (busy) return; resize(); if (camKey && !anim) goCam(camKey, true); }).observe(stage);
+function tick(now) {
+  if (!busy) {
+    if (anim) {
+      const k = Math.min(1, (now - anim.t0) / 600), e = 1 - Math.pow(1 - k, 3);
+      camera.position.lerpVectors(anim.p0, anim.pos, e); controls.target.lerpVectors(anim.q0, anim.target, e);
+      camera.fov = anim.f0 + (anim.fov - anim.f0) * e; camera.updateProjectionMatrix();
+      if (k >= 1) anim = null;
+    }
+    controls.update(); renderer.render(scene, camera); labels.render(scene, camera);
+  }
+  requestAnimationFrame(tick);
+}
+renderToggles(); resize();
+select(location.hash.slice(1));
+addEventListener("hashchange", () => { if (location.hash.slice(1) !== prod.sku) select(location.hash.slice(1)); });
+requestAnimationFrame(tick);
+</script>

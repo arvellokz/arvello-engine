@@ -1,0 +1,72 @@
+{
+ "sku": "ARV-WRD-002",
+ "name": "Шкаф-купе «Каскад»",
+ "category": "WRD",
+ "builder": "wardrobe_sliding",
+ "product_en": "sliding-door wardrobe",
+ "room_en": "bedroom",
+ "line": "STD",
+ "desc": "Шкаф-купе с дверями в алюминиевом профиле, опционально с зеркалом.",
+ "sources": [
+  [
+   "Blum Cabinet Configurator",
+   "https://blum.com/nz/en/services/planning-construction-product-selection/cabinet-configurator"
+  ],
+  [
+   "Ana White — гардеробная система",
+   "https://www.ana-white.com/woodworking-projects/master-closet-system"
+  ]
+ ],
+ "axes": [
+  {
+   "key": "width",
+   "label": "Ширина",
+   "mode": "frame",
+   "values": [
+    1800,
+    2400
+   ],
+   "labels": {
+    "1800": "180 см",
+    "2400": "240 см"
+   }
+  },
+  {
+   "key": "color",
+   "label": "Цвет",
+   "mode": "frame",
+   "values": [
+    "W",
+    "C",
+    "O",
+    "G"
+   ],
+   "labels": {
+    "W": "белый",
+    "C": "кашемир",
+    "O": "дуб",
+    "G": "графит"
+   }
+  },
+  {
+   "key": "doors",
+   "label": "Двери",
+   "mode": "frame",
+   "values": [
+    "ldsp",
+    "mirror"
+   ],
+   "labels": {
+    "ldsp": "ЛДСП",
+    "mirror": "с зеркалом"
+   }
+  }
+ ],
+ "angles": [
+  "hero",
+  "front",
+  "side",
+  "detail",
+  "lifestyle"
+ ]
+}

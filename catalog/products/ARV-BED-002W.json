@@ -1,0 +1,46 @@
+{
+ "sku": "ARV-BED-002W",
+ "name": "Кровать «Нимб Wood»",
+ "category": "BED",
+ "builder": "floating_bed_wood",
+ "product_en": "floating platform bed",
+ "room_en": "bedroom",
+ "axes": [
+  {
+   "key": "size",
+   "label": "Спальное место",
+   "mode": "frame",
+   "values": [
+    1600,
+    1800
+   ],
+   "labels": {
+    "1600": "160 × 200",
+    "1800": "180 × 200"
+   }
+  },
+  {
+   "key": "color",
+   "label": "Цвет",
+   "mode": "frame",
+   "values": [
+    "G",
+    "O",
+    "W"
+   ],
+   "labels": {
+    "G": "графит",
+    "O": "дуб",
+    "W": "белый"
+   }
+  }
+ ],
+ "angles": [
+  "hero",
+  "front",
+  "side",
+  "detail",
+  "lifestyle"
+ ],
+ "line": "Тренд"
+}

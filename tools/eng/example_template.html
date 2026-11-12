@@ -1,0 +1,146 @@
+<title>Опора: сквозной пример</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: одна колонка «паспорт изделия» — сверху переключатель ревизии и 3D, ниже чертёж, спецификация, затраты */
+:root {
+  --bg: #EEEDE9; --surface: #FFFFFF; --ink: #2E3033; --muted: #686B70; --line: #D3D0C9;
+  --oak: #8A6A3F; --oak-soft: #F1E7D8; --warn: #A23B2A; --ok: #2F6B45; --stage: #E4E2DC;
+  --display: "Onest", "Segoe UI", system-ui, sans-serif;
+  --body: "Onest", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #1B1C1E; --surface: #242628; --ink: #E9E7E2; --muted: #A2A4A8; --line: #3A3C40;
+  --oak: #D2B183; --oak-soft: #3A3127; --warn: #E07A66; --ok: #7CC495; --stage: #2B2D30; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #1B1C1E; --surface: #242628; --ink: #E9E7E2; --muted: #A2A4A8; --line: #3A3C40;
+  --oak: #D2B183; --oak-soft: #3A3127; --warn: #E07A66; --ok: #7CC495; --stage: #2B2D30; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--body); }
+.wrap { max-width: 1120px; margin: 0 auto; padding-block: 28px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 20px; }
+header { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: end; justify-content: space-between; }
+.eyebrow { font: 500 12px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { font: 700 clamp(26px, 4vw, 38px)/1.1 var(--display); margin: 4px 0 6px; text-wrap: balance; }
+.lead { margin: 0; color: var(--muted); max-width: 64ch; }
+.switch { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); }
+.switch button { font: 600 14px var(--body); color: var(--ink); background: none; border: 0; padding: 10px 16px; cursor: pointer; }
+.switch button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.switch button:focus-visible, .tools button:focus-visible { outline: 2px solid var(--oak); outline-offset: 2px; }
+.stage { position: relative; background: var(--stage); border-radius: 10px; aspect-ratio: 16 / 8; min-height: 300px; max-width: 100%; overflow: hidden; }
+.stage canvas { display: block; width: 100%; height: 100%; }
+.tools { position: absolute; left: 12px; bottom: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+.tools button { font: 500 13px var(--body); background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; cursor: pointer; }
+.tools button[aria-pressed="true"] { border-color: var(--oak); color: var(--oak); }
+.legend { position: absolute; right: 12px; top: 12px; font: 12px var(--mono); color: var(--muted); background: var(--surface); padding: 6px 10px; border-radius: 6px; max-width: 60%; }
+.rev { display: grid; gap: 14px; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.facts > div { background: var(--surface); padding: 12px 14px; display: grid; gap: 2px; min-width: 0; }
+.facts span { font: 500 11px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.facts b { font: 600 19px var(--display); font-variant-numeric: tabular-nums; }
+.facts em { font-style: normal; font-size: 13px; color: var(--muted); }
+.facts em.warn { color: var(--warn); }
+.mono { font-family: var(--mono) !important; font-size: 16px !important; }
+h2 { font: 600 21px var(--display); margin: 18px 0 0; padding-top: 14px; border-top: 1px solid var(--line); }
+h2 small { font: 400 12px var(--mono); color: var(--muted); margin-left: 8px; }
+h3 { font: 600 16px var(--display); margin: 6px 0 0; }
+.warnings { margin: 0; padding: 10px 14px 10px 30px; background: var(--oak-soft); border-radius: 8px; color: var(--ink); font-size: 14px; display: grid; gap: 4px; }
+.checks, .bars { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 14px; }
+.checks .ok::first-letter { color: var(--ok); }
+.checks .ok { color: var(--ink); } .checks .bad { color: var(--warn); }
+.bars { font: 13px var(--mono); }
+.sheets { display: grid; gap: 12px; }
+.sheets img { width: 100%; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+.tw { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 500 11px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+td { font-variant-numeric: tabular-nums; }
+tr:last-child td { border-bottom: 0; }
+table.cost td:nth-child(n+2) { white-space: nowrap; }
+table.cost td:last-child, table.cost th:last-child { text-align: right; }
+.ids { font: 12px var(--mono); color: var(--muted); }
+.pill { font: 500 11px var(--mono); background: var(--oak-soft); color: var(--oak); padding: 1px 6px; border-radius: 10px; }
+.note { margin: 0; font-size: 13px; color: var(--warn); }
+@media (max-width: 560px) { .stage { aspect-ratio: 4 / 5; } .legend { max-width: 70%; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">ARV-TBL-003 · стол «Опора» · 1600 × 900 · дуб · чёрный металл</div>
+      <h1>Опора: одна конфигурация, один снимок</h1>
+      <p class="lead">3D, чертёж, спецификация и затраты ниже построены из одного и того же снимка конфигурации. Сейчас в каталоге R03E: связи под столешницей и низкие регулируемые подпятники у концов перекладин. Вид утверждён, конструкция ещё нет. R02E — исходный пакет с высокими подпятниками, R00 — прежний стол на перекладинах.</p>
+    </div>
+    <div class="switch" role="group" aria-label="Ревизия">
+      <button id="b-R03E" type="button" aria-pressed="true" data-rev="R03E">R03E · каталог</button>
+      <button id="b-R02E" type="button" aria-pressed="false" data-rev="R02E">R02E · пакет</button>
+      <button id="b-R00" type="button" aria-pressed="false" data-rev="R00">R00 · прежний</button>
+    </div>
+  </header>
+
+  <div class="stage" id="stage">
+    <div class="legend" id="legend"></div>
+    <div class="tools">
+      <button id="t-top" type="button" aria-pressed="false">Без столешницы</button>
+      <button id="t-reset" type="button">Ракурс по умолчанию</button>
+    </div>
+  </div>
+
+  __BLOCKS__
+</div>
+
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+const DATA = __THREE__;
+const stage = document.getElementById("stage");
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+stage.prepend(renderer.domElement);
+const scene = new THREE.Scene();
+const cam = new THREE.PerspectiveCamera(32, 2, 10, 20000);
+const ctl = new OrbitControls(cam, renderer.domElement);
+ctl.enableDamping = true;
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8a8a8a, 1.6));
+const sun = new THREE.DirectionalLight(0xffffff, 1.4); sun.position.set(-1200, 2400, 1800); scene.add(sun);
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(6000, 6000), new THREE.MeshStandardMaterial({ color: 0xcfcdc7, roughness: 1 }));
+floor.rotation.x = -Math.PI / 2; floor.position.y = -0.5; scene.add(floor);
+let group = null, rev = "R03E", hideTop = false;
+function build() {
+  if (group) { scene.remove(group); group.traverse(o => { o.geometry?.dispose(); o.material?.dispose?.(); }); }
+  group = new THREE.Group();
+  const { parts, d } = DATA[rev];
+  for (const p of parts) {
+    if (hideTop && p.g === "top") continue;
+    const [x0, y0, z0, x1, y1, z1] = p.b;
+    const g = new THREE.BoxGeometry(x1 - x0, z1 - z0, y1 - y0);
+    const m = new THREE.MeshStandardMaterial({ color: p.c, roughness: p.g === "top" ? 0.7 : 0.45, metalness: p.g === "top" ? 0 : 0.25,
+      transparent: p.buy, opacity: p.buy ? 0.55 : 1 });
+    const mesh = new THREE.Mesh(g, m);
+    mesh.position.set((x0 + x1) / 2 - d.length / 2, (z0 + z1) / 2, -((y0 + y1) / 2 - d.width / 2));
+    const e = new THREE.LineSegments(new THREE.EdgesGeometry(g), new THREE.LineBasicMaterial({ color: 0x1d1e20, transparent: true, opacity: 0.35 }));
+    mesh.add(e); group.add(mesh);
+  }
+  scene.add(group);
+  const n = parts.length;
+  document.getElementById("legend").textContent =
+    `${rev} · ${n} деталей · рама ${d.frame_h} · стойка ${d.leg}` + (d.link ? ` · связи ${d.link}` : " · без связей") + (d.feet_h ? ` · подпятник ${d.feet_h}` : "");
+}
+function home() { cam.position.set(1700, 1150, 1900); ctl.target.set(0, 380, 0); ctl.update(); }
+function size() { const r = stage.getBoundingClientRect(); renderer.setSize(r.width, r.height, false); cam.aspect = r.width / r.height; cam.updateProjectionMatrix(); }
+new ResizeObserver(size).observe(stage);
+size(); home(); build();
+(function loop() { ctl.update(); renderer.render(scene, cam); requestAnimationFrame(loop); })();
+document.querySelectorAll(".switch button").forEach(b => b.addEventListener("click", () => {
+  rev = b.dataset.rev;
+  document.querySelectorAll(".switch button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+  document.querySelectorAll("section.rev").forEach(s => s.hidden = s.dataset.rev !== rev);
+  build();
+}));
+document.getElementById("t-top").addEventListener("click", e => { hideTop = !hideTop; e.currentTarget.setAttribute("aria-pressed", String(hideTop)); build(); });
+document.getElementById("t-reset").addEventListener("click", home);
+</script>

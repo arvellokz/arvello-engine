@@ -1,0 +1,72 @@
+{
+ "sku": "ARV-WRD-006",
+ "name": "Гардеробная «Каркас»",
+ "category": "WRD",
+ "builder": "open_wardrobe",
+ "product_en": "open wardrobe system",
+ "room_en": "walk-in closet",
+ "line": "Тренд",
+ "desc": "Открытая гардеробная система: сварные стойки, полки и ящики.",
+ "sources": [
+  [
+   "Ana White — гардеробная система",
+   "https://www.ana-white.com/woodworking-projects/master-closet-system"
+  ],
+  [
+   "Сварной каркас — собственный чертёж Arvello (труба по ГОСТ, расчёт в техкарте)",
+   ""
+  ]
+ ],
+ "axes": [
+  {
+   "key": "width",
+   "label": "Ширина",
+   "mode": "frame",
+   "values": [
+    1600,
+    2400
+   ],
+   "labels": {
+    "1600": "160 см",
+    "2400": "240 см"
+   }
+  },
+  {
+   "key": "color",
+   "label": "Полки",
+   "mode": "frame",
+   "values": [
+    "O",
+    "W",
+    "G",
+    "C"
+   ],
+   "labels": {
+    "O": "дуб",
+    "W": "белый",
+    "G": "графит",
+    "C": "кашемир"
+   }
+  },
+  {
+   "key": "metal",
+   "label": "Металл",
+   "mode": "frame",
+   "values": [
+    "black",
+    "white"
+   ],
+   "labels": {
+    "black": "чёрный",
+    "white": "белый"
+   }
+  }
+ ],
+ "angles": [
+  "hero",
+  "front",
+  "side",
+  "detail",
+  "lifestyle"
+ ]
+}

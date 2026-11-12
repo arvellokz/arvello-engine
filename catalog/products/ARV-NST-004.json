@@ -1,0 +1,55 @@
+{
+ "sku": "ARV-NST-004",
+ "name": "Тумба «Луна»",
+ "category": "NST",
+ "builder": "nightstand_float",
+ "product_en": "floating bedside table",
+ "room_en": "bedroom",
+ "line": "Тренд",
+ "desc": "Подвесная тумба с подсветкой и беспроводной зарядкой.",
+ "sources": [
+  [
+   "Blum Cabinet Configurator",
+   "https://blum.com/nz/en/services/planning-construction-product-selection/cabinet-configurator"
+  ]
+ ],
+ "axes": [
+  {
+   "key": "width",
+   "label": "Ширина",
+   "mode": "frame",
+   "values": [
+    400,
+    500
+   ],
+   "labels": {
+    "400": "40 см",
+    "500": "50 см"
+   }
+  },
+  {
+   "key": "color",
+   "label": "Цвет",
+   "mode": "frame",
+   "values": [
+    "W",
+    "C",
+    "O",
+    "G"
+   ],
+   "labels": {
+    "W": "белый",
+    "C": "кашемир",
+    "O": "дуб",
+    "G": "графит"
+   }
+  }
+ ],
+ "angles": [
+  "hero",
+  "front",
+  "side",
+  "detail",
+  "lifestyle"
+ ]
+}

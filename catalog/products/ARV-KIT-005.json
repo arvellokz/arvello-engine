@@ -1,0 +1,87 @@
+{
+ "sku": "ARV-KIT-005",
+ "name": "Кухня «Остров»",
+ "category": "KIT",
+ "builder": "kitchen_island",
+ "product_en": "kitchen with island",
+ "room_en": "kitchen",
+ "line": "Тренд",
+ "desc": "Кухня без ручек и остров-барная стойка с рифлёным торцом.",
+ "sources": [
+  [
+   "Blum Cabinet Configurator",
+   "https://blum.com/nz/en/services/planning-construction-product-selection/cabinet-configurator"
+  ],
+  [
+   "Ana White — нижний модуль кухни",
+   "https://www.ana-white.com/woodworking-projects/frameless-kitchen-base-cabinet-universal-template"
+  ],
+  [
+   "Ana White — верхний модуль кухни",
+   "https://www.ana-white.com/woodworking-projects/frameless-kitchen-wall-cabinet-universal-template"
+  ]
+ ],
+ "axes": [
+  {
+   "key": "length",
+   "label": "Длина кухни",
+   "mode": "frame",
+   "values": [
+    3000,
+    3600
+   ],
+   "labels": {
+    "3000": "300 см",
+    "3600": "360 см"
+   }
+  },
+  {
+   "key": "island",
+   "label": "Остров",
+   "mode": "frame",
+   "values": [
+    1800,
+    2400
+   ],
+   "labels": {
+    "1800": "180 см",
+    "2400": "240 см"
+   }
+  },
+  {
+   "key": "base",
+   "label": "Низ и остров",
+   "mode": "frame",
+   "values": [
+    "G",
+    "O",
+    "C"
+   ],
+   "labels": {
+    "G": "графит",
+    "O": "дуб",
+    "C": "кашемир"
+   }
+  },
+  {
+   "key": "top",
+   "label": "Верх",
+   "mode": "frame",
+   "values": [
+    "W",
+    "C"
+   ],
+   "labels": {
+    "W": "белый",
+    "C": "кашемир"
+   }
+  }
+ ],
+ "angles": [
+  "hero",
+  "front",
+  "side",
+  "detail",
+  "lifestyle"
+ ]
+}

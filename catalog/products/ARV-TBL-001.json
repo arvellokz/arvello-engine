@@ -1,0 +1,70 @@
+{
+ "sku": "ARV-TBL-001",
+ "name": "Стол «Дастархан»",
+ "category": "TBL",
+ "builder": "table_4legs",
+ "product_en": "dining table",
+ "room_en": "dining area",
+ "line": "STD",
+ "desc": "Обеденный стол на четырёх металлических ножках с царгой.",
+ "sources": [
+  [
+   "Ripaton — параметры металлических опор",
+   "https://www.ripaton.fr/en/made-to-measure/made-to-measure-inverted-U-shaped-steel-table-leg-authentique-330"
+  ],
+  [
+   "Сварной каркас — собственный чертёж Arvello (труба по ГОСТ, расчёт в техкарте)",
+   ""
+  ]
+ ],
+ "axes": [
+  {
+   "key": "size",
+   "label": "Размер",
+   "mode": "frame",
+   "values": [
+    1200,
+    1600
+   ],
+   "labels": {
+    "1200": "120 × 80",
+    "1600": "160 × 90"
+   }
+  },
+  {
+   "key": "top",
+   "label": "Столешница",
+   "mode": "frame",
+   "values": [
+    "O",
+    "W",
+    "G"
+   ],
+   "labels": {
+    "O": "дуб",
+    "W": "белый",
+    "G": "графит"
+   }
+  },
+  {
+   "key": "metal",
+   "label": "Металл",
+   "mode": "frame",
+   "values": [
+    "black",
+    "white"
+   ],
+   "labels": {
+    "black": "чёрный",
+    "white": "белый"
+   }
+  }
+ ],
+ "angles": [
+  "hero",
+  "front",
+  "side",
+  "detail",
+  "lifestyle"
+ ]
+}

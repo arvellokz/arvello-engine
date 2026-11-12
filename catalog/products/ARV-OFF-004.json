@@ -1,0 +1,72 @@
+{
+ "sku": "ARV-OFF-004",
+ "name": "Ресепшн «Приём»",
+ "category": "OFF",
+ "builder": "reception",
+ "product_en": "reception desk",
+ "room_en": "office lobby",
+ "line": "Офис",
+ "desc": "Стойка ресепшн: рифлёный борт 1100, рабочая зона и подсветка.",
+ "sources": [
+  [
+   "Blum Cabinet Configurator",
+   "https://blum.com/nz/en/services/planning-construction-product-selection/cabinet-configurator"
+  ],
+  [
+   "Сварной каркас — собственный чертёж Arvello (труба по ГОСТ, расчёт в техкарте)",
+   ""
+  ]
+ ],
+ "axes": [
+  {
+   "key": "width",
+   "label": "Ширина",
+   "mode": "frame",
+   "values": [
+    1600,
+    2000,
+    2400
+   ],
+   "labels": {
+    "1600": "160 см",
+    "2000": "200 см",
+    "2400": "240 см"
+   }
+  },
+  {
+   "key": "color",
+   "label": "Корпус",
+   "mode": "frame",
+   "values": [
+    "W",
+    "G"
+   ],
+   "labels": {
+    "W": "белый",
+    "G": "графит"
+   }
+  },
+  {
+   "key": "accent",
+   "label": "Борт",
+   "mode": "frame",
+   "values": [
+    "O",
+    "G",
+    "C"
+   ],
+   "labels": {
+    "O": "дуб",
+    "G": "графит",
+    "C": "кашемир"
+   }
+  }
+ ],
+ "angles": [
+  "hero",
+  "front",
+  "side",
+  "detail",
+  "lifestyle"
+ ]
+}

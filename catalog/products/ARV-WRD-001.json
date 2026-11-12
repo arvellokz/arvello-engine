@@ -1,0 +1,59 @@
+{
+ "sku": "ARV-WRD-001",
+ "name": "Шкаф «Арна»",
+ "category": "WRD",
+ "builder": "wardrobe_hinged",
+ "product_en": "hinged wardrobe",
+ "room_en": "bedroom",
+ "line": "STD",
+ "desc": "Распашной шкаф с антресолью и ручками.",
+ "sources": [
+  [
+   "Blum Cabinet Configurator",
+   "https://blum.com/nz/en/services/planning-construction-product-selection/cabinet-configurator"
+  ],
+  [
+   "Ana White — гардеробная система",
+   "https://www.ana-white.com/woodworking-projects/master-closet-system"
+  ]
+ ],
+ "axes": [
+  {
+   "key": "width",
+   "label": "Ширина",
+   "mode": "frame",
+   "values": [
+    1200,
+    1800
+   ],
+   "labels": {
+    "1200": "120 см",
+    "1800": "180 см"
+   }
+  },
+  {
+   "key": "color",
+   "label": "Цвет",
+   "mode": "frame",
+   "values": [
+    "W",
+    "C",
+    "O",
+    "G"
+   ],
+   "labels": {
+    "W": "белый",
+    "C": "кашемир",
+    "O": "дуб",
+    "G": "графит"
+   }
+  }
+ ],
+ "angles": [
+  "hero",
+  "front",
+  "side",
+  "detail",
+  "lifestyle"
+ ]
+}

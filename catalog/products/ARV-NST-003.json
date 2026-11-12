@@ -1,0 +1,42 @@
+{
+ "sku": "ARV-NST-003",
+ "name": "ТВ-тумба «Кок-Тобе»",
+ "category": "LIV",
+ "builder": "tv_floor",
+ "product_en": "TV stand",
+ "room_en": "living room",
+ "line": "STD",
+ "desc": "Напольная ТВ-тумба 1600 мм на ножках.",
+ "sources": [
+  [
+   "Blum Cabinet Configurator",
+   "https://blum.com/nz/en/services/planning-construction-product-selection/cabinet-configurator"
+  ]
+ ],
+ "axes": [
+  {
+   "key": "color",
+   "label": "Цвет",
+   "mode": "frame",
+   "values": [
+    "W",
+    "C",
+    "O",
+    "G"
+   ],
+   "labels": {
+    "W": "белый",
+    "C": "кашемир",
+    "O": "дуб",
+    "G": "графит"
+   }
+  }
+ ],
+ "angles": [
+  "hero",
+  "front",
+  "side",
+  "detail",
+  "lifestyle"
+ ]
+}

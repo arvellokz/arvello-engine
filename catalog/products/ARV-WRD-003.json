@@ -1,0 +1,42 @@
+{
+ "sku": "ARV-WRD-003",
+ "name": "Прихожая «Порог»",
+ "category": "WRD",
+ "builder": "hallway_open",
+ "product_en": "open hallway unit",
+ "room_en": "hallway",
+ "line": "STD",
+ "desc": "Компактная открытая прихожая 1200 мм: шкаф, вешалка, обувница.",
+ "sources": [
+  [
+   "Blum Cabinet Configurator",
+   "https://blum.com/nz/en/services/planning-construction-product-selection/cabinet-configurator"
+  ]
+ ],
+ "axes": [
+  {
+   "key": "color",
+   "label": "Цвет",
+   "mode": "frame",
+   "values": [
+    "W",
+    "C",
+    "O",
+    "G"
+   ],
+   "labels": {
+    "W": "белый",
+    "C": "кашемир",
+    "O": "дуб",
+    "G": "графит"
+   }
+  }
+ ],
+ "angles": [
+  "hero",
+  "front",
+  "side",
+  "detail",
+  "lifestyle"
+ ]
+}

@@ -1,0 +1,74 @@
+{
+ "sku": "ARV-KIT-002",
+ "name": "Кухня «Медеу»",
+ "category": "KIT",
+ "builder": "kitchen_std",
+ "product_en": "straight kitchen",
+ "room_en": "kitchen",
+ "line": "STD",
+ "desc": "Прямая кухня 3000 мм комфорт-класса с ручками.",
+ "sources": [
+  [
+   "Blum Cabinet Configurator",
+   "https://blum.com/nz/en/services/planning-construction-product-selection/cabinet-configurator"
+  ],
+  [
+   "Ana White — нижний модуль кухни",
+   "https://www.ana-white.com/woodworking-projects/frameless-kitchen-base-cabinet-universal-template"
+  ],
+  [
+   "Ana White — верхний модуль кухни",
+   "https://www.ana-white.com/woodworking-projects/frameless-kitchen-wall-cabinet-universal-template"
+  ]
+ ],
+ "axes": [
+  {
+   "key": "length",
+   "label": "Длина",
+   "mode": "frame",
+   "values": [
+    3000
+   ],
+   "labels": {
+    "3000": "300 см"
+   }
+  },
+  {
+   "key": "base",
+   "label": "Низ",
+   "mode": "frame",
+   "values": [
+    "W",
+    "C",
+    "O",
+    "G"
+   ],
+   "labels": {
+    "W": "белый",
+    "C": "кашемир",
+    "O": "дуб",
+    "G": "графит"
+   }
+  },
+  {
+   "key": "top",
+   "label": "Верх",
+   "mode": "frame",
+   "values": [
+    "W",
+    "C"
+   ],
+   "labels": {
+    "W": "белый",
+    "C": "кашемир"
+   }
+  }
+ ],
+ "angles": [
+  "hero",
+  "front",
+  "side",
+  "detail",
+  "lifestyle"
+ ]
+}

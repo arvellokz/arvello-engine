@@ -1,0 +1,65 @@
+{
+ "sku": "ARV-KIT-006",
+ "name": "Кухня «Лофт»",
+ "category": "KIT",
+ "builder": "kitchen_loft",
+ "product_en": "loft kitchen with open shelves",
+ "room_en": "kitchen",
+ "line": "Тренд",
+ "desc": "Кухня без верхних шкафов: открытые полки на сварной раме.",
+ "sources": [
+  [
+   "Blum Cabinet Configurator",
+   "https://blum.com/nz/en/services/planning-construction-product-selection/cabinet-configurator"
+  ],
+  [
+   "Ana White — нижний модуль кухни",
+   "https://www.ana-white.com/woodworking-projects/frameless-kitchen-base-cabinet-universal-template"
+  ],
+  [
+   "Сварной каркас — собственный чертёж Arvello (труба по ГОСТ, расчёт в техкарте)",
+   ""
+  ]
+ ],
+ "axes": [
+  {
+   "key": "length",
+   "label": "Длина",
+   "mode": "frame",
+   "values": [
+    2400,
+    3000,
+    3600
+   ],
+   "labels": {
+    "2400": "240 см",
+    "3000": "300 см",
+    "3600": "360 см"
+   }
+  },
+  {
+   "key": "base",
+   "label": "Низ",
+   "mode": "frame",
+   "values": [
+    "G",
+    "W",
+    "C",
+    "O"
+   ],
+   "labels": {
+    "G": "графит",
+    "W": "белый",
+    "C": "кашемир",
+    "O": "дуб"
+   }
+  }
+ ],
+ "angles": [
+  "hero",
+  "front",
+  "side",
+  "detail",
+  "lifestyle"
+ ]
+}

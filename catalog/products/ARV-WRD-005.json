@@ -1,0 +1,53 @@
+{
+ "sku": "ARV-WRD-005",
+ "name": "Шкаф «Витрина»",
+ "category": "WRD",
+ "builder": "glass_cabinet",
+ "product_en": "glass display cabinet",
+ "room_en": "living room",
+ "line": "Тренд",
+ "desc": "Шкаф с дверями из тонированного стекла в алюминиевой рамке и подсветкой.",
+ "sources": [
+  [
+   "Blum Cabinet Configurator",
+   "https://blum.com/nz/en/services/planning-construction-product-selection/cabinet-configurator"
+  ]
+ ],
+ "axes": [
+  {
+   "key": "width",
+   "label": "Ширина",
+   "mode": "frame",
+   "values": [
+    800,
+    1200
+   ],
+   "labels": {
+    "800": "80 см",
+    "1200": "120 см"
+   }
+  },
+  {
+   "key": "color",
+   "label": "Корпус",
+   "mode": "frame",
+   "values": [
+    "G",
+    "O",
+    "W"
+   ],
+   "labels": {
+    "G": "графит",
+    "O": "дуб",
+    "W": "белый"
+   }
+  }
+ ],
+ "angles": [
+  "hero",
+  "front",
+  "side",
+  "detail",
+  "lifestyle"
+ ]
+}

@@ -1,0 +1,42 @@
+{
+ "sku": "ARV-NST-002",
+ "name": "Комод «Самал»",
+ "category": "NST",
+ "builder": "chest",
+ "product_en": "chest of drawers",
+ "room_en": "bedroom",
+ "line": "STD",
+ "desc": "Комод с 4 ящиками.",
+ "sources": [
+  [
+   "Blum Cabinet Configurator",
+   "https://blum.com/nz/en/services/planning-construction-product-selection/cabinet-configurator"
+  ]
+ ],
+ "axes": [
+  {
+   "key": "color",
+   "label": "Цвет",
+   "mode": "frame",
+   "values": [
+    "W",
+    "C",
+    "O",
+    "G"
+   ],
+   "labels": {
+    "W": "белый",
+    "C": "кашемир",
+    "O": "дуб",
+    "G": "графит"
+   }
+  }
+ ],
+ "angles": [
+  "hero",
+  "front",
+  "side",
+  "detail",
+  "lifestyle"
+ ]
+}

@@ -1,0 +1,383 @@
+{
+ "_status": "ПРИМЕР ДЛЯ ПРОВЕРКИ МЕХАНИЗМА — не реальные цены. Заменить прайсами поставщиков и цехов.",
+ "_comment": "Цены хранятся отдельно от геометрии и в хеш снимка не входят. Количества берутся из снимка.",
+ "currency": "KZT",
+ "margin": 0.4,
+ "reserve": 0.05,
+ "materials": {
+  "LDSP25": {
+   "name": "ЛДСП 25 мм",
+   "unit": "м²",
+   "price": 9000,
+   "waste": 0.15
+  },
+  "TUBE40x40x2": {
+   "name": "Труба профильная 40×40×2",
+   "unit": "м",
+   "price": 1500,
+   "waste": 0.1
+  },
+  "S235-4": {
+   "name": "Лист 4 мм S235",
+   "unit": "кг",
+   "price": 600,
+   "waste": 0.3
+  },
+  "S235-2": {
+   "name": "Лист 2 мм S235",
+   "unit": "кг",
+   "price": 600,
+   "waste": 0.5
+  },
+  "MDF25": {
+   "name": "МДФ 25 мм",
+   "unit": "м²",
+   "price": 11000,
+   "waste": 0.15
+  },
+  "HDF4": {
+   "name": "ХДФ 3–4 мм",
+   "unit": "м²",
+   "price": 1800,
+   "waste": 0.15
+  },
+  "MDF-THIN": {
+   "name": "МДФ 8–12 мм",
+   "unit": "м²",
+   "price": 5000,
+   "waste": 0.2
+  },
+  "LDSP16": {
+   "name": "ЛДСП 16 мм",
+   "unit": "м²",
+   "price": 4500,
+   "waste": 0.15
+  },
+  "LDSP18": {
+   "name": "ЛДСП 18 мм",
+   "unit": "м²",
+   "price": 5200,
+   "waste": 0.15
+  },
+  "FRONT18": {
+   "name": "Фасад МДФ 18 (отделка по декору)",
+   "unit": "м²",
+   "price": 18000,
+   "waste": 0.1
+  },
+  "LDSP22": {
+   "name": "ЛДСП 22 мм / щит 20",
+   "unit": "м²",
+   "price": 7500,
+   "waste": 0.15
+  },
+  "TOP28": {
+   "name": "Столешница 28 мм",
+   "unit": "м²",
+   "price": 14000,
+   "waste": 0.1
+  },
+  "TOP38": {
+   "name": "Столешница / плита 38–40 мм",
+   "unit": "м²",
+   "price": 17000,
+   "waste": 0.1
+  },
+  "STONE": {
+   "name": "Кварцевый камень",
+   "unit": "м²",
+   "price": 90000,
+   "waste": 0.15
+  },
+  "GLASS": {
+   "name": "Стекло закалённое / тонированное",
+   "unit": "м²",
+   "price": 15000,
+   "waste": 0.05
+  },
+  "MIRROR": {
+   "name": "Зеркало 4 мм",
+   "unit": "м²",
+   "price": 9000,
+   "waste": 0.05
+  },
+  "UPHOLSTERY": {
+   "name": "Мягкая панель (основа, ППУ, ткань)",
+   "unit": "м²",
+   "price": 22000,
+   "waste": 0.2
+  },
+  "TUBE20x20x2": {
+   "name": "Труба 20×20×2",
+   "unit": "м",
+   "price": 700,
+   "waste": 0.1
+  },
+  "TUBE30x20x2": {
+   "name": "Труба 30×20×2",
+   "unit": "м",
+   "price": 850,
+   "waste": 0.1
+  },
+  "TUBE40x20x2": {
+   "name": "Труба 40×20×2",
+   "unit": "м",
+   "price": 1000,
+   "waste": 0.1
+  },
+  "TUBE30x30x2": {
+   "name": "Труба 30×30×2",
+   "unit": "м",
+   "price": 1000,
+   "waste": 0.1
+  },
+  "TUBE60x30x2": {
+   "name": "Труба 60×30×2",
+   "unit": "м",
+   "price": 1700,
+   "waste": 0.1
+  },
+  "TUBE40x25x2": {
+   "name": "Труба 40×25×2",
+   "unit": "м",
+   "price": 1100,
+   "waste": 0.1
+  },
+  "TIMBER45x95": {
+   "name": "Брус сухой строганый 45×95",
+   "unit": "м",
+   "price": 1200,
+   "waste": 0.1
+  },
+  "TIMBER45x145": {
+   "name": "Брус сухой строганый 45×145",
+   "unit": "м",
+   "price": 1800,
+   "waste": 0.1
+  },
+  "TIMBER45x45": {
+   "name": "Брус сухой строганый 45×45",
+   "unit": "м",
+   "price": 700,
+   "waste": 0.1
+  },
+  "TUBE60x20x2": {
+   "name": "Труба 60×20×2",
+   "unit": "м",
+   "price": 1300,
+   "waste": 0.1
+  },
+  "TUBE60x40x2": {
+   "name": "Труба 60×40×2",
+   "unit": "м",
+   "price": 1900,
+   "waste": 0.1
+  },
+  "PANEL50": {
+   "name": "Плита 50 мм (склейка 2 × ЛДСП 25)",
+   "unit": "м²",
+   "price": 22000,
+   "waste": 0.15
+  },
+  "TIMBER45x120": {
+   "name": "Брус 45×120",
+   "unit": "м",
+   "price": 1500,
+   "waste": 0.1
+  }
+ },
+ "hardware": {
+  "INSERT-M6": {
+   "price": 250
+  },
+  "SCREW-M6x16": {
+   "price": 120
+  },
+  "WASHER-6.4x18": {
+   "price": 40
+  },
+  "FOOT-M8": {
+   "price": 1500
+  },
+  "RIVNUT-M8": {
+   "price": 150
+  },
+  "NUT-M8": {
+   "price": 30
+  },
+  "CAP-36": {
+   "price": 100
+  },
+  "HINGE": {
+   "price": 900
+  },
+  "SLIDES": {
+   "price": 6500,
+   "name": "Направляющие (пара)"
+  },
+  "FLAP-LIFT": {
+   "price": 4500
+  },
+  "ROLLERS": {
+   "price": 7000
+  },
+  "HANDLE": {
+   "price": 1500
+  },
+  "GOLA": {
+   "price": 4000
+  },
+  "SLIDE-PROFILE": {
+   "price": 3500
+  },
+  "ROD": {
+   "price": 1500
+  },
+  "LOCK": {
+   "price": 1200
+  },
+  "HOOK": {
+   "price": 500
+  },
+  "LED": {
+   "price": 5000
+  },
+  "SCONCE": {
+   "price": 15000
+  },
+  "CHARGER": {
+   "price": 9000
+  },
+  "SLAT": {
+   "price": 600
+  },
+  "FOOT-ADJ": {
+   "price": 600
+  },
+  "LIFT-MECH": {
+   "price": 28000
+  },
+  "BED-LEG": {
+   "price": 1200
+  },
+  "FRAME-PROFILE": {
+   "price": 3000
+  },
+  "CABLE-BOX": {
+   "price": 6000
+  },
+  "HANDLE-128": {
+   "name": "Ручка-скоба 128",
+   "price": 1500
+  },
+  "SCREW-M4x22": {
+   "name": "Винт M4×22",
+   "price": 15
+  },
+  "ECC-15": {
+   "name": "Стяжка эксцентриковая Ø15 со штоком",
+   "price": 120
+  },
+  "DOWEL-8x30": {
+   "name": "Шкант 8×30",
+   "price": 5
+  },
+  "CONF-7x50": {
+   "name": "Конфирмат 7×50",
+   "price": 12
+  },
+  "SCREW-4x25": {
+   "name": "Саморез 4×25",
+   "price": 5
+  },
+  "SCREW-3.5x16": {
+   "name": "Саморез 3,5×16",
+   "price": 4
+  },
+  "GLUE-PVA": {
+   "name": "Клей ПВА D3",
+   "price": 2500
+  },
+  "SLIDE-LOCK": {
+   "name": "Замок Blum T51.1700.04 (пара)",
+   "price": 1200
+  },
+  "SLIDE-SCREW": {
+   "name": "Саморез Ø4×15",
+   "price": 5
+  },
+  "LOCK-SCREW": {
+   "name": "Саморез Ø4×15 (замок)",
+   "price": 5
+  },
+  "ECC-BOLT": {
+   "name": "Болт Minifix S200",
+   "price": 60
+  }
+ },
+ "operations": {
+  "tube_cut": {
+   "name": "Рез трубы",
+   "unit": "рез",
+   "price": 300
+  },
+  "weld_frame_joint": {
+   "name": "Сварка стыка каркаса",
+   "unit": "стык",
+   "price": 1500
+  },
+  "weld_small": {
+   "name": "Приварка пластины/заглушки",
+   "unit": "шт",
+   "price": 500
+  },
+  "powder_m2": {
+   "name": "Порошковая покраска",
+   "unit": "м²",
+   "price": 4000
+  },
+  "board_cut": {
+   "name": "Раскрой плиты (на деталь)",
+   "unit": "деталь",
+   "price": 250
+  },
+  "edging_m": {
+   "name": "Кромкование",
+   "unit": "м",
+   "price": 600
+  },
+  "drill_insert": {
+   "name": "Сверление и установка втулки",
+   "unit": "шт",
+   "price": 300
+  },
+  "rivnut_set": {
+   "name": "Установка заклёпочной гайки",
+   "unit": "шт",
+   "price": 400
+  },
+  "assembly": {
+   "name": "Сборка и контроль",
+   "unit": "изделие",
+   "price": 5000
+  },
+  "upholstery_m2": {
+   "name": "Обивка мягких панелей",
+   "unit": "м²",
+   "price": 12000
+  },
+  "assembly_part": {
+   "name": "Сборка (на деталь)",
+   "unit": "деталь",
+   "price": 300
+  },
+  "drill_hole": {
+   "name": "Присадка (отверстие)",
+   "unit": "отв",
+   "price": 40
+  }
+ },
+ "logistics": {
+  "per_order": 10000
+ }
+}

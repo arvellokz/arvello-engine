@@ -1,0 +1,98 @@
+{
+ "sku": "ARV-OFF-001",
+ "name": "Стол «Модуль»",
+ "category": "OFF",
+ "builder": "office_desk",
+ "product_en": "office desk",
+ "room_en": "office",
+ "line": "Офис",
+ "desc": "Офисный стол на металлокаркасе с кабель-каналом, опционально экран.",
+ "sources": [
+  [
+   "Ripaton — параметры металлических опор",
+   "https://www.ripaton.fr/en/made-to-measure/made-to-measure-inverted-U-shaped-steel-table-leg-authentique-330"
+  ],
+  [
+   "Сварной каркас — собственный чертёж Arvello (труба по ГОСТ, расчёт в техкарте)",
+   ""
+  ]
+ ],
+ "axes": [
+  {
+   "key": "size",
+   "label": "Длина",
+   "mode": "frame",
+   "values": [
+    1200,
+    1400,
+    1600
+   ],
+   "labels": {
+    "1200": "120 см",
+    "1400": "140 см",
+    "1600": "160 см"
+   }
+  },
+  {
+   "key": "depth",
+   "label": "Глубина",
+   "mode": "frame",
+   "values": [
+    700,
+    800
+   ],
+   "labels": {
+    "700": "70 см",
+    "800": "80 см"
+   }
+  },
+  {
+   "key": "top",
+   "label": "Столешница",
+   "mode": "frame",
+   "values": [
+    "W",
+    "O",
+    "G"
+   ],
+   "labels": {
+    "W": "белый",
+    "O": "дуб",
+    "G": "графит"
+   }
+  },
+  {
+   "key": "metal",
+   "label": "Металл",
+   "mode": "frame",
+   "values": [
+    "black",
+    "white"
+   ],
+   "labels": {
+    "black": "чёрный",
+    "white": "белый"
+   }
+  },
+  {
+   "key": "screen",
+   "label": "Экран",
+   "mode": "frame",
+   "values": [
+    "none",
+    "front"
+   ],
+   "labels": {
+    "none": "нет",
+    "front": "по заднему краю"
+   }
+  }
+ ],
+ "angles": [
+  "hero",
+  "front",
+  "side",
+  "detail",
+  "lifestyle"
+ ]
+}

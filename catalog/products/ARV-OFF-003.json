@@ -1,0 +1,72 @@
+{
+ "sku": "ARV-OFF-003",
+ "name": "Стол «Совет»",
+ "category": "OFF",
+ "builder": "meeting_table",
+ "product_en": "conference table",
+ "room_en": "meeting room",
+ "line": "Офис",
+ "desc": "Стол для переговоров на 8–12 человек с кабельным лючком.",
+ "sources": [
+  [
+   "Ripaton — параметры металлических опор",
+   "https://www.ripaton.fr/en/made-to-measure/made-to-measure-inverted-U-shaped-steel-table-leg-authentique-330"
+  ],
+  [
+   "Сварной каркас — собственный чертёж Arvello (труба по ГОСТ, расчёт в техкарте)",
+   ""
+  ]
+ ],
+ "axes": [
+  {
+   "key": "length",
+   "label": "Длина",
+   "mode": "frame",
+   "values": [
+    2400,
+    3000,
+    3600
+   ],
+   "labels": {
+    "2400": "240 см",
+    "3000": "300 см",
+    "3600": "360 см"
+   }
+  },
+  {
+   "key": "top",
+   "label": "Столешница",
+   "mode": "frame",
+   "values": [
+    "O",
+    "W",
+    "G"
+   ],
+   "labels": {
+    "O": "дуб",
+    "W": "белый",
+    "G": "графит"
+   }
+  },
+  {
+   "key": "metal",
+   "label": "Металл",
+   "mode": "frame",
+   "values": [
+    "black",
+    "white"
+   ],
+   "labels": {
+    "black": "чёрный",
+    "white": "белый"
+   }
+  }
+ ],
+ "angles": [
+  "hero",
+  "front",
+  "side",
+  "detail",
+  "lifestyle"
+ ]
+}

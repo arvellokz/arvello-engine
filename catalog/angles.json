@@ -1,0 +1,443 @@
+{
+ "_comment": "Ракурсы карточки товара по категориям. az — поворот камеры влево от фронтальной оси (град.), el — высота над горизонтом (град.). order — порядок в галерее; первым всегда идёт hero. bg: white — студийный белый фон, interior — реалистичный интерьер.",
+ "BED": {
+  "hero": {
+   "order": 1,
+   "bg": "white",
+   "az": 35,
+   "el": 26,
+   "lens": 50,
+   "note_ru": "3/4 спереди-слева, видно изголовье, парящую базу и верх",
+   "words": "three-quarter view from the front-left corner at the foot of the bed"
+  },
+  "front": {
+   "order": 2,
+   "bg": "white",
+   "az": 0,
+   "el": 10,
+   "lens": 50,
+   "note_ru": "строго спереди, от изножья",
+   "words": "straight frontal view from the foot of the bed, symmetrical"
+  },
+  "side": {
+   "order": 3,
+   "bg": "white",
+   "az": -70,
+   "el": 12,
+   "lens": 50,
+   "note_ru": "сбоку справа, видна толщина и зазор под кроватью",
+   "words": "side view from the right, slightly from the front"
+  },
+  "detail": {
+   "order": 4,
+   "bg": "white",
+   "az": 25,
+   "el": 4,
+   "lens": 85,
+   "focus_box": [
+    0,
+    0,
+    0,
+    0.55,
+    0.45,
+    0.32
+   ],
+   "note_ru": "низкий ракурс на угол платформы: эффект парения",
+   "words": "low close-up of the front-left corner of the platform and the recessed base, camera almost at floor level"
+  },
+  "lifestyle": {
+   "order": 5,
+   "bg": "interior",
+   "az": 30,
+   "el": 14,
+   "lens": 35,
+   "note_ru": "в интерьере спальни",
+   "words": "three-quarter view from the front-left, eye level of a standing person"
+  }
+ },
+ "TBL": {
+  "hero": {
+   "order": 1,
+   "bg": "white",
+   "az": 35,
+   "el": 30,
+   "lens": 50,
+   "note_ru": "3/4 сверху: столешница и обе опоры",
+   "words": "three-quarter view from the front-left corner, slightly from above, both base frames visible"
+  },
+  "front": {
+   "order": 2,
+   "bg": "white",
+   "az": 0,
+   "el": 6,
+   "lens": 50,
+   "note_ru": "строго спереди по длинной стороне",
+   "words": "straight frontal view of the long side, symmetrical"
+  },
+  "side": {
+   "order": 3,
+   "bg": "white",
+   "az": -88,
+   "el": 6,
+   "lens": 50,
+   "note_ru": "с торца, видна U-рама",
+   "words": "straight view from the short end, the U-shaped base frame clearly visible"
+  },
+  "detail": {
+   "order": 4,
+   "bg": "white",
+   "az": 30,
+   "el": 12,
+   "lens": 85,
+   "focus_box": [
+    0,
+    0,
+    0,
+    0.32,
+    1,
+    1
+   ],
+   "note_ru": "крупно: стык столешницы и сварной рамы",
+   "words": "close-up of one welded base frame and where it meets the table top"
+  },
+  "lifestyle": {
+   "order": 5,
+   "bg": "interior",
+   "az": 35,
+   "el": 20,
+   "lens": 35,
+   "note_ru": "в столовой зоне",
+   "words": "three-quarter view from the front-left, eye level of a standing person"
+  }
+ },
+ "KIT": {
+  "hero": {
+   "order": 1,
+   "bg": "white",
+   "az": 30,
+   "el": 14,
+   "lens": 50,
+   "note_ru": "3/4 спереди-слева",
+   "words": "three-quarter view from the front-left, slightly above eye level"
+  },
+  "front": {
+   "order": 2,
+   "bg": "white",
+   "az": 0,
+   "el": 4,
+   "lens": 50,
+   "note_ru": "строго спереди",
+   "words": "straight frontal view, symmetrical"
+  },
+  "side": {
+   "order": 3,
+   "bg": "white",
+   "az": -60,
+   "el": 8,
+   "lens": 50,
+   "note_ru": "3/4 справа",
+   "words": "three-quarter view from the front-right"
+  },
+  "detail": {
+   "order": 4,
+   "bg": "white",
+   "az": 25,
+   "el": 10,
+   "lens": 85,
+   "focus_box": [
+    0.35,
+    0,
+    0.25,
+    0.75,
+    1,
+    0.55
+   ],
+   "note_ru": "крупно: канал Gola и ящики",
+   "words": "close-up of the handleless drawer fronts, the black Gola channel and the worktop edge"
+  },
+  "lifestyle": {
+   "order": 5,
+   "bg": "interior",
+   "az": 25,
+   "el": 10,
+   "lens": 35,
+   "note_ru": "в интерьере",
+   "words": "three-quarter view from the front-left, eye level of a standing person"
+  }
+ },
+ "WRD": {
+  "hero": {
+   "order": 1,
+   "bg": "white",
+   "az": 30,
+   "el": 14,
+   "lens": 50,
+   "note_ru": "3/4 спереди-слева",
+   "words": "three-quarter view from the front-left at eye level"
+  },
+  "front": {
+   "order": 2,
+   "bg": "white",
+   "az": 0,
+   "el": 4,
+   "lens": 50,
+   "note_ru": "строго спереди",
+   "words": "straight frontal view, symmetrical"
+  },
+  "side": {
+   "order": 3,
+   "bg": "white",
+   "az": -60,
+   "el": 8,
+   "lens": 50,
+   "note_ru": "3/4 справа",
+   "words": "three-quarter view from the front-right"
+  },
+  "detail": {
+   "order": 4,
+   "bg": "white",
+   "az": 25,
+   "el": 10,
+   "lens": 85,
+   "focus_box": [
+    0,
+    0,
+    0,
+    0.5,
+    1,
+    0.45
+   ],
+   "note_ru": "крупно: зазоры и цоколь",
+   "words": "close-up of the lower part of the doors, the 3 mm gaps and the recessed plinth"
+  },
+  "lifestyle": {
+   "order": 5,
+   "bg": "interior",
+   "az": 25,
+   "el": 10,
+   "lens": 35,
+   "note_ru": "в интерьере",
+   "words": "three-quarter view from the front-left, eye level of a standing person"
+  }
+ },
+ "LIV": {
+  "hero": {
+   "order": 1,
+   "bg": "white",
+   "az": 30,
+   "el": 14,
+   "lens": 50,
+   "note_ru": "3/4 спереди-слева",
+   "words": "three-quarter view from the front-left at eye level"
+  },
+  "front": {
+   "order": 2,
+   "bg": "white",
+   "az": 0,
+   "el": 4,
+   "lens": 50,
+   "note_ru": "строго спереди",
+   "words": "straight frontal view, symmetrical"
+  },
+  "side": {
+   "order": 3,
+   "bg": "white",
+   "az": -60,
+   "el": 8,
+   "lens": 50,
+   "note_ru": "3/4 справа",
+   "words": "three-quarter view from the front-right"
+  },
+  "detail": {
+   "order": 4,
+   "bg": "white",
+   "az": 25,
+   "el": 10,
+   "lens": 85,
+   "focus_box": [
+    0,
+    0,
+    0,
+    0.45,
+    1,
+    0.4
+   ],
+   "note_ru": "крупно: торец подвесной тумбы",
+   "words": "close-up of the end of the floating console with its flip-down door"
+  },
+  "lifestyle": {
+   "order": 5,
+   "bg": "interior",
+   "az": 25,
+   "el": 10,
+   "lens": 35,
+   "note_ru": "в интерьере",
+   "words": "three-quarter view from the front-left, eye level of a standing person"
+  }
+ },
+ "NST": {
+  "hero": {
+   "order": 1,
+   "bg": "white",
+   "az": 30,
+   "el": 18,
+   "lens": 50,
+   "note_ru": "3/4 спереди-слева",
+   "words": "three-quarter view from the front-left, slightly from above"
+  },
+  "front": {
+   "order": 2,
+   "bg": "white",
+   "az": 0,
+   "el": 4,
+   "lens": 50,
+   "note_ru": "строго спереди",
+   "words": "straight frontal view, symmetrical"
+  },
+  "side": {
+   "order": 3,
+   "bg": "white",
+   "az": -60,
+   "el": 8,
+   "lens": 50,
+   "note_ru": "3/4 справа",
+   "words": "three-quarter view from the front-right"
+  },
+  "detail": {
+   "order": 4,
+   "bg": "white",
+   "az": 25,
+   "el": 10,
+   "lens": 85,
+   "focus_box": [
+    0,
+    0,
+    0,
+    0.6,
+    1,
+    0.6
+   ],
+   "note_ru": "крупно: фасады и цоколь",
+   "words": "close-up of a front corner showing the drawer fronts and the base"
+  },
+  "lifestyle": {
+   "order": 5,
+   "bg": "interior",
+   "az": 25,
+   "el": 10,
+   "lens": 35,
+   "note_ru": "в интерьере",
+   "words": "three-quarter view from the front-left, eye level of a standing person"
+  }
+ },
+ "BTH": {
+  "hero": {
+   "order": 1,
+   "bg": "white",
+   "az": 30,
+   "el": 14,
+   "lens": 50,
+   "note_ru": "3/4 спереди-слева",
+   "words": "three-quarter view from the front-left at eye level"
+  },
+  "front": {
+   "order": 2,
+   "bg": "white",
+   "az": 0,
+   "el": 4,
+   "lens": 50,
+   "note_ru": "строго спереди",
+   "words": "straight frontal view, symmetrical"
+  },
+  "side": {
+   "order": 3,
+   "bg": "white",
+   "az": -60,
+   "el": 8,
+   "lens": 50,
+   "note_ru": "3/4 справа",
+   "words": "three-quarter view from the front-right"
+  },
+  "detail": {
+   "order": 4,
+   "bg": "white",
+   "az": 25,
+   "el": 10,
+   "lens": 85,
+   "focus_box": [
+    0,
+    0,
+    0,
+    0.5,
+    1,
+    0.55
+   ],
+   "note_ru": "крупно: рама и столешница",
+   "words": "close-up of the metal frame meeting the countertop"
+  },
+  "lifestyle": {
+   "order": 5,
+   "bg": "interior",
+   "az": 25,
+   "el": 10,
+   "lens": 35,
+   "note_ru": "в интерьере",
+   "words": "three-quarter view from the front-left, eye level of a standing person"
+  }
+ },
+ "OFF": {
+  "hero": {
+   "order": 1,
+   "bg": "white",
+   "az": 30,
+   "el": 22,
+   "lens": 50,
+   "note_ru": "3/4 спереди-слева",
+   "words": "three-quarter view from the front-left, slightly from above"
+  },
+  "front": {
+   "order": 2,
+   "bg": "white",
+   "az": 0,
+   "el": 4,
+   "lens": 50,
+   "note_ru": "строго спереди",
+   "words": "straight frontal view, symmetrical"
+  },
+  "side": {
+   "order": 3,
+   "bg": "white",
+   "az": -60,
+   "el": 8,
+   "lens": 50,
+   "note_ru": "3/4 справа",
+   "words": "three-quarter view from the front-right"
+  },
+  "detail": {
+   "order": 4,
+   "bg": "white",
+   "az": 25,
+   "el": 10,
+   "lens": 85,
+   "focus_box": [
+    0,
+    0,
+    0,
+    0.4,
+    1,
+    1
+   ],
+   "note_ru": "крупно: опора и кромка",
+   "words": "close-up of the leg frame and the edge of the top"
+  },
+  "lifestyle": {
+   "order": 5,
+   "bg": "interior",
+   "az": 25,
+   "el": 10,
+   "lens": 35,
+   "note_ru": "в интерьере",
+   "words": "three-quarter view from the front-left, eye level of a standing person"
+  }
+ }
+}

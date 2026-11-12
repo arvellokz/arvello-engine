@@ -1,0 +1,66 @@
+{
+ "sku": "ARV-OFF-002",
+ "name": "Бенч «Ряд»",
+ "category": "OFF",
+ "builder": "bench_system",
+ "product_en": "office bench desk system",
+ "room_en": "open-plan office",
+ "line": "Офис",
+ "desc": "Бенч-система на 2–6 мест с общими опорами, экранами и кабель-каналом.",
+ "sources": [
+  [
+   "Сварной каркас — собственный чертёж Arvello (труба по ГОСТ, расчёт в техкарте)",
+   ""
+  ]
+ ],
+ "axes": [
+  {
+   "key": "seats",
+   "label": "Мест",
+   "mode": "frame",
+   "values": [
+    2,
+    4,
+    6
+   ],
+   "labels": {
+    "2": "2",
+    "4": "4",
+    "6": "6"
+   }
+  },
+  {
+   "key": "top",
+   "label": "Столешница",
+   "mode": "frame",
+   "values": [
+    "W",
+    "O"
+   ],
+   "labels": {
+    "W": "белый",
+    "O": "дуб"
+   }
+  },
+  {
+   "key": "metal",
+   "label": "Металл",
+   "mode": "frame",
+   "values": [
+    "black",
+    "white"
+   ],
+   "labels": {
+    "black": "чёрный",
+    "white": "белый"
+   }
+  }
+ ],
+ "angles": [
+  "hero",
+  "front",
+  "side",
+  "detail",
+  "lifestyle"
+ ]
+}

@@ -1,0 +1,252 @@
+{
+ "_comment": "Набор фото для сайта (решение Темирлана 02.11): по каждой модели исполнение(я) для hero; интерьер — только для первого. Остальное показывает 3D-конфигуратор.",
+ "angles": [
+  "hero",
+  "lifestyle"
+ ],
+ "models": {
+  "ARV-KIT-001": [
+   {
+    "length": 2400,
+    "base": "G",
+    "top": "W"
+   }
+  ],
+  "ARV-KIT-002": [
+   {
+    "length": 3000,
+    "base": "G",
+    "top": "W"
+   }
+  ],
+  "ARV-KIT-003": [
+   {
+    "layout": "corner",
+    "base": "G",
+    "top": "W"
+   }
+  ],
+  "ARV-KIT-004": [
+   {
+    "length": 3600,
+    "base": "G",
+    "top": "W"
+   }
+  ],
+  "ARV-KIT-005": [
+   {
+    "length": 3600,
+    "island": 2400,
+    "base": "G",
+    "top": "W"
+   }
+  ],
+  "ARV-KIT-006": [
+   {
+    "length": 3600,
+    "base": "G"
+   }
+  ],
+  "ARV-BED-002": [
+   {
+    "size": 1600,
+    "headboard": "fluted",
+    "color": "G",
+    "led": "warm"
+   }
+  ],
+  "ARV-BED-002W": [
+   {
+    "size": 1600,
+    "color": "G"
+   }
+  ],
+  "ARV-BED-003": [
+   {
+    "size": 1800,
+    "fabric": "beige",
+    "color": "C"
+   }
+  ],
+  "ARV-BED-001": [
+   {
+    "size": 1600,
+    "color": "W"
+   }
+  ],
+  "ARV-NST-004": [
+   {
+    "width": 500,
+    "color": "W"
+   },
+   {
+    "width": 500,
+    "color": "G"
+   }
+  ],
+  "ARV-NST-005": [
+   {
+    "width": 800,
+    "color": "O",
+    "metal": "white"
+   }
+  ],
+  "ARV-NST-001": [
+   {
+    "color": "W"
+   }
+  ],
+  "ARV-NST-002": [
+   {
+    "color": "W"
+   }
+  ],
+  "ARV-NST-003": [
+   {
+    "color": "W"
+   }
+  ],
+  "ARV-BTH-001": [
+   {
+    "width": 800,
+    "color": "W",
+    "metal": "black"
+   }
+  ],
+  "ARV-WRD-004": [
+   {
+    "width": 1800,
+    "height": 2700,
+    "color": "W"
+   }
+  ],
+  "ARV-WRD-005": [
+   {
+    "width": 800,
+    "color": "G"
+   }
+  ],
+  "ARV-WRD-006": [
+   {
+    "width": 2400,
+    "color": "G",
+    "metal": "black"
+   }
+  ],
+  "ARV-WRD-001": [
+   {
+    "width": 1200,
+    "color": "W"
+   }
+  ],
+  "ARV-WRD-002": [
+   {
+    "width": 1800,
+    "color": "W",
+    "doors": "ldsp"
+   }
+  ],
+  "ARV-WRD-003": [
+   {
+    "color": "W"
+   }
+  ],
+  "ARV-WRD-007": [
+   {
+    "width": 2000,
+    "color": "W"
+   }
+  ],
+  "ARV-LIV-001": [
+   {
+    "length": 2400,
+    "color": "G",
+    "panel": "slats"
+   }
+  ],
+  "ARV-LIV-002": [
+   {
+    "width": 1200,
+    "color": "G",
+    "metal": "black"
+   }
+  ],
+  "ARV-TBL-001": [
+   {
+    "size": 1200,
+    "top": "W",
+    "metal": "black"
+   }
+  ],
+  "ARV-TBL-002": [
+   {
+    "color": "W",
+    "side": "right"
+   }
+  ],
+  "ARV-TBL-003": [
+   {
+    "size": 1600,
+    "top": "O",
+    "metal": "black"
+   }
+  ],
+  "ARV-TBL-004": [
+   {
+    "size": 1400,
+    "top": "W",
+    "metal": "black",
+    "pedestal": "yes"
+   }
+  ],
+  "ARV-OFF-007": [
+   {
+    "size": 1600,
+    "color": "O",
+    "accent": "G",
+    "return": "right"
+   }
+  ],
+  "ARV-OFF-004": [
+   {
+    "width": 1600,
+    "color": "W",
+    "accent": "O"
+   }
+  ],
+  "ARV-OFF-005": [
+   {
+    "color": "W"
+   }
+  ],
+  "ARV-OFF-006": [
+   {
+    "type": "closed",
+    "color": "W"
+   }
+  ],
+  "ARV-OFF-003": [
+   {
+    "length": 2400,
+    "top": "O",
+    "metal": "black"
+   }
+  ],
+  "ARV-OFF-001": [
+   {
+    "size": 1200,
+    "depth": 700,
+    "top": "W",
+    "metal": "black",
+    "screen": "none"
+   }
+  ],
+  "ARV-OFF-002": [
+   {
+    "seats": 2,
+    "top": "W",
+    "metal": "black"
+   }
+  ]
+ }
+}

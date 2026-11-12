@@ -1,0 +1,72 @@
+{
+ "sku": "ARV-BED-003",
+ "name": "Кровать «Кокон»",
+ "category": "BED",
+ "builder": "bed_cocoon",
+ "product_en": "upholstered bed with wall panel",
+ "room_en": "bedroom",
+ "line": "Тренд",
+ "desc": "Мягкая кровать, стеновая панель во всю стену, подвесные тумбы и бра.",
+ "sources": [
+  [
+   "Blum Cabinet Configurator",
+   "https://blum.com/nz/en/services/planning-construction-product-selection/cabinet-configurator"
+  ],
+  [
+   "Сварной каркас — собственный чертёж Arvello (труба по ГОСТ, расчёт в техкарте)",
+   ""
+  ]
+ ],
+ "axes": [
+  {
+   "key": "size",
+   "label": "Спальное место",
+   "mode": "frame",
+   "values": [
+    1600,
+    1800
+   ],
+   "labels": {
+    "1600": "160 × 200",
+    "1800": "180 × 200"
+   }
+  },
+  {
+   "key": "fabric",
+   "label": "Ткань",
+   "mode": "frame",
+   "values": [
+    "beige",
+    "grey"
+   ],
+   "labels": {
+    "beige": "букле бежевое",
+    "grey": "велюр серый"
+   }
+  },
+  {
+   "key": "color",
+   "label": "Стена и тумбы",
+   "mode": "frame",
+   "values": [
+    "C",
+    "W",
+    "G",
+    "O"
+   ],
+   "labels": {
+    "C": "кашемир",
+    "W": "белый",
+    "G": "графит",
+    "O": "дуб"
+   }
+  }
+ ],
+ "angles": [
+  "hero",
+  "front",
+  "side",
+  "detail",
+  "lifestyle"
+ ]
+}

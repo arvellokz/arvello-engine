@@ -1,0 +1,55 @@
+{
+ "sku": "ARV-TBL-002",
+ "name": "Стол «Студент»",
+ "category": "TBL",
+ "builder": "desk_student",
+ "product_en": "writing desk",
+ "room_en": "bedroom",
+ "line": "STD",
+ "desc": "Письменный стол 1200 мм с тумбой на 3 ящика.",
+ "sources": [
+  [
+   "Blum Cabinet Configurator",
+   "https://blum.com/nz/en/services/planning-construction-product-selection/cabinet-configurator"
+  ]
+ ],
+ "axes": [
+  {
+   "key": "color",
+   "label": "Цвет",
+   "mode": "frame",
+   "values": [
+    "W",
+    "C",
+    "O",
+    "G"
+   ],
+   "labels": {
+    "W": "белый",
+    "C": "кашемир",
+    "O": "дуб",
+    "G": "графит"
+   }
+  },
+  {
+   "key": "side",
+   "label": "Тумба",
+   "mode": "frame",
+   "values": [
+    "right",
+    "left"
+   ],
+   "labels": {
+    "right": "справа",
+    "left": "слева"
+   }
+  }
+ ],
+ "angles": [
+  "hero",
+  "front",
+  "side",
+  "detail",
+  "lifestyle"
+ ]
+}

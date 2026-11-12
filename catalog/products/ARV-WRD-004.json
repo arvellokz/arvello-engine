@@ -1,0 +1,67 @@
+{
+ "sku": "ARV-WRD-004",
+ "name": "Шкаф «Стена»",
+ "category": "WRD",
+ "builder": "wardrobe_flush",
+ "product_en": "built-in handleless wardrobe",
+ "room_en": "bedroom",
+ "axes": [
+  {
+   "key": "width",
+   "label": "Ширина",
+   "mode": "frame",
+   "values": [
+    1200,
+    1800,
+    2400
+   ],
+   "labels": {
+    "1200": "120 см",
+    "1800": "180 см",
+    "2400": "240 см"
+   }
+  },
+  {
+   "key": "height",
+   "label": "Высота потолка",
+   "mode": "frame",
+   "values": [
+    2400,
+    2700
+   ],
+   "labels": {
+    "2400": "240 см",
+    "2700": "270 см"
+   }
+  },
+  {
+   "key": "color",
+   "label": "Цвет",
+   "mode": "frame",
+   "values": [
+    "W",
+    "C",
+    "G",
+    "O"
+   ],
+   "labels": {
+    "W": "белый",
+    "C": "кашемир",
+    "G": "графит",
+    "O": "дуб"
+   }
+  }
+ ],
+ "angles": [
+  "hero",
+  "front",
+  "side",
+  "detail",
+  "lifestyle"
+ ],
+ "lifestyle_only": {
+  "width": 1800,
+  "height": 2700
+ },
+ "line": "Тренд"
+}

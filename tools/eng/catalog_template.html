@@ -1,0 +1,261 @@
+<title>Каталог Arvello: сквозной пример</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: слева список моделей по категориям, справа паспорт выбранной модели — 3D, чертёж, спецификация, затраты */
+:root {
+  --bg: #EEEDE9; --surface: #FFFFFF; --ink: #2E3033; --muted: #686B70; --line: #D3D0C9;
+  --oak: #8A6A3F; --oak-soft: #F1E7D8; --warn: #A23B2A; --ok: #2F6B45; --stage: #E4E2DC; --sel: #2E3033; --sel-ink: #F4F2EE;
+  --body: "Onest", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #1B1C1E; --surface: #242628; --ink: #E9E7E2; --muted: #A2A4A8; --line: #3A3C40;
+  --oak: #D2B183; --oak-soft: #3A3127; --warn: #E07A66; --ok: #7CC495; --stage: #2B2D30; --sel: #E9E7E2; --sel-ink: #1B1C1E; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #1B1C1E; --surface: #242628; --ink: #E9E7E2; --muted: #A2A4A8; --line: #3A3C40;
+  --oak: #D2B183; --oak-soft: #3A3127; --warn: #E07A66; --ok: #7CC495; --stage: #2B2D30; --sel: #E9E7E2; --sel-ink: #1B1C1E; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font: 14.5px/1.5 var(--body); }
+.wrap { max-width: 1320px; margin: 0 auto; padding-block: 24px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 18px; }
+.eyebrow { font: 500 12px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { font: 700 clamp(24px, 3.4vw, 34px)/1.1 var(--body); margin: 4px 0 6px; text-wrap: balance; }
+.lead { margin: 0; color: var(--muted); max-width: 72ch; }
+.summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.summary > div { background: var(--surface); padding: 10px 14px; display: grid; gap: 2px; }
+.summary span, .facts span { font: 500 11px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.summary b { font: 600 22px var(--body); font-variant-numeric: tabular-nums; }
+.layout { display: grid; grid-template-columns: 270px minmax(0, 1fr); gap: 18px; align-items: start; }
+nav.list { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 8px); max-height: calc(100vh - 24px); overflow: auto; }
+nav.list h3 { font: 500 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 10px 8px 4px; }
+nav.list button { display: flex; justify-content: space-between; gap: 8px; width: 100%; text-align: left; font: inherit; font-size: 13.5px; color: var(--ink); background: none; border: 0; border-radius: 6px; padding: 6px 8px; cursor: pointer; }
+nav.list button small { font: 11px var(--mono); color: var(--muted); }
+nav.list button[aria-current="true"] { background: var(--sel); color: var(--sel-ink); }
+nav.list button[aria-current="true"] small { color: inherit; opacity: .75; }
+nav.list button:focus-visible, .tools button:focus-visible, a:focus-visible { outline: 2px solid var(--oak); outline-offset: 2px; }
+main { display: grid; gap: 14px; min-width: 0; }
+.head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 16px; align-items: end; }
+.head h2 { font: 700 26px var(--body); margin: 0; }
+.status { font-size: 13px; color: var(--warn); }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.facts > div { background: var(--surface); padding: 10px 14px; display: grid; gap: 2px; min-width: 0; }
+.facts b { font: 600 17px var(--body); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.facts em { font-style: normal; font-size: 12.5px; color: var(--muted); }
+.mono { font-family: var(--mono) !important; }
+.stage { position: relative; background: var(--stage); border-radius: 10px; aspect-ratio: 16 / 8; min-height: 280px; max-width: 100%; overflow: hidden; }
+.stage canvas { display: block; width: 100%; height: 100%; }
+.tools { position: absolute; left: 12px; bottom: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+.tools button { font: 500 13px var(--body); background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; cursor: pointer; }
+.tools button[aria-pressed="true"] { border-color: var(--oak); color: var(--oak); }
+.legend { position: absolute; right: 12px; top: 12px; font: 12px var(--mono); color: var(--muted); background: var(--surface); padding: 6px 10px; border-radius: 6px; max-width: 65%; }
+h3.sec { font: 600 18px var(--body); margin: 8px 0 0; padding-top: 12px; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; }
+h3.sec small { font: 400 12px var(--mono); color: var(--muted); }
+h3.sec a { font: 500 13px var(--body); color: var(--oak); }
+.checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 13.5px; }
+.checks .ok b { color: var(--ok); } .checks .bad { color: var(--warn); }
+.warns { margin: 0; padding: 10px 14px 10px 30px; background: var(--oak-soft); border-radius: 8px; font-size: 13.5px; display: grid; gap: 3px; }
+.sheets { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; }
+.dl { font: 500 13px var(--body); background: var(--ink); color: var(--bg); border: 0; border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+.dl[disabled] { opacity: .6; cursor: progress; }
+.dlst { font: 12px var(--mono); color: var(--muted); }
+.sheets figure { margin: 0; display: grid; gap: 4px; }
+.sheets figcaption { font: 12px var(--mono); color: var(--muted); }
+.sheets img { cursor: zoom-in; }
+.zoom { position: fixed; inset: 0; z-index: 30; background: rgba(12,13,15,.86); overflow: auto; display: grid; place-items: start center;
+  padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.zoom img { width: min(1800px, 100%); max-width: none; background: #fff; border-radius: 4px; cursor: zoom-out; }
+.zoom button { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 12px); right: calc(env(safe-area-inset-right, 0px) + 12px); font: 600 14px var(--body); border: 0; border-radius: 6px; padding: 8px 12px; background: #fff; color: #2E3033; cursor: pointer; }
+.sheets img { width: 100%; border: 1px solid var(--line); border-radius: 6px; background: #fff; aspect-ratio: 420 / 297; object-fit: contain; }
+.tw { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 500 11px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+td { font-variant-numeric: tabular-nums; }
+td.n, th.n { text-align: right; white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+tr.g td { font-weight: 600; background: var(--bg); }
+.note { margin: 0; font-size: 13px; color: var(--warn); }
+.pill { font: 500 11px var(--mono); background: var(--oak-soft); color: var(--oak); padding: 1px 6px; border-radius: 10px; white-space: nowrap; }
+@media (max-width: 860px) { .layout { grid-template-columns: 1fr; } nav.list { position: static; max-height: 260px; } .stage { aspect-ratio: 4 / 3; } }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Arvello · единый источник геометрии · 29.10.2026</div>
+    <h1>Весь каталог: одна конфигурация, один снимок</h1>
+    <p class="lead">Для каждой модели показана одна конфигурация. 3D, чертёж, спецификация, раскрой и затраты построены из одного снимка, и проверки ниже это подтверждают. «Опора» — инженерная ревизия R03E; остальные модели — каталожная геометрия: конструкция и крепёж ещё не разработаны, спецификация — оценка по 3D.</p>
+  </header>
+  <section class="summary" id="summary" aria-label="Итоги"></section>
+  <div class="layout">
+    <nav class="list" id="list" aria-label="Модели"></nav>
+    <main id="main">
+      <div class="head"><div><div class="eyebrow" id="p-sku"></div><h2 id="p-name"></h2></div><div class="status" id="p-status"></div></div>
+      <div class="facts" id="p-facts"></div>
+      <div class="stage" id="stage">
+        <div class="legend" id="legend"></div>
+        <div class="tools">
+          <button id="t-ctx" type="button" aria-pressed="true">Показывать технику и декор</button>
+          <button id="t-reset" type="button">Ракурс по умолчанию</button>
+        </div>
+      </div>
+      <h3 class="sec">Совпадение</h3>
+      <ul class="checks" id="p-checks"></ul>
+      <ul class="warns" id="p-warn"></ul>
+      <h3 class="sec">Чертёж <small id="p-pages"></small> <button class="dl" id="p-pdf" type="button" hidden>Скачать PDF</button> <span class="dlst" id="p-pdfst" role="status"></span></h3>
+      <div class="sheets" id="p-sheets"></div>
+      <h3 class="sec">Спецификация</h3>
+      <div class="tw"><table><thead><tr><th>Деталь</th><th>Материал</th><th>Декор / цвет</th><th>Размер, мм</th><th class="n">Кол.</th></tr></thead><tbody id="p-bom"></tbody></table></div>
+      <h3 class="sec">Покупные изделия</h3>
+      <div class="tw"><table><thead><tr><th>Наименование</th><th>Спецификация</th><th class="n">Кол.</th><th>Статус</th></tr></thead><tbody id="p-buy"></tbody></table></div>
+      <h3 class="sec">Раскрой плит <small>лист 2800 × 2070, оценка полосами</small></h3>
+      <div class="tw"><table><thead><tr><th>Материал</th><th>Декор</th><th class="n">Деталей</th><th class="n">Листов</th><th class="n">Заполнение</th><th>Не помещается в лист</th></tr></thead><tbody id="p-sheetplan"></tbody></table></div>
+      <h3 class="sec">Состав затрат</h3>
+      <p class="note" id="p-pricenote"></p>
+      <div class="tw"><table><thead><tr><th>Статья</th><th class="n">Количество</th><th class="n">Цена</th><th class="n">Сумма</th></tr></thead><tbody id="p-cost"></tbody></table></div>
+    </main>
+  </div>
+</div>
+<div class="zoom" id="zoom" hidden><button type="button" id="zoomclose">Закрыть</button><img id="zoomimg" alt=""></div>
+
+<script type="application/json" id="data">__DATA__</script>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+const D = JSON.parse(document.getElementById("data").textContent);
+const $ = id => document.getElementById(id);
+const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const money = x => Math.round(x).toLocaleString("ru-RU").replace(/,/g, " ") + " ₸";
+const items = D.items, bySku = Object.fromEntries(items.map(i => [i.sku, i]));
+const okAll = i => i.checks.every(c => c[1]);
+$("summary").innerHTML = [
+  ["Моделей", items.length], ["Вариантов в 3D-каталоге", D.meta.variants],
+  ["Листов чертежей", items.reduce((s, i) => s + i.pages, 0)], ["С расхождениями", items.filter(i => !okAll(i)).length],
+  ["В производство выдано", 0]
+].map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join("");
+let html = "";
+for (const [cat, title] of D.meta.cats) {
+  const list = items.filter(i => i.cat === cat);
+  if (!list.length) continue;
+  html += `<h3>${esc(title)}</h3>` + list.map(i => `<button type="button" data-sku="${i.sku}"><span>${esc(i.name)}</span><small>${i.rev}${okAll(i) ? "" : " ✗"}</small></button>`).join("");
+}
+$("list").innerHTML = html;
+$("list").addEventListener("click", e => { const b = e.target.closest("button[data-sku]"); if (b) location.hash = b.dataset.sku; });
+
+// 3D
+const stage = $("stage");
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+stage.prepend(renderer.domElement);
+const scene = new THREE.Scene();
+const cam = new THREE.PerspectiveCamera(32, 2, 10, 40000);
+const ctl = new OrbitControls(cam, renderer.domElement); ctl.enableDamping = true;
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8a8a8a, 1.6));
+const sun = new THREE.DirectionalLight(0xffffff, 1.3); sun.position.set(-2400, 4000, 3000); scene.add(sun);
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(20000, 20000), new THREE.MeshStandardMaterial({ color: 0xcfcdc7, roughness: 1 }));
+floor.rotation.x = -Math.PI / 2; floor.position.y = -0.5; scene.add(floor);
+let group = null, cur = null, showCtx = true, home = null;
+function build3d() {
+  if (group) { scene.remove(group); group.traverse(o => { o.geometry?.dispose(); o.material?.dispose?.(); }); }
+  group = new THREE.Group();
+  const P = cur.parts3d;
+  const xs = P.flatMap(p => [p[1], p[4]]), ys = P.flatMap(p => [p[2], p[5]]), zs = P.flatMap(p => [p[6]]);
+  const cx = (Math.min(...xs) + Math.max(...xs)) / 2, cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+  const W = Math.max(...xs) - Math.min(...xs), Dd = Math.max(...ys) - Math.min(...ys), H = Math.max(...zs);
+  let n = 0;
+  for (const p of P) {
+    const kind = p[8];
+    if (!showCtx && kind === "context") continue;
+    const [x0, y0, z0, x1, y1, z1] = p.slice(1, 7);
+    const g = new THREE.BoxGeometry(Math.max(x1 - x0, 1), Math.max(z1 - z0, 1), Math.max(y1 - y0, 1));
+    const ctx = kind === "context";
+    const m = new THREE.MeshStandardMaterial({ color: p[7], roughness: 0.6, metalness: ["tube", "plate", "cap"].includes(kind) ? 0.3 : 0,
+      transparent: ctx || kind === "glass", opacity: ctx ? 0.35 : kind === "glass" ? 0.6 : 1 });
+    const mesh = new THREE.Mesh(g, m);
+    mesh.position.set((x0 + x1) / 2 - cx, (z0 + z1) / 2, -((y0 + y1) / 2 - cy));
+    if (!ctx) { mesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(g), new THREE.LineBasicMaterial({ color: 0x1d1e20, transparent: true, opacity: 0.28 }))); n++; }
+    group.add(mesh);
+  }
+  scene.add(group);
+  const R = Math.max(W, Dd, H);
+  home = { pos: new THREE.Vector3(R * 0.95, H * 0.85 + R * 0.35, R * 1.15), tgt: new THREE.Vector3(0, H * 0.42, 0) };
+  $("legend").textContent = `${cur.sku} · ${n} деталей изделия · снимок ${cur.hash}`;
+}
+function goHome() { cam.position.copy(home.pos); ctl.target.copy(home.tgt); ctl.update(); }
+function size() { const r = stage.getBoundingClientRect(); renderer.setSize(r.width, r.height, false); cam.aspect = r.width / r.height; cam.updateProjectionMatrix(); }
+new ResizeObserver(size).observe(stage);
+(function loop() { ctl.update(); renderer.render(scene, cam); requestAnimationFrame(loop); })();
+$("t-ctx").addEventListener("click", e => { showCtx = !showCtx; e.currentTarget.setAttribute("aria-pressed", String(showCtx)); build3d(); });
+$("t-reset").addEventListener("click", goHome);
+
+function show(sku) {
+  cur = bySku[sku] || items[0];
+  document.querySelectorAll("#list button").forEach(b => b.setAttribute("aria-current", String(b.dataset.sku === cur.sku)));
+  $("p-sku").textContent = `${cur.sku} · ${cur.line}`;
+  $("p-name").textContent = cur.name;
+  $("p-status").textContent = `${cur.rev} · ${cur.status}`;
+  const opts = Object.entries(cur.opts).map(([k, v]) => `${k} ${v}`).join(", ");
+  $("p-facts").innerHTML = [
+    ["Снимок конфигурации", `<b class="mono">${cur.hash}</b><em>${esc(opts)}</em>`],
+    ["Габарит, мм", `<b>${cur.dims}</b><em>Ш × Г × В</em>`],
+    ["Деталей изделия", `<b>${cur.bom.reduce((s, r) => s + r[4], 0)}</b><em>${cur.bom.length} позиций спецификации</em>`],
+    ["Цена по формуле", `<b>${money(cur.cost.price)}</b><em>цены — пример</em>`],
+  ].map(([k, v]) => `<div><span>${k}</span>${v}</div>`).join("");
+  $("p-checks").innerHTML = cur.checks.map(([n, ok, t]) => `<li class="${ok ? "ok" : "bad"}"><b>${ok ? "✓" : "✗"}</b> <b>${esc(n)}</b> · ${esc(t)}</li>`).join("")
+    + cur.rules.map(([n, ok]) => `<li class="${ok ? "ok" : "bad"}"><b>${ok ? "✓" : "✗"}</b> ${esc(n)}</li>`).join("");
+  $("p-warn").innerHTML = cur.warn.map(w => `<li>${esc(w)}</li>`).join("");
+  $("p-pages").textContent = `${cur.pages} листов A3 · нажмите на лист, чтобы увеличить`;
+  $("p-pdfst").textContent = "";
+  $("p-sheets").innerHTML = Array.from({ length: cur.pages }, (_, k) => k + 1)
+    .map(n => `<figure><img src="sheets/${cur.sku}-${n}.png" alt="Лист ${n} чертежа ${esc(cur.name)}" loading="lazy"><figcaption>Лист ${n} / ${cur.pages}</figcaption></figure>`).join("");
+  $("p-bom").innerHTML = cur.bom.map(r => `<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td>${esc(r[2])}</td><td>${esc(r[3])}</td><td class="n">${r[4]}</td></tr>`).join("");
+  $("p-buy").innerHTML = cur.buy.length ? cur.buy.map(r => `<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td class="n">${r[2]} ${esc(r[3])}</td><td><span class="pill">${esc(r[4])}</span></td></tr>`).join("")
+    : `<tr><td colspan="4">Покупных изделий в модели нет</td></tr>`;
+  $("p-sheetplan").innerHTML = cur.sheets.length ? cur.sheets.map(r => `<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td class="n">${r[2]}</td><td class="n">${r[3]}</td><td class="n">${Math.round(r[4] * 100)}%</td><td>${esc(r[5].join(", ") || "—")}</td></tr>`).join("")
+    : `<tr><td colspan="6">Плитных деталей нет</td></tr>`;
+  const G = {};
+  for (const l of cur.cost.lines) (G[l[0]] ||= []).push(l);
+  let c = "";
+  for (const [g, ls] of Object.entries(G)) {
+    c += `<tr class="g"><td>${esc(g)}</td><td></td><td></td><td class="n">${money(ls.reduce((s, l) => s + l[6], 0))}</td></tr>`;
+    c += ls.map(l => `<tr><td>${esc(l[1])}</td><td class="n">${+l[2].toFixed(3)} ${esc(l[3])}${l[5] ? ` +${Math.round(l[5] * 100)}%` : ""}</td><td class="n">${money(l[4])}</td><td class="n">${money(l[6])}</td></tr>`).join("");
+  }
+  c += `<tr><td>Резерв</td><td></td><td></td><td class="n">${money(cur.cost.reserve)}</td></tr>`;
+  c += `<tr class="g"><td>Себестоимость</td><td></td><td></td><td class="n">${money(cur.cost.cost)}</td></tr>`;
+  c += `<tr class="g"><td>Цена = себестоимость / (1 − ${cur.cost.margin}), вверх до 1 000</td><td></td><td></td><td class="n">${money(cur.cost.price)}</td></tr>`;
+  $("p-cost").innerHTML = c;
+  $("p-pricenote").textContent = D.meta.prices_status + (cur.cost.missing.length ? " Не вошло: " + cur.cost.missing.join("; ") : "");
+  size(); build3d(); goHome();
+}
+$("p-sheets").addEventListener("click", e => {
+  const img = e.target.closest("img"); if (!img) return;
+  $("zoomimg").src = img.src; $("zoomimg").alt = img.alt; $("zoom").hidden = false; $("zoomclose").focus();
+});
+const closeZoom = () => { $("zoom").hidden = true; };
+$("zoom").addEventListener("click", closeZoom);
+addEventListener("keydown", e => { if (e.key === "Escape") closeZoom(); });
+let downloads = null;
+(async () => {
+  try { downloads = await window.claude?.use?.("downloads"); } catch { downloads = null; }
+  $("p-pdf").hidden = !downloads;
+})();
+$("p-pdf").addEventListener("click", async () => {
+  if (!downloads) return;
+  const btn = $("p-pdf"); btn.disabled = true; $("p-pdfst").textContent = "Готовлю файл…";
+  try {
+    const r = await fetch(`drawings/${cur.sku}.pdf`);
+    if (!r.ok) throw { code: "fetch", message: String(r.status) };
+    await downloads.save({ filename: `${cur.sku}-${cur.hash}.pdf`, data: await r.blob() });
+    $("p-pdfst").textContent = "Сохранено";
+  } catch (e) {
+    $("p-pdfst").textContent = e?.code === "declined" ? "Сохранение отменено"
+      : e?.code === "rate_limited" ? "Окно сохранения уже открыто — подтвердите его"
+      : "Не удалось скачать здесь; PDF всех моделей есть в архиве чертежей";
+  } finally { btn.disabled = false; }
+});
+function route() { const h = location.hash.slice(1); show(bySku[h] ? h : "ARV-TBL-003"); }
+addEventListener("hashchange", route);
+route();
+</script>

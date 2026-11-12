@@ -1,0 +1,66 @@
+{
+ "sku": "ARV-LIV-001",
+ "name": "ТВ-зона «Экран»",
+ "category": "LIV",
+ "builder": "tv_unit",
+ "product_en": "floating TV console with wall panel",
+ "room_en": "living room",
+ "axes": [
+  {
+   "key": "length",
+   "label": "Длина тумбы",
+   "mode": "frame",
+   "values": [
+    1800,
+    2400
+   ],
+   "labels": {
+    "1800": "180 см",
+    "2400": "240 см"
+   }
+  },
+  {
+   "key": "color",
+   "label": "Цвет",
+   "mode": "frame",
+   "values": [
+    "O",
+    "G",
+    "W",
+    "C"
+   ],
+   "labels": {
+    "O": "дуб",
+    "G": "графит",
+    "W": "белый",
+    "C": "кашемир"
+   }
+  },
+  {
+   "key": "panel",
+   "label": "Стеновая панель",
+   "mode": "frame",
+   "values": [
+    "none",
+    "flat",
+    "slats"
+   ],
+   "labels": {
+    "none": "нет",
+    "flat": "гладкая",
+    "slats": "с рейками"
+   }
+  }
+ ],
+ "angles": [
+  "hero",
+  "front",
+  "side",
+  "detail",
+  "lifestyle"
+ ],
+ "lifestyle_only": {
+  "length": 2400
+ },
+ "line": "Тренд"
+}

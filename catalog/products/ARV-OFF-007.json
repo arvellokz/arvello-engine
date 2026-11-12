@@ -1,0 +1,81 @@
+{
+ "sku": "ARV-OFF-007",
+ "name": "Стол «Руководитель»",
+ "category": "OFF",
+ "builder": "exec_desk",
+ "product_en": "executive desk",
+ "room_en": "executive office",
+ "line": "Офис",
+ "desc": "Стол руководителя на панельных опорах с приставкой и тумбой.",
+ "sources": [
+  [
+   "Blum Cabinet Configurator",
+   "https://blum.com/nz/en/services/planning-construction-product-selection/cabinet-configurator"
+  ]
+ ],
+ "axes": [
+  {
+   "key": "size",
+   "label": "Длина",
+   "mode": "frame",
+   "values": [
+    1600,
+    1800,
+    2000
+   ],
+   "labels": {
+    "1600": "160 см",
+    "1800": "180 см",
+    "2000": "200 см"
+   }
+  },
+  {
+   "key": "color",
+   "label": "Столешница",
+   "mode": "frame",
+   "values": [
+    "O",
+    "G"
+   ],
+   "labels": {
+    "O": "дуб",
+    "G": "графит"
+   }
+  },
+  {
+   "key": "accent",
+   "label": "Акцент",
+   "mode": "frame",
+   "values": [
+    "G",
+    "O",
+    "C"
+   ],
+   "labels": {
+    "G": "графит",
+    "O": "дуб",
+    "C": "кашемир"
+   }
+  },
+  {
+   "key": "return",
+   "label": "Приставка",
+   "mode": "frame",
+   "values": [
+    "right",
+    "left"
+   ],
+   "labels": {
+    "right": "справа",
+    "left": "слева"
+   }
+  }
+ ],
+ "angles": [
+  "hero",
+  "front",
+  "side",
+  "detail",
+  "lifestyle"
+ ]
+}

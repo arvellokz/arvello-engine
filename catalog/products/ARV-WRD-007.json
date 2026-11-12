@@ -1,0 +1,53 @@
+{
+ "sku": "ARV-WRD-007",
+ "name": "Прихожая «Вход»",
+ "category": "WRD",
+ "builder": "hallway_set",
+ "product_en": "entryway set",
+ "room_en": "hallway",
+ "axes": [
+  {
+   "key": "width",
+   "label": "Ширина",
+   "mode": "frame",
+   "values": [
+    1600,
+    2000,
+    2400
+   ],
+   "labels": {
+    "1600": "160 см",
+    "2000": "200 см",
+    "2400": "240 см"
+   }
+  },
+  {
+   "key": "color",
+   "label": "Цвет шкафа",
+   "mode": "frame",
+   "values": [
+    "W",
+    "C",
+    "G",
+    "O"
+   ],
+   "labels": {
+    "W": "белый",
+    "C": "кашемир",
+    "G": "графит",
+    "O": "дуб"
+   }
+  }
+ ],
+ "angles": [
+  "hero",
+  "front",
+  "side",
+  "detail",
+  "lifestyle"
+ ],
+ "lifestyle_only": {
+  "width": 2000
+ },
+ "line": "Тренд"
+}

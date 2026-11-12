@@ -1,0 +1,72 @@
+{
+ "sku": "ARV-BTH-001",
+ "name": "Тумба «Поток»",
+ "category": "BTH",
+ "builder": "vanity_float",
+ "product_en": "floating bathroom vanity",
+ "room_en": "bathroom",
+ "line": "Тренд",
+ "desc": "Подвесная тумба под раковину на металлической раме.",
+ "sources": [
+  [
+   "Blum Cabinet Configurator",
+   "https://blum.com/nz/en/services/planning-construction-product-selection/cabinet-configurator"
+  ],
+  [
+   "Сварной каркас — собственный чертёж Arvello (труба по ГОСТ, расчёт в техкарте)",
+   ""
+  ]
+ ],
+ "axes": [
+  {
+   "key": "width",
+   "label": "Ширина",
+   "mode": "frame",
+   "values": [
+    800,
+    1000,
+    1200
+   ],
+   "labels": {
+    "800": "80 см",
+    "1000": "100 см",
+    "1200": "120 см"
+   }
+  },
+  {
+   "key": "color",
+   "label": "Цвет",
+   "mode": "frame",
+   "values": [
+    "O",
+    "G",
+    "W"
+   ],
+   "labels": {
+    "O": "дуб",
+    "G": "графит",
+    "W": "белый"
+   }
+  },
+  {
+   "key": "metal",
+   "label": "Металл",
+   "mode": "frame",
+   "values": [
+    "black",
+    "white"
+   ],
+   "labels": {
+    "black": "чёрный",
+    "white": "белый"
+   }
+  }
+ ],
+ "angles": [
+  "hero",
+  "front",
+  "side",
+  "detail",
+  "lifestyle"
+ ]
+}

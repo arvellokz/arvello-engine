@@ -1,0 +1,68 @@
+{
+ "sku": "ARV-LIV-002",
+ "name": "Стеллаж «Грань»",
+ "category": "LIV",
+ "builder": "shelf_divider",
+ "product_en": "room divider shelving",
+ "room_en": "living room",
+ "line": "Тренд",
+ "desc": "Стеллаж-перегородка из металла и дуба для зонирования.",
+ "sources": [
+  [
+   "Сварной каркас — собственный чертёж Arvello (труба по ГОСТ, расчёт в техкарте)",
+   ""
+  ]
+ ],
+ "axes": [
+  {
+   "key": "width",
+   "label": "Ширина",
+   "mode": "frame",
+   "values": [
+    1200,
+    1600,
+    2000
+   ],
+   "labels": {
+    "1200": "120 см",
+    "1600": "160 см",
+    "2000": "200 см"
+   }
+  },
+  {
+   "key": "color",
+   "label": "Короба",
+   "mode": "frame",
+   "values": [
+    "G",
+    "W",
+    "C"
+   ],
+   "labels": {
+    "G": "графит",
+    "W": "белый",
+    "C": "кашемир"
+   }
+  },
+  {
+   "key": "metal",
+   "label": "Металл",
+   "mode": "frame",
+   "values": [
+    "black",
+    "white"
+   ],
+   "labels": {
+    "black": "чёрный",
+    "white": "белый"
+   }
+  }
+ ],
+ "angles": [
+  "hero",
+  "front",
+  "side",
+  "detail",
+  "lifestyle"
+ ]
+}

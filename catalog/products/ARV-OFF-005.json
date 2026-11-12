@@ -1,0 +1,42 @@
+{
+ "sku": "ARV-OFF-005",
+ "name": "Тумба «Мобиль»",
+ "category": "OFF",
+ "builder": "mobile_pedestal",
+ "product_en": "mobile office pedestal",
+ "room_en": "office",
+ "line": "Офис",
+ "desc": "Мобильная тумба на колёсах с 3 ящиками и замком.",
+ "sources": [
+  [
+   "Blum Cabinet Configurator",
+   "https://blum.com/nz/en/services/planning-construction-product-selection/cabinet-configurator"
+  ]
+ ],
+ "axes": [
+  {
+   "key": "color",
+   "label": "Цвет",
+   "mode": "frame",
+   "values": [
+    "W",
+    "C",
+    "O",
+    "G"
+   ],
+   "labels": {
+    "W": "белый",
+    "C": "кашемир",
+    "O": "дуб",
+    "G": "графит"
+   }
+  }
+ ],
+ "angles": [
+  "hero",
+  "front",
+  "side",
+  "detail",
+  "lifestyle"
+ ]
+}

@@ -1,0 +1,75 @@
+{
+ "sku": "ARV-KIT-003",
+ "name": "Кухня «Тарлан»",
+ "category": "KIT",
+ "builder": "kitchen_std",
+ "product_en": "L-shaped kitchen",
+ "room_en": "kitchen",
+ "line": "STD",
+ "desc": "Угловая кухня 2400 + 1600 мм с ручками.",
+ "sources": [
+  [
+   "Blum Cabinet Configurator",
+   "https://blum.com/nz/en/services/planning-construction-product-selection/cabinet-configurator"
+  ],
+  [
+   "Ana White — нижний модуль кухни",
+   "https://www.ana-white.com/woodworking-projects/frameless-kitchen-base-cabinet-universal-template"
+  ],
+  [
+   "Ana White — верхний модуль кухни",
+   "https://www.ana-white.com/woodworking-projects/frameless-kitchen-wall-cabinet-universal-template"
+  ]
+ ],
+ "axes": [
+  {
+   "key": "layout",
+   "label": "Планировка",
+   "mode": "frame",
+   "values": [
+    "corner"
+   ],
+   "labels": {
+    "corner": "угловая 2400 + 1600"
+   }
+  },
+  {
+   "key": "base",
+   "label": "Низ",
+   "mode": "frame",
+   "values": [
+    "W",
+    "C",
+    "O",
+    "G"
+   ],
+   "labels": {
+    "W": "белый",
+    "C": "кашемир",
+    "O": "дуб",
+    "G": "графит"
+   }
+  },
+  {
+   "key": "top",
+   "label": "Верх",
+   "mode": "frame",
+   "values": [
+    "W",
+    "C"
+   ],
+   "labels": {
+    "W": "белый",
+    "C": "кашемир"
+   }
+  }
+ ],
+ "angles": [
+  "hero",
+  "front",
+  "side",
+  "detail",
+  "lifestyle"
+ ],
+ "cam_flip": true
+}

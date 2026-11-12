@@ -1,0 +1,79 @@
+{
+ "sku": "ARV-BED-002",
+ "name": "Кровать «Нимб»",
+ "category": "BED",
+ "builder": "floating_bed",
+ "product_en": "floating platform bed",
+ "room_en": "bedroom",
+ "axes": [
+  {
+   "key": "size",
+   "label": "Спальное место",
+   "mode": "frame",
+   "values": [
+    1600,
+    1800
+   ],
+   "labels": {
+    "1600": "160 × 200",
+    "1800": "180 × 200"
+   }
+  },
+  {
+   "key": "headboard",
+   "label": "Изголовье",
+   "mode": "frame",
+   "values": [
+    "flat",
+    "fluted",
+    "soft"
+   ],
+   "labels": {
+    "flat": "гладкое",
+    "fluted": "рифлёное",
+    "soft": "мягкое"
+   }
+  },
+  {
+   "key": "color",
+   "label": "Цвет",
+   "mode": "frame",
+   "values": [
+    "G",
+    "O",
+    "W"
+   ],
+   "labels": {
+    "G": "графит",
+    "O": "дуб",
+    "W": "белый"
+   }
+  },
+  {
+   "key": "led",
+   "label": "Подсветка",
+   "mode": "layer",
+   "values": [
+    "off",
+    "warm"
+   ],
+   "base": "off",
+   "labels": {
+    "off": "без подсветки",
+    "warm": "тёплая"
+   },
+   "layer_prompt": "Add only a warm 3000 K LED glow coming from under the platform and softly lighting the floor around the recessed base. No visible LED strip or wires."
+  }
+ ],
+ "angles": [
+  "hero",
+  "front",
+  "side",
+  "detail",
+  "lifestyle"
+ ],
+ "lifestyle_only": {
+  "size": 1600
+ },
+ "line": "Тренд"
+}
