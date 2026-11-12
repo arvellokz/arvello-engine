@@ -46,8 +46,8 @@ def verify(s, report=None, texts=None, known_q=()):
             ov = [min(a[k + "1"], b[k + "1"]) - max(a[k + "0"], b[k + "0"]) for k in "xyz"]
             if all(o > 0.01 for o in ov):
                 g = grooves.get(frozenset((a["id"], b["id"])))
-                if g and all(abs(min(a[k + "1"], b[k + "1"], g[k + "1"]) - max(a[k + "0"], b[k + "0"], g[k + "0"]) - o) < 0.01
-                             and abs(g[k + "1"] - g[k + "0"] - o) < 0.01 for k, o in zip("xyz", ov)):
+                if g and all(max(a[k + "0"], b[k + "0"]) >= g[k + "0"] - 0.01 and min(a[k + "1"], b[k + "1"]) <= g[k + "1"] + 0.01
+                             for k in "xyz"):                    # пересечение целиком внутри паза
                     continue
                 clash.append((a["id"], b["id"]))
     add("Детали не пересекаются (дно в пазу — по объёму паза)", not clash, "нет" if not clash else clash[:4])
@@ -176,8 +176,9 @@ def verify(s, report=None, texts=None, known_q=()):
                     if abs((w["z1"] - w["z0"]) - wall) > 0.01 or abs(w["z0"] - bt["z1"]) > 0.01:
                         e.append(f"{r['pre']}{r['n']}: стенка {nm} {w['z1'] - w['z0']:g} ≠ {wall:g} или не на дне")
                 skw = r["LW"] - 42
-                if abs((bt["x1"] - bt["x0"]) - (skw + 10)) > 0.01:          # раскрой Blum: дно 536 при SKW 526
-                    e.append(f"{r['pre']}{r['n']}: дно {bt['x1'] - bt['x0']:g} ≠ SKW + 10 = {skw + 10:g}")
+                cl = r.get("bottom_clear") or 0                         # раскрой Blum: дно 536 при SKW 526 (зазор 0)
+                if abs((bt["x1"] - bt["x0"]) - (skw + 10 - 2 * cl)) > 0.01 or cl < 0 or cl > 1:
+                    e.append(f"{r['pre']}{r['n']}: дно {bt['x1'] - bt['x0']:g} ≠ SKW + 10 − 2 × зазор {cl:g}")
                 if abs((bt["y1"] - bt["y0"]) - (r["NL"] - 10)) > 0.01:
                     e.append(f"{r['pre']}{r['n']}: длина дна ≠ SKL")
                 if abs(bt["z0"] - sl["z0"] - RECESS) > 0.01:

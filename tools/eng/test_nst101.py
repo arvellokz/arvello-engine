@@ -75,6 +75,20 @@ _, ch = run(BASE, "mok")
 expect("MOVENTO: исполнение по Blum", ch, "MOVENTO (раскрой Blum", "пройдено")
 expect("MOVENTO: исполнение по Blum", ch, "MOVENTO TIP-ON BLUMOTION", "пройдено")
 expect("MOVENTO: исполнение по Blum", ch, "Детали не пересекаются", "пройдено")
+# 6. ENG-002: фасад висит в 2,5 от передней стенки (как было при TIP-ON до 12.11) — вход самореза 6,5
+orig_dr = cab.Build.drawers
+def gap_drawers(self, *a, **k):
+    recs = orig_dr(self, *a, **k)
+    for r in recs:
+        fr = self.get(r["front"])
+        fr.y0 -= 2.5; fr.y1 -= 2.5
+    return recs
+cab.Build.drawers = gap_drawers
+_, ch = run({**BASE, "changer": "no"}, "fgap")
+expect("фасад с зазором 2,5 от стенки", ch, "Фасад ящика: вплотную", "ошибка")
+cab.Build.drawers = orig_dr
+_, ch = run({**BASE, "changer": "no"}, "fok")
+expect("фасад вплотную", ch, "Фасад ящика: вплотную", "пройдено")
 for tag, name, want, got, good in res:
     print(f"{'✓' if good else '✗'} {tag:36s} | {name:28s} | ожидалось: {want:13s} | получено: {got}")
 print("ИТОГ:", "все совпали" if all(r[-1] for r in res) else "есть расхождения")

@@ -285,6 +285,32 @@ def verify_new(s, texts):
         add("MOVENTO TIP-ON BLUMOTION: зазор фасада ≥ 2,5, точки профиля по каталогу 2024 с. 428, блок по NL и массе", ERR if bad else OK,
             f"{len(mv)} ящ., NL {nl}, {kg:g} кг" if not bad else f"{bad[0]}; всего {len(bad)}")
 
+    # 15. Фасад ящика крепится изнутри: вплотную к передней стенке, саморез входит в фасад и не выходит на лицо
+    #     (ENG-002: фасад висел в 2,5 от короба при TIP-ON — вход самореза 6,5 вместо 9)
+    drs_all = d.get("drawers", [])
+    if drs_all:
+        bad = []
+        for r in drs_all:
+            fr, fw = P[r["front"]], P[r["box"][2]]
+            gap = round(fw["y0"] - fr["y1"], 2)
+            fs = [h for h in holes if h["joint"] == f"J-{r['pre']}FRONT{r['n']}-BOX{r['n']}"]
+            on_face = [h for h in fs if h["part"] == fr["id"]]
+            for h in fs:
+                L = _len(h.get("fastener"))
+                if h["part"] != fw["id"] or h["dir"] != "-y" or L is None:
+                    continue
+                eng = L - (fw["y1"] - fw["y0"]) - gap
+                rest = (fr["y1"] - fr["y0"]) - eng
+                if gap > 0.01 or eng < 6 or rest < 3:
+                    bad.append(f"{r['pre']}ящ.{r['n']}: зазор фасад — стенка {gap:g}, вход {eng:g}, остаток до лица {rest:g}")
+                    break
+            if on_face:
+                bad.append(f"{r['pre']}ящ.{r['n']}: отверстие крепежа на фасаде ({on_face[0]['kind']})")
+            if not fs:
+                bad.append(f"{r['pre']}ящ.{r['n']}: нет крепления фасада")
+        add("Фасад ящика: вплотную к передней стенке, саморез изнутри — вход в фасад ≥ 6, остаток до лица ≥ 3",
+            ERR if bad else OK, f"{len(drs_all)} ящ." if not bad else f"{bad[0]}; всего {len(bad)}")
+
     # 9. Текстура дубовых дверей — одним направлением (вертикально)
     gr = {d["parts_ext"].get(p["id"], {}).get("grain") for p in doors if p["finish"] == "O"}
     if gr:

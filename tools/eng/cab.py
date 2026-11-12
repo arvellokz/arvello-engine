@@ -51,7 +51,11 @@ MOV_SERIES = (270, 300, 320, 350, 380, 400, 420, 450, 480, 500, 520)
 _PTS_MOV = {270: (19, 37, 69, 197), **{nl: (19, 37, 69, 243, 261) for nl in (300, 320, 350)},
             **{nl: (19, 37, 69, 243, 261, 293) for nl in (380, 400, 420, 450, 480, 500, 520)}}
 MOVENTO = {"under": 28.5, "axis": 38, "art": "760H{:04d}S", "name": "TIP-ON BLUMOTION", "gap": 2.5,
-           "ref": "Blum каталог 2022/23 стр. 436–437, TD-132", "groove": 5}
+           "ref": "Blum каталог 2022/23 стр. 436–437, TD-132", "groove": 5,
+           # зазор дна в пазу на сторону: 0 — как в раскрое Blum (дно SKW + 10). Blum зазор не задаёт — это решение
+           # Arvello вместе с цехом по фактической толщине плиты и ширине паза (вопрос цеху Ц-4); до согласования
+           # проба ящика заблокирована. Одно значение — для модели, чертежа детали и сборочных листов.
+           "bottom_clear": 0.0}
 
 
 def _ru(x):
@@ -411,7 +415,11 @@ class Build:
         NL = pick_nl(Dc, MOV_SERIES if movento else NL_SERIES)
         LW = colR.x0 - colL.x1
         bx0, bx1 = colL.x1 + 5, colR.x0 - 5
-        by0, by1 = yc0, yc0 + NL - 10
+        # накладной фасад крепится к коробу вплотную: короб начинается от тыльной стороны фасада. При TIP-ON / TIP-ON
+        # BLUMOTION закрытый ящик стоит на зазор впереди корпуса (Blum: регулировка глубины, зазор фасада 2,5 / 3,5),
+        # точки профиля — по-прежнему от передней кромки корпуса (yc0).
+        by0 = yc0 if setback else min(yc0, front_t)
+        by1 = by0 + NL - 10
         pts = movento_points(NL) if movento else blum_points(NL, tipon)
         recs = []
         hz_all = []
@@ -497,6 +505,7 @@ class Build:
                          "floor": floor_z, "ceil": ceil_z, "front": fr.id, "hz": hz, "pts": list(pts),
                          "box": boxids, "limit_top": limit, "through": handle_through, "notch": notch,
                          "front_t": front_t, "setback_front": bool(setback), "sys": "movento" if movento else "tandem",
+                         "bottom_clear": MOVENTO["bottom_clear"] if movento else None,
                          "load": load})
         nd = len(fronts)
         self.derived["drawers"] += recs
@@ -524,7 +533,9 @@ class Build:
         E = {"+z": "PVC04"}
         fp = self.part(f"{k}-F", "Стенка ящика передняя", bx0 + T, by0, zb1, bx1 - T, by0 + T, z1, "LDSP16", fin, "interior", edges=E)
         bp = self.part(f"{k}-B", "Стенка ящика задняя", bx0 + T, by1 - T, zb1, bx1 - T, by1, z1, "LDSP16", fin, "interior", edges=E)
-        bt = self.part(f"{k}-BOT", "Дно ящика", bx0 + T - g, by0, zb0, bx1 - T + g, by1, zb1, "LDSP16", fin, "interior")
+        c = MOVENTO["bottom_clear"]
+        bt = self.part(f"{k}-BOT", "Дно ящика", bx0 + T - g + c, by0, zb0, bx1 - T + g - c, by1, zb1, "LDSP16", fin,
+                       "interior")
         gr = self.derived.setdefault("grooves", [])
         for side, x0_, x1_ in ((sl, bx0 + T - g, bx0 + T), (sr, bx1 - T, bx1 - T + g)):
             gr.append({"part": side.id, "with": bt.id, "x0": x0_, "x1": x1_, "y0": by0, "y1": by1, "z0": zb0, "z1": zb1,
