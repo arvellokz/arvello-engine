@@ -2,7 +2,7 @@
 verify(s) -> [(проверка, ok, подробности)]."""
 from __future__ import annotations
 
-from .cab import BLUM, MOV_SERIES, MOVENTO, NL_SERIES, RECESS, blum_points, movento_points
+from .cab import BLUM, MOV_SERIES, MOVENTO, TECH, NL_SERIES, RECESS, blum_points, movento_points
 
 MADE = ("board", "tube", "plate")
 FACE = ("ecc_stem", "dowel_face", "conf_face")
@@ -160,7 +160,7 @@ def verify(s, report=None, texts=None, known_q=()):
             if abs(r["z0"] - (r["rb"] + sysd["under"] - RECESS)) > 0.01: e.append("низ дна")
             if r["Dc"] < r["NL"] + 3: e.append("NL+3")
             if r["limit_top"] - (r["z0"] + r["h"]) < 0 or r["limit_top"] < 0: e.append("над коробом")
-            if abs(r["rb"] - (r["floor"] + 1)) > 0.01 and r["n"] == 1: e.append("профиль над дном")
+            if abs(r["rb"] - (r["floor"] + TECH["runner_lift"])) > 0.01 and r["n"] == 1: e.append("профиль над дном")
             if r["pts"] != list(pts_of(r)): e.append("точки")
         add("Blum 560H / 760H: SKL = NL − 10, SKW = LW − 42, место NL + 3, NL из ряда системы", not e,
             f"{len(drs)} ящ." if not e else e[:4])

@@ -209,6 +209,22 @@ def head_bad(ax, cx, cy):           # головка выступает — за
     screw_shape(ax, cx, cy - 5, 1.6, 10, math.pi / 2, "screw", 1.0, z=12)
 
 
+# ------------------------------------------------------------------ П16: наклейки-различители
+def side_letter(name):
+    """Л / П по наименованию детали (левая / правая); иначе пусто."""
+    n = name.lower()
+    return "Л" if "лев" in n or n.endswith(" л") else "П" if "прав" in n or n.endswith(" п") else ""
+
+
+def sticker(pg, x, y, pos, letter, z=16):
+    """Наклейка на детали (как её видит сборщик): номер позиции + Л / П."""
+    w = 13 if letter else 8
+    pg.ax.add_patch(Rectangle((x, y - 3.2), w, 6.4, fc="#fffbe6", ec="k", lw=0.8, zorder=z))
+    pg.text(x + 1.2, y, str(pos), size=7.5, va="center", weight="bold", zorder=z + 1)
+    if letter:
+        pg.text(x + w - 1.2, y, letter, size=9, va="center", ha="right", weight="bold", color=RED, zorder=z + 1)
+
+
 # ------------------------------------------------------------------ рамки
 def check_box(pg, x, y, w, lines):
     h = 6 + 4.2 * len(lines)
@@ -258,6 +274,9 @@ def page_set(D, n, total):
         ob.draw([(b, E.HL, {"groove": g} if g else {})])
         E.pos_ball(pg, x + 4, y + 22, pos[k], r=3.6)
         pg.text(x + 25, y - 3, f"1× {nm}", size=7.5, va="center", ha="center")
+        let = side_letter(b["name"])
+        if let:
+            sticker(pg, x + 40, y + 6, pos[k], let)
     pg.text(12, 166, "Крепёж — в натуральную величину (головки условно)", size=9, weight="bold")
     cnt = lambda key, kind: len(E.joint_holes(D, key, kind))
     fx = [("CONF-7x50", cnt("BOX", "conf_face"), "конфирмат 7 × 50", "conf"),
@@ -299,6 +318,7 @@ def page_box1(D, n, total):
     ob.arrow((b["x1"] + 250, (b["y0"] + b["y1"]) / 2, b["z1"] + 40), (b["x1"] + 120, (b["y0"] + b["y1"]) / 2, b["z1"] + 40))
     E.pos_ball(pg, *ob.p(p["SL"]["x0"], p["SL"]["y0"], p["SL"]["z1"] + 15), pos["SL"], r=3.6)
     E.pos_ball(pg, *ob.p(bm["x1"], bm["y0"], bm["z1"] + 25), pos["BOT"], r=3.6)
+    sticker(pg, *ob.p(p["SL"]["x0"], p["SL"]["y1"], p["SL"]["z1"] + 40), pos["SL"], "Л")
     pair_box(pg, 152, 214, 48, 40, groove_ok, groove_bad, "паз внизу", "паз вверху")
     check_box(pg, 16, 196, 184, ["дно входит от руки, края заподлицо спереди и сзади",
                                  "туго или болтается — стоп, сообщить Arvello (зазор паза — наше значение [М], проба [О])"])
@@ -357,7 +377,9 @@ def page_box3(D, n, total):
     ob.arrow((SRm["x0"] + 60, (SRm["y0"] + SRm["y1"]) / 2, SRm["z1"] + 30),
              (p["SR"]["x0"] + 40, (SRm["y0"] + SRm["y1"]) / 2, SRm["z1"] + 30))
     E.pos_ball(pg, *ob.p(SRm["x1"], SRm["y0"], SRm["z1"] + 15), pos["SR"], r=3.6)
-    check_box(pg, 16, 140, 184, ["паз боковины — на край дна, задвинуть до стенок"])
+    sticker(pg, *ob.p(SRm["x1"], SRm["y1"], SRm["z1"] + 40), pos["SR"], "П")
+    check_box(pg, 16, 140, 184, ["паз боковины — на край дна, задвинуть до стенок",
+                                 f"наклейка {pos['SR']} П — правая боковина; с {pos['SL']} Л не путать"])
     pair_box(pg, 16, 66, 100, 50, groove_ok, groove_bad, "паз внизу — дно в пазу", "паз вверху — неверно")
     return pg
 

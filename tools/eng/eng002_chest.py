@@ -130,6 +130,9 @@ def page_set_carcass(D, n, total):
         ob.draw([(b, E.HL, {})])
         ball(pg, x + 4, y + 23, pos[pid])
         pg.text(x + 24, y - 3, f"1× {nm}", size=7, ha="center", va="center")
+        let = G.side_letter(b["name"])
+        if let:
+            G.sticker(pg, x + 30, y + 22, pos[pid], let)
     pg.text(12, 140, "Крепёж корпуса и цоколя (длина — в натуральную величину, головки условно)", size=9, weight="bold")
     H = D["H"]
     cnt = lambda fid: sum(1 for h in D["s"]["holes"] if h.get("fastener") == fid and "BOX" not in h["joint"]
@@ -174,6 +177,7 @@ def page_pre(D, n, total):
         st = [h for h in D["s"]["holes"] if h["part"] == pid and h["kind"] in ("ecc_stem", "dowel_face")]
         fasten(pg, D, ob, st, f"корпус 1 {pid}")
         ball(pg, *ob.p(S["x0"], S["y0"], S["z1"] + 40), pos[pid])
+        G.sticker(pg, *ob.p(S["x0"], S["y1"], S["z1"] + 60), pos[pid], G.side_letter(S["name"]))
     nb = len(H_(D, "J-L", "ecc_stem")) + len(H_(D, "J-R", "ecc_stem"))
     nd_ = len(H_(D, "J-L", "dowel_face")) + len(H_(D, "J-R", "dowel_face"))
     use(D, "ECC-BOLT", nb, "шаг 1"); use(D, "DOWEL-8x30", nd_, "шаг 1")
@@ -244,6 +248,8 @@ def page_stands(D, n, total):
         ob.arrow(((S["x0"] + S["x1"]) / 2, ym, S["z0"] - 5), ((S0["x0"] + S0["x1"]) / 2, ym, B["z1"] + 40))
     ball(pg, *ob.p(s1m["x0"], s1m["y0"], s1m["z1"] + 20), pos["PART-1"])
     ball(pg, *ob.p(s2m["x1"], s2m["y0"], s2m["z1"] + 20), pos["PART-2"])
+    G.sticker(pg, *ob.p(s1m["x0"] - 260, s1m["y1"], s1m["z1"] + 40), pos["PART-1"], "Л")
+    G.sticker(pg, *ob.p(s2m["x1"] + 60, s2m["y1"], s2m["z1"] + 40), pos["PART-2"], "П")
     x, y = ob.p(s1m["x0"], s1m["y0"] + 100, s1m["z0"] + 300)
     E.callout(pg, x, y, x - 4, y - 32, "стойка Л: гнёзда — влево", 7.5)
     x, y = ob.p(s2m["x1"], s2m["y0"] + 100, s2m["z0"] + 300)
@@ -261,6 +267,8 @@ def page_stands(D, n, total):
     ob2.arrow((rm["x0"] - 10, R["y0"] + 100, zc), (R["x0"] - 40, R["y0"] + 100, zc))
     ball(pg, *ob2.p(lm["x0"], lm["y0"], lm["z1"]), pos["SIDE-L"])
     ball(pg, *ob2.p(rm["x1"], rm["y0"], rm["z1"]), pos["SIDE-R"])
+    G.sticker(pg, *ob2.p(lm["x0"] - 200, lm["y1"], lm["z1"]), pos["SIDE-L"], "Л")
+    G.sticker(pg, *ob2.p(rm["x1"] + 40, rm["y1"], rm["z1"]), pos["SIDE-R"], "П")
     hd = [h for h in D["s"]["holes"] if h["kind"] == "ecc_housing" and h["part"] == "BOTTOM"]
     G.check_box(pg, 16, 58, 184, [f"{len(hd)} эксцентрика в дне — повернуть до упора (доступ сверху, изнутри)",
                                   "боковины стоят ровно по передней кромке дна"])
@@ -338,7 +346,7 @@ def page_runners(D, n, total):
     S = P["SIDE-L"]
     marks = [h for h in D["s"]["holes"] if h["part"] == "SIDE-L" and h["kind"] == "runner_mark"]
     sc = 0.12
-    x0, y0 = 22, 150
+    x0, y0 = 22, 162
     pg.rect(x0, y0, x0 + (S["y1"] - S["y0"]) * sc, y0 + (S["z1"] - S["z0"]) * sc, dict(lw=1.0, color="k", ls="-"),
             fill="#f3f3f3")
     for h in marks:
@@ -360,12 +368,13 @@ def page_runners(D, n, total):
     r0 = D["s"]["derived"]["drawers"]
     fl, rb0 = r0[0]["floor"], r0[0]["rb"]
     pitch = r0[1]["rb"] - r0[0]["rb"]
-    pg.text(x0, y0 - 16, f"нижняя ось {kit13.n_(round(rb0 + 38 - S['z0'], 1))} = дно {kit13.n_(fl - S['z0'])} + профиль над дном "
-            f"{kit13.n_(rb0 - fl)} [М] + ось 38 над низом профиля [Д]; шаг по высоте {kit13.n_(round(pitch, 1))} = шаг фасадов [М]",
-            size=6.8)
+    pg.text(x0, y0 - 16, f"нижняя ось {kit13.n_(round(rb0 + 38 - S['z0'], 1))} = дно {kit13.n_(fl - S['z0'])} + 38 (мин. Blum над "
+            f"опорой [Д]) + {kit13.n_(rb0 - fl)} запас [М]; шаг по высоте {kit13.n_(round(pitch, 1))} = шаг фасадов [М]", size=6.8)
+    pg.text(x0, y0 - 21, "Запас 1: Blum задаёт минимум 38 — запас держит его при допуске толщины плиты ±0,3; Blum его не требует.",
+            size=6.5, color="#444")
     G.count_badge(pg, 16, 126, nm, hp["SLIDE-SCREW-M"], "саморез 609.1500 Ø3,5 × 15 · без сверления, по разметке")
     G.check_box(pg, 16, 116, 184, ["все колонки и стойки — одинаково: профиль Л на левую стенку колонны, П — на правую",
-                                   "ось саморезов 38 над низом профиля; профили ставят ПОСЛЕ сборки корпуса [Д]",
+                                   "профили ставят ПОСЛЕ сборки корпуса; ось — по разметке (мин. 38 над дном [Д] + запас 1 [М])",
                                    "профили одного ящика — на одной высоте (уровень)"])
     G.step(pg, 12, 86, "К12", prefix="", title="TIP-ON BLUMOTION и синхронизация — по инструкции Blum в упаковке")
     sync = H["TIPON-SYNC"]["spec"]
@@ -422,7 +431,13 @@ def page_wall(D, n, total):
     car = [P[k] for k in ("BOTTOM", "TOP", "PART-1", "PART-2", "SIDE-L", "SIDE-R", "BACK")]
     ob = obl(pg, D, (16, 186, 196, 266), [(q, E.DONE, {}) for q in car], sgn=1)
     q = H["WALL-ANGLE"]["qty"]
-    wa = D["s"]["derived"]["wall_angles"]
+    wa_all = D["s"]["derived"]["wall_angles"]
+    wa = [a_ for a_ in wa_all if not a_.get("inside")]
+    for a_ in [a_ for a_ in wa_all if a_.get("inside")]:
+        cx_, cy_ = ob.p((a_["x0"] + a_["x1"]) / 2, a_["y1"], (a_["z0"] + a_["z1"]) / 2)
+        pg.ax.add_patch(Circle((cx_, cy_), 3.0, fc="none", ec=BLUE, lw=1.4, ls="--", zorder=14))
+        E.callout(pg, cx_, cy_, cx_ - 8, cy_ - 52, "3-й уголок: внутри левой колонны под крышкой, через ХДФ в стену [М]",
+                  7.2, BLUE)
     for a_ in wa:
         pts = [ob.p(a_["x0"], a_["y0"], a_["z"]), ob.p(a_["x1"], a_["y0"], a_["z"]), ob.p(a_["x1"], a_["y1"], a_["z"]),
                ob.p(a_["x0"], a_["y1"], a_["z"])]
@@ -431,10 +446,12 @@ def page_wall(D, n, total):
         pg.ax.add_patch(Circle((cx_, cy_), 2.4, fc=BLUE, ec="k", lw=0.6, zorder=14))
     x, y = ob.p((wa[-1]["x0"] + wa[-1]["x1"]) / 2, wa[-1]["y1"], T["z1"])
     xs_ = " и ".join(kit13.n_((a_["x0"] + a_["x1"]) / 2) for a_ in wa)
-    E.callout(pg, x, y, x - 90, y - 30, f"{q} уголка на крышке у стены: центры {xs_} от левого края [М]", 7.5, BLUE)
+    E.callout(pg, x, y, x - 90, y - 30, f"{len(wa)} уголка на крышке у стены: центры {xs_} от левого края [М]", 7.5, BLUE)
     if D["changer"]:
-        pg.text(16, 98, "Со столиком: левый уголок — справа от основания столика (крышка слева занята столиком), "
-                "проверено по модели.", size=7.5, color=BLUE)
+        pg.text(16, 96, "Со столиком: крышка слева занята столиком — оба верхних уголка справа от основания; слева — 3-й",
+                size=7.5, color=BLUE)
+        pg.text(16, 90, "уголок внутри колонны под крышкой (над верхним ящиком свободно ≈ 75, уголок 40) — проверено по "
+                "модели [М].", size=7.5, color=BLUE)
     G.count_badge(pg, 16, 176, q, hp["WALL-ANGLE"], H["WALL-ANGLE"]["name"].lower())
     pg.text(16, 166, "Крепёж в стену — по типу стены [М], проверить вытягиванием рукой [О]:", size=8.5, weight="bold")
     rows = [["бетон, кирпич полнотелый", "дюбель нейлоновый 8 + шуруп 5 × 60", "сверло Ø8 по бетону, глубина 65"],
@@ -444,8 +461,8 @@ def page_wall(D, n, total):
     pg.table(16, 160, ["Стена", "Крепёж", "Как"], rows, [50, 74, 60], row_h=6.2, size=7.2)
     G.check_box(pg, 16, 120, 184, ["комод выставлен по уровню; уголки к крышке — 2 самореза каждый [М]",
                                    "после крепления потянуть комод на себя — не отходит от стены"])
-    pg.text(16, 90, "Тип стены неизвестен до выезда (В-48) — крепёж везёт сборщик по таблице.", size=7.5, color="#444")
-    pg.text(16, 84, "Уголки — на крышке снаружи; разметке направляющих внутри колонн не мешают.", size=7.5, color="#444")
+    pg.text(16, 78, "Тип стены неизвестен до выезда (В-48) — крепёж везёт сборщик по таблице.", size=7.5, color="#444")
+    pg.text(16, 72, "Уголки — на крышке снаружи; разметке направляющих внутри колонн не мешают.", size=7.5, color="#444")
     return pg
 
 
@@ -471,10 +488,11 @@ def page_changer(D, n, total):
     use(D, "SCREW-4x25T", len(mt), "С2")
     pg.text(68, 74, "вид снизу: крышка комода, столик сверху", size=7, ha="center", style="italic")
     ob3 = obl(pg, D, (128, 186, 198, 226), [(T, E.DONE, {}), (base, E.HL, {})] + [(q, E.HL, {}) for q in rims], sgn=1)
-    for a_ in D["s"]["derived"]["wall_angles"]:
+    for a_ in [q_ for q_ in D["s"]["derived"]["wall_angles"] if not q_.get("inside")]:
         x, y = ob3.p((a_["x0"] + a_["x1"]) / 2, (a_["y0"] + a_["y1"]) / 2, a_["z"])
         pg.ax.add_patch(Circle((x, y), 2.2, fc=BLUE, ec="k", lw=0.6, zorder=13))
-    pg.text(163, 181, "уголки к стене (синие) — вне основания", size=6.8, ha="center", color=BLUE)
+    pg.text(163, 181, "верхние уголки (синие) — вне основания;", size=6.8, ha="center", color=BLUE)
+    pg.text(163, 177, "3-й — внутри левой колонны (К10)", size=6.8, ha="center", color=BLUE)
     G.count_badge(pg, 126, 140, len(mt), hp["SCREW-4x25T"], "саморез 4 × 25 · снизу")
     pg.text(126, 130, "доступ — из верхнего левого ящика", size=7.5)
     pg.text(126, 125, "(ящик снять)", size=7.5)
@@ -482,6 +500,34 @@ def page_changer(D, n, total):
                                    "столик не качается", "проверка столика — В-106 [О]"])
     G.check_box(pg, 16, 64, 184, ["комод закреплён к стене ДО установки столика",
                                   "при снятии столика — заглушки Ø14 в отверстия крепления"])
+    return pg
+
+
+def labels(D):
+    """Наклейки: по одной на каждую изготавливаемую деталь (из модели): позиция, Л / П, наименование."""
+    out = []
+    for p in D["s"]["parts"]:
+        if p["kind"] != "board":
+            continue
+        out.append((D["cpos"][p["id"]], G.side_letter(p["name"]), p["name"]))
+    return sorted(out, key=lambda t: (t[0], t[1]))
+
+
+def page_labels(D, n, total, chunk, k, pages):
+    pg = G.Page(D, n, total, f"Наклейки {k}/{pages}")
+    pg.text(12, 278, "Наклейки на детали (П16) — печатаем сами, если цех не клеит", size=11, weight="bold")
+    pg.text(12, 271, "Клеить на ЗАДНИЙ торец детали (после сборки не виден); ХДФ — на тыльную сторону; фасад — изнутри. [М]",
+            size=7.5)
+    cw, chh = 46, 21
+    for i, (pos, let, name) in enumerate(chunk):
+        x = 12 + (i % 4) * (cw + 1.5)
+        y = 262 - (i // 4) * (chh + 1.5)
+        pg.ax.add_patch(Rectangle((x, y - chh), cw, chh, fc="white", ec="#888", lw=0.6, ls=(0, (2, 1.5))))
+        pg.text(x + 2, y - 7.5, str(pos), size=16, weight="bold", va="center")
+        if let:
+            pg.text(x + cw - 3, y - 7.5, let, size=18, weight="bold", va="center", ha="right", color=RED)
+        pg.text(x + 2, y - 15, name[:36], size=5.8, va="center")
+        pg.text(x + 2, y - 19, "ARV-NST-101", size=5.5, va="center", color="#666")
     return pg
 
 
@@ -509,6 +555,11 @@ def write(path, opts):
               page_runners, page_drawer_map]
     makers += [("drawer", m) for m in G.PAGES]
     makers += [page_final] + ([page_changer] if D["changer"] else [])
+    lab = labels(D)
+    per = 44
+    chunks = [lab[i:i + per] for i in range(0, len(lab), per)]
+    for k, ch in enumerate(chunks, 1):
+        makers.append(("labels", (lambda c=ch, kk=k: (lambda D_, n_, t_: page_labels(D_, n_, t_, c, kk, len(chunks))))()))
     total = len(makers)
     pages = []
     with PdfPages(path) as pdf:
@@ -522,6 +573,11 @@ def write(path, opts):
     res = G.verify_guide(D, pages)
     bad = verify_counts(D)
     res.append(("Крепёж в шагах = спецификации", not bad, bad[:3]))
+    nboard = sum(1 for p in D["s"]["parts"] if p["kind"] == "board")
+    pairs = [p["id"] for p in D["s"]["parts"] if p["kind"] == "board" and G.side_letter(p["name"]) == ""
+             and any(w in p["id"] for w in ("SIDE-L", "SIDE-R", "PART-1", "PART-2", "-SL", "-SR", "CH-L", "CH-R"))]
+    res.append(("Наклейки: по одной на деталь, у парных деталей есть Л / П", len(lab) == nboard and not pairs,
+                f"наклеек {len(lab)}, деталей {nboard}; без Л/П: {pairs[:3]}"))
     for pg in pages:
         G.plt.close(pg.fig)
     return D, res

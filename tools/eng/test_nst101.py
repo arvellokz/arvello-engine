@@ -99,6 +99,14 @@ def angle_under(o):
 MN.NEW["ARV-NST-101"] = ("Комод на 6 ящиков", angle_under); MN.MODELS.update(MN.NEW)
 _, ch = run(BASE, "wa")
 expect("уголок под столиком", ch, "Уголки к стене", "ошибка")
+def angle_low(o):
+    b = orig_chest(o)
+    a_ = [x for x in b.derived.get("wall_angles", []) if x.get("inside")][0]
+    a_.update(z0=a_["z0"] - 100, z1=a_["z1"] - 100)          # опустили в зону верхнего ящика
+    return b
+MN.NEW["ARV-NST-101"] = ("Комод на 6 ящиков", angle_low); MN.MODELS.update(MN.NEW)
+_, ch = run(BASE, "wa3")
+expect("внутренний уголок в ящике", ch, "Уголки к стене", "ошибка")
 MN.NEW["ARV-NST-101"] = ("Комод на 6 ящиков", orig_chest); MN.MODELS.update(MN.NEW)
 _, ch = run(BASE, "wa2")
 expect("уголки свободны", ch, "Уголки к стене", "пройдено")

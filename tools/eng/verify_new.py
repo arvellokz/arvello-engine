@@ -316,6 +316,11 @@ def verify_new(s, texts):
     if wa:
         cov = []
         for a_ in wa:
+            if a_.get("inside"):                  # уголок внутри корпуса: не пересекается ни с одной деталью
+                for p in boards:
+                    if all(_ov(p[k + "0"], p[k + "1"], a_[k + "0"], a_[k + "1"]) > 0.01 for k in "xyz"):
+                        cov.append(f"внутренний уголок x {a_['x0']:g}…{a_['x1']:g} z {a_['z0']:g}…{a_['z1']:g} в {p['id']}")
+                continue
             for p in boards:
                 if abs(p["z0"] - a_["z"]) < 0.6 and _ov(p["x0"], p["x1"], a_["x0"], a_["x1"]) > 0.01 and \
                         _ov(p["y0"], p["y1"], a_["y0"], a_["y1"]) > 0.01:

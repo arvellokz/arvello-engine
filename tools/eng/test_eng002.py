@@ -64,6 +64,12 @@ for ch in ("yes", "no"):
 D4["used"].pop("SCREW-3.5x16", None)
 bad = C.verify_counts(D4)
 res.append(("крепёж шага не учтён → ошибка", bool(bad), bad[:1]))
+# 9. негатив П16: у парной детали пропала буква Л / П — проверка выпуска должна дать ошибку
+orig_sl = G.side_letter
+G.side_letter = lambda name: "" if "Стойка" in name else orig_sl(name)
+_, r5 = C.write("/tmp/eng002_chest_lab.pdf", OPTS)
+res.append(("наклейка стойки без Л / П → ошибка", any(x[0].startswith("Наклейки") and not x[1] for x in r5), ""))
+G.side_letter = orig_sl
 for name, ok, t in res:
     print(f"{'✓' if ok else '✗'} {name:44s} | {t}")
 print("ИТОГ:", "все совпали" if all(r[1] for r in res) else "есть расхождения")

@@ -373,6 +373,13 @@ def chest6(o):
     aw = 40
     xs = [80, W - 80] if not changer else [800 + 20 + aw / 2, W - 80]
     b.derived["wall_angles"] = [{"x0": x - aw / 2, "x1": x + aw / 2, "y0": yc1 - aw, "y1": yc1, "z": H} for x in xs]
+    if changer:
+        # 3-я точка слева (13.11, [М]): уголок ВНУТРИ левой колонны под крышкой — полка к крышке снизу, вторая полка через
+        # ХДФ в стену. Не зависит от съёмного столика (крепление через бортик столика пропадёт при его снятии).
+        # Над коробом верхнего ящика свободно ≈ 75 — уголок 40 проходит; проверка verify_new п. 16.
+        b.derived["wall_angles"].append({"x0": T + 30, "x1": T + 30 + aw, "y0": yc1 - aw, "y1": yc1,
+                                         "z0": H - T - aw, "z1": H - T, "z": H - T, "inside": True})
+        b.hw["WALL-ANGLE"]["qty"] = 3
     Htot = H + T + Hr if changer else H
     b.derived.update(width=W, depth=D, height=Htot, plinth=PL, levels=[0, PL, H] + ([Htot] if changer else []))
     if changer:
