@@ -17,7 +17,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from matplotlib.backends.backend_pdf import PdfPages  # noqa: E402
-from matplotlib.patches import Circle, Polygon, Rectangle  # noqa: E402
+from matplotlib.patches import Circle, FancyArrowPatch, Polygon, Rectangle  # noqa: E402
 
 from eng import eng002_drawer as E  # noqa: E402
 from eng import eng002_guide as G  # noqa: E402
@@ -62,6 +62,49 @@ def obl(pg, D, box, items, **kw):
 def fasten(pg, D, ob, holes, where):
     ob.fasteners(holes)
     E._check_view(D, ob, where)
+
+
+# разные значки для разного крепежа на одном рисунке (проверка Codex 13.11): болт — синий треугольник,
+# шкант — жёлтый квадрат, корпус эксцентрика — серый круг
+SYM = {"ecc_stem": (BLUE, "^", 1.8), "dowel_face": ("#e0b54a", "s", 1.5), "ecc_housing": ("#9aa3ad", "o", 2.3)}
+
+
+def fasten_kinds(pg, D, ob, holes, where):
+    for kind, (col, shp, r) in SYM.items():
+        hs = [h for h in holes if h["kind"] == kind]
+        if hs:
+            ob.fasteners(hs, col, r, shp)
+    E._check_view(D, ob, where)
+
+
+def sym(pg, x, y, kind):
+    col, shp, r = SYM[kind]
+    r *= 1.4
+    if shp == "s":
+        pg.ax.add_patch(Rectangle((x - r, y - r), 2 * r, 2 * r, fc=col, ec="k", lw=0.6, zorder=20))
+    elif shp == "^":
+        pg.ax.add_patch(Polygon([(x - r * 1.2, y - r), (x + r * 1.2, y - r), (x, y + r * 1.3)], fc=col, ec="k", lw=0.6,
+                                zorder=20))
+    else:
+        pg.ax.add_patch(Circle((x, y), r, fc=col, ec="k", lw=0.6, zorder=20))
+
+
+def badge(pg, x, y, n, pos, text, kind):
+    sym(pg, x + 2, y, kind)
+    G.count_badge(pg, x + 7, y, n, pos, text)
+
+
+def ecc_zoom(pg, cx, cy, R=24):
+    """Схема корпуса эксцентрика (не контур Häfele): гнездо Ø15 на 24 от кромки, стрелка корпуса — к кромке, где болт."""
+    ax = pg.ax
+    ax.add_patch(Circle((cx, cy), R, fc="white", ec="k", lw=1.4, zorder=14))
+    ax.add_patch(Rectangle((cx - R * 0.9, cy + R * 0.45), R * 1.8, R * 0.25, fc=G.WOOD2, ec="k", lw=0.8, zorder=15))
+    pg.text(cx, cy + R + 3, "кромка детали — сюда входит болт", size=6.5, ha="center", va="bottom", zorder=16)
+    ax.add_patch(Circle((cx, cy - R * 0.15), R * 0.42, fc="#c9ced4", ec="k", lw=0.9, zorder=16))
+    ax.add_patch(FancyArrowPatch((cx, cy - R * 0.15), (cx, cy + R * 0.42), arrowstyle="-|>", mutation_scale=11,
+                                 color=RED, lw=1.6, zorder=17))
+    pg.text(cx, cy - R * 0.72, "стрелка на корпусе — к кромке", size=6.3, ha="center", zorder=16, weight="bold")
+    pg.text(cx, cy - R - 3.5, "схема (не контур Häfele): Ø15, центр 24 от кромки [Д]", size=6.8, ha="center", va="top")
 
 
 def parts(D, *ids):
@@ -161,6 +204,8 @@ def page_set_carcass(D, n, total):
     pg.text(72, y, f"{H['ECC-BOLT']['qty']}×", size=12, weight="bold", va="center")
     ball(pg, 86, y, hp["ECC-BOLT"])
     pg.text(92, y, "болт стяжки S200 (условно)", size=8, va="center")
+    pg.text(12, 40, f"Расходник: клей ПВА D3 (поз. {hp['GLUE-PVA']}) — {kit13.n_(H['GLUE-PVA']['qty'])} кг, для шкантов (К1, К2, К9а).",
+            size=7.5)
     pg.text(12, 34, "Направляющие и TIP-ON BLUMOTION — набор «Корпус: Blum» (раздел 3); крепёж ящиков — в наборах «Ящик».",
             size=7.5)
     return pg
@@ -175,30 +220,30 @@ def page_pre(D, n, total):
         S = P[pid]
         ob = obl(pg, D, (16 + i * 92, 196, 100 + i * 92, 266), [(S, E.HL, {})], sgn=sg)
         st = [h for h in D["s"]["holes"] if h["part"] == pid and h["kind"] in ("ecc_stem", "dowel_face")]
-        fasten(pg, D, ob, st, f"корпус 1 {pid}")
+        fasten_kinds(pg, D, ob, st, f"корпус 1 {pid}")
         ball(pg, *ob.p(S["x0"], S["y0"], S["z1"] + 40), pos[pid])
         G.sticker(pg, *ob.p(S["x0"], S["y1"], S["z1"] + 60), pos[pid], G.side_letter(S["name"]))
     nb = len(H_(D, "J-L", "ecc_stem")) + len(H_(D, "J-R", "ecc_stem"))
     nd_ = len(H_(D, "J-L", "dowel_face")) + len(H_(D, "J-R", "dowel_face"))
     use(D, "ECC-BOLT", nb, "шаг 1"); use(D, "DOWEL-8x30", nd_, "шаг 1")
-    G.count_badge(pg, 16, 186, nb, hp["ECC-BOLT"], "болт стяжки — вкрутить до упора, шестигранник 4")
-    G.count_badge(pg, 16, 176, nd_, hp["DOWEL-8x30"], "шкант 8 × 30 — на клей, вбить до упора")
+    badge(pg, 16, 186, nb, hp["ECC-BOLT"], "болт стяжки (▲) — вкрутить до упора, шестигранник 4", "ecc_stem")
+    badge(pg, 16, 176, nd_, hp["DOWEL-8x30"], "шкант 8 × 30 (■) — на клей ПВА, вбить до упора", "dowel_face")
     G.step(pg, 12, 160, "К2", prefix="", title="Болты и шканты — в дно и крышку (места под стойки)")
     B, T = P["BOTTOM"], P["TOP"]
     obB = obl(pg, D, (16, 80, 100, 150), [(B, E.HL, {})], sgn=1)
-    fasten(pg, D, obB, [h for h in D["s"]["holes"] if h["part"] == "BOTTOM" and h["kind"] in ("ecc_stem", "dowel_face")],
-           "корпус 2 дно")
+    fasten_kinds(pg, D, obB, [h for h in D["s"]["holes"] if h["part"] == "BOTTOM" and h["kind"] in ("ecc_stem", "dowel_face")],
+                 "корпус 2 дно")
     obT = obl(pg, D, (108, 80, 196, 150), [(T, E.HL, {})], sgn=1, zs=-1)
-    fasten(pg, D, obT, [h for h in D["s"]["holes"] if h["part"] == "TOP" and h["kind"] in ("ecc_stem", "dowel_face")],
-           "корпус 2 крышка")
+    fasten_kinds(pg, D, obT, [h for h in D["s"]["holes"] if h["part"] == "TOP" and h["kind"] in ("ecc_stem", "dowel_face")],
+                 "корпус 2 крышка")
     ball(pg, *obB.p(B["x0"], B["y0"], B["z1"] + 30), pos["BOTTOM"])
     ball(pg, *obT.p(T["x0"], T["y0"], T["z0"] - 30), pos["TOP"])
     pg.text(58, 76, "дно — сверху", size=7, ha="center", style="italic")
     pg.text(152, 76, "крышка — вид снизу (внутренняя сторона)", size=7, ha="center", style="italic")
     nb2 = len(H_(D, "J-PART", "ecc_stem")); nd2 = len(H_(D, "J-PART", "dowel_face"))
     use(D, "ECC-BOLT", nb2, "шаг 2"); use(D, "DOWEL-8x30", nd2, "шаг 2")
-    G.count_badge(pg, 16, 64, nb2, hp["ECC-BOLT"], "болт стяжки")
-    G.count_badge(pg, 16, 54, nd2, hp["DOWEL-8x30"], "шкант 8 × 30 на клей")
+    badge(pg, 16, 64, nb2, hp["ECC-BOLT"], "болт стяжки (▲)", "ecc_stem")
+    badge(pg, 16, 54, nd2, hp["DOWEL-8x30"], "шкант 8 × 30 (■) на клей", "dowel_face")
     G.check_box(pg, 110, 70, 90, ["болты вкручены до упора,", "шканты выступают одинаково"])
     return pg
 
@@ -209,13 +254,13 @@ def page_housings(D, n, total):
     G.step(pg, 12, 279, "К3", prefix="", title="Корпуса эксцентриков — в дно, крышку и стойки (стрелкой к краю)")
     B, T, S1, S2 = P["BOTTOM"], P["TOP"], P["PART-1"], P["PART-2"]
     obB = obl(pg, D, (16, 200, 100, 266), [(B, E.HL, {})], sgn=1)
-    fasten(pg, D, obB, [h for h in D["s"]["holes"] if h["part"] == "BOTTOM" and h["kind"] == "ecc_housing"], "корпус 3 дно")
+    fasten_kinds(pg, D, obB, [h for h in D["s"]["holes"] if h["part"] == "BOTTOM" and h["kind"] == "ecc_housing"], "корпус 3 дно")
     obT = obl(pg, D, (108, 200, 196, 266), [(T, E.HL, {})], sgn=1, zs=-1)
-    fasten(pg, D, obT, [h for h in D["s"]["holes"] if h["part"] == "TOP" and h["kind"] == "ecc_housing"], "корпус 3 крышка")
+    fasten_kinds(pg, D, obT, [h for h in D["s"]["holes"] if h["part"] == "TOP" and h["kind"] == "ecc_housing"], "корпус 3 крышка")
     ob1 = obl(pg, D, (16, 120, 100, 190), [(S1, E.HL, {})], sgn=-1)
-    fasten(pg, D, ob1, [h for h in D["s"]["holes"] if h["part"] == "PART-1" and h["kind"] == "ecc_housing"], "корпус 3 ст. Л")
+    fasten_kinds(pg, D, ob1, [h for h in D["s"]["holes"] if h["part"] == "PART-1" and h["kind"] == "ecc_housing"], "корпус 3 ст. Л")
     ob2 = obl(pg, D, (108, 120, 196, 190), [(S2, E.HL, {})], sgn=1)
-    fasten(pg, D, ob2, [h for h in D["s"]["holes"] if h["part"] == "PART-2" and h["kind"] == "ecc_housing"], "корпус 3 ст. П")
+    fasten_kinds(pg, D, ob2, [h for h in D["s"]["holes"] if h["part"] == "PART-2" and h["kind"] == "ecc_housing"], "корпус 3 ст. П")
     for ob, pid, z in ((obB, "BOTTOM", B["z1"] + 30), (obT, "TOP", T["z0"] - 30)):
         b = P[pid]
         ball(pg, *ob.p(b["x0"], b["y0"], z), pos[pid])
@@ -225,7 +270,8 @@ def page_housings(D, n, total):
     pg.text(152, 116, "стойка П — со стороны ПРАВОЙ колонны", size=7, ha="center", style="italic")
     nh = len([h for h in D["s"]["holes"] if h["kind"] == "ecc_housing"])
     use(D, "ECC-15", nh, "шаг 3")
-    G.count_badge(pg, 16, 104, nh, hp["ECC-15"], "корпус эксцентрика Minifix 15 — стрелкой к краю детали")
+    badge(pg, 16, 104, nh, hp["ECC-15"], "корпус эксцентрика Minifix 15 (●) — стрелкой к кромке", "ecc_housing")
+    ecc_zoom(pg, 160, 66)
     h0 = next(h for h in D["s"]["holes"] if h["kind"] == "ecc_housing" and h["part"] == "PART-1")
     G.check_box(pg, 16, 92, 120, ["корпуса заподлицо с пластью, не затянуты",
                                   "стойки: гнёзда смотрят в СВОЮ колонну —",
@@ -307,7 +353,7 @@ def page_top(D, n, total):
 
 
 def page_back(D, n, total):
-    pg = G.Page(D, n, total, "Корпус · К8–К9")
+    pg = G.Page(D, n, total, "Корпус · К8")
     P, pos, hp = D["P"], D["cpos"], D["hpos"]
     car = [P[k] for k in ("BOTTOM", "TOP", "PART-1", "PART-2", "SIDE-L", "SIDE-R")]
     BK = P["BACK"]
@@ -327,16 +373,6 @@ def page_back(D, n, total):
     G.check_box(pg, 16, 130, 184, [f"диагонали корпуса по фасаду равны: ≈ {diag:.0f}, разность ≤ 1,5 [М]",
                                    "ХДФ — накладная, отступ 2 от граней; сначала 4 угла, потом остальное",
                                    "в двойную стойку — только в левую половину (по разметке) [М]"])
-    G.step(pg, 12, 106, "К9", prefix="", title="Цоколь: рамка на шкантах, корпус — на цоколь, конфирматы изнутри")
-    pl = [P[k] for k in ("PL-F", "PL-B", "PL-SL", "PL-SR")]
-    ob2 = obl(pg, D, (16, 30, 120, 98), [(q, E.HL, {}) for q in pl] + [(E.moved(P["BOTTOM"], dz=60), E.DONE, {})], sgn=1)
-    hc = [h for h in D["s"]["holes"] if h["joint"].startswith("J-BOT-PL") and h["kind"] == "conf_face"]
-    hp_ = [h for h in D["s"]["holes"] if h["joint"].startswith("J-PL") and h["kind"] == "dowel_face"]
-    use(D, "DOWEL-8x30", len(hp_), "шаг 9"); use(D, "CONF-7x50", len(hc), "шаг 9")
-    G.count_badge(pg, 126, 92, len(hp_), hp["DOWEL-8x30"], "шкант на клей")
-    G.count_badge(pg, 126, 82, len(hc), hp["CONF-7x50"], "конфирмат сверху")
-    G.check_box(pg, 126, 74, 74, ["рамка цоколя — углы 90°,", "корпус заподлицо сзади;",
-                                  "конфирматы — через дно", "изнутри корпуса"])
     return pg
 
 
@@ -423,6 +459,51 @@ def page_final(D, n, total):
     return pg
 
 
+def page_plinth(D, n, total):
+    """К9: цоколь — (а) рамка из 4 деталей на шкантах, разнесено; (б) корпус на рамку, конфирматы через дно изнутри."""
+    pg = G.Page(D, n, total, "Цоколь · К9а–К9б")
+    P, pos, hp = D["P"], D["cpos"], D["hpos"]
+    F, Bk, SL, SR, BOT = (P[k] for k in ("PL-F", "PL-B", "PL-SL", "PL-SR", "BOTTOM"))
+    hd = [h for h in D["s"]["holes"] if h["joint"].startswith("J-PL") and h["kind"] == "dowel_face"]
+    he = [h for h in D["s"]["holes"] if h["joint"].startswith("J-PL") and h["kind"] == "dowel_edge"]
+    G.step(pg, 12, 279, "К9а", prefix="", title="Рамка цоколя: 4 детали на шкантах (на клей)")
+    gap = 140
+    Fm, Bm = E.moved(F, dy=-gap), E.moved(Bk, dy=gap)
+    ob = obl(pg, D, (16, 178, 196, 266), [(SL, E.HL, {}), (SR, E.HL, {}), (Fm, E.HL, {}), (Bm, E.HL, {})], sgn=1)
+    mv = {"PL-F": -gap, "PL-B": gap}
+    pts_e = [(h["x"], h["y"], h["z"]) for h in he]                    # шканты в торцах боковых деталей
+    ob.dots(pts_e, "#e0b54a", 1.5, "s")
+    for h in hd:                                                       # ответные отверстия в переднем / заднем
+        ob.dots([(h["x"], h["y"] + mv.get(h["part"], 0), h["z"])], "white", 1.3, "o")
+    for W, d in ((Fm, 1), (Bm, -1)):
+        xm = (W["x0"] + W["x1"]) / 2
+        yy = W["y1"] if d > 0 else W["y0"]
+        ob.arrow((xm, yy + 0 * d, W["z1"] + 10), (xm, yy + d * (gap - 40), W["z1"] + 10))
+    for pid, W in (("PL-F", Fm), ("PL-B", Bm), ("PL-SL", SL), ("PL-SR", SR)):
+        ball(pg, *ob.p(W["x0"] if pid != "PL-SR" else W["x1"], W["y0"], W["z1"] + 50), pos[pid])
+    G.sticker(pg, *ob.p(SL["x0"] - 120, SL["y1"], SL["z1"] + 60), pos["PL-SL"], "Л")
+    G.sticker(pg, *ob.p(SR["x1"] - 120, SR["y1"], SR["z1"] + 60), pos["PL-SR"], "П")
+    use(D, "DOWEL-8x30", len(hd), "К9а")
+    badge(pg, 16, 168, len(hd), hp["DOWEL-8x30"], "шкант 8 × 30 (■) — в торцы боковых деталей, на клей", "dowel_face")
+    pg.text(23, 160, "белые кружки — ответные отверстия в переднем и заднем цоколе", size=7)
+    G.check_box(pg, 16, 154, 184, ["углы рамки 90° (угольник), диагонали рамки равны",
+                                   "передний цоколь — с отступом от фасадов (по рисунку), задний — у стены"])
+    G.step(pg, 12, 126, "К9б", prefix="", title="Корпус — на рамку; конфирматы сверху через дно корпуса")
+    hc = [h for h in D["s"]["holes"] if h["joint"].startswith("J-BOT-PL") and h["kind"] == "conf_face"]
+    B_up = E.moved(BOT, dz=0)
+    ob2 = obl(pg, D, (16, 40, 120, 116), [(q, E.DONE, {}) for q in (F, Bk, SL, SR)] + [(B_up, E.HL, {})], sgn=1)
+    ob2.fasteners(hc, RED, 1.4)
+    E._check_view(D, ob2, "К9б")
+    pg.text(68, 34, "дно корпуса сверху (корпус целиком не показан)", size=7, ha="center", style="italic")
+    use(D, "CONF-7x50", len(hc), "К9б")
+    G.count_badge(pg, 126, 108, len(hc), hp["CONF-7x50"], "конфирмат 7 × 50")
+    pg.text(126, 99, "изнутри корпуса, сверху вниз,", size=7.5)
+    pg.text(126, 94, "шестигранник 4", size=7.5)
+    G.check_box(pg, 126, 86, 74, ["корпус заподлицо с рамкой", "сзади; спереди — отступ", "цоколя по рисунку",
+                                  "конфирматы без перекоса"])
+    return pg
+
+
 def page_wall(D, n, total):
     pg = G.Page(D, n, total, "Стена")
     hp, H = D["hpos"], D["H"]
@@ -453,7 +534,7 @@ def page_wall(D, n, total):
                 size=7.5, color=BLUE)
         pg.text(16, 90, "уголок внутри колонны под крышкой (над верхним ящиком свободно ≈ 75, уголок 40) — проверено по "
                 "модели [М].", size=7.5, color=BLUE)
-    G.count_badge(pg, 16, 176, q, hp["WALL-ANGLE"], H["WALL-ANGLE"]["name"].lower())
+    G.count_badge(pg, 16, 176, q, hp["WALL-ANGLE"], H["WALL-ANGLE"]["name"].lower() + " — изделие не выбрано (В-48)")
     pg.text(16, 166, "Крепёж в стену — по типу стены [М], проверить вытягиванием рукой [О]:", size=8.5, weight="bold")
     rows = [["бетон, кирпич полнотелый", "дюбель нейлоновый 8 + шуруп 5 × 60", "сверло Ø8 по бетону, глубина 65"],
             ["кирпич пустотелый, газобетон", "дюбель для пустотелых / газобетона 8–10", "сверлить без удара"],
@@ -464,6 +545,12 @@ def page_wall(D, n, total):
                                    "после крепления потянуть комод на себя — не отходит от стены"])
     pg.text(16, 78, "Тип стены неизвестен до выезда (В-48) — крепёж везёт сборщик по таблице.", size=7.5, color="#444")
     pg.text(16, 72, "Уголки — на крышке снаружи; разметке направляющих внутри колонн не мешают.", size=7.5, color="#444")
+    pg.ax.add_patch(Rectangle((16, 30), 184, 34, fc="#fbe3df", ec=RED, lw=1.2))
+    pg.text(20, 58, "НЕ ДЛЯ РАБОЧЕЙ ВЕРСИИ: узел крепления не подтверждён (В-48)", size=8, color=RED, weight="bold")
+    pg.text(20, 51, f"Набор «Стена»: уголок {q} шт. (артикул не выбран), саморезы к крышке 2 на уголок (тип и длина",
+            size=7.2)
+    pg.text(20, 45, "не выбраны), крепёж в стену — по таблице. Нужны: конкретный уголок и крепёж, проверка узла на", size=7.2)
+    pg.text(20, 39, "образце (вытягивание) и запись результата. Таблица стен и проверка рукой этого не заменяют.", size=7.2)
     return pg
 
 
@@ -499,6 +586,9 @@ def page_changer(D, n, total):
     pg.text(126, 125, "(ящик снять)", size=7.5)
     G.check_box(pg, 126, 118, 74, ["матрас 700 × 500 ложится", "внутрь бортиков целиком;",
                                    "столик не качается", "проверка столика — В-106 [О]"])
+    pg.text(16, 46, f"Набор «Столик»: основание, 3 бортика, конфирматы {len(hc) + len(hc2)}, саморезы 4 × 25 — {len(mt)}, "
+            f"заглушки Ø14 — 4, матрас (модель не выбрана, В-106).", size=7.2)
+    pg.text(16, 39, "НЕ ДЛЯ РАБОЧЕЙ ВЕРСИИ: столик не проверен на образце (В-106).", size=7.5, color=RED, weight="bold")
     G.check_box(pg, 16, 64, 184, ["комод закреплён к стене ДО установки столика",
                                   "при снятии столика — заглушки Ø14 в отверстия крепления"])
     return pg
@@ -528,7 +618,8 @@ def page_labels(D, n, total, chunk, k, pages):
         if let:
             pg.text(x + cw - 3, y - 7.5, let, size=18, weight="bold", va="center", ha="right", color=RED)
         pg.text(x + 2, y - 15, name[:36], size=5.8, va="center")
-        pg.text(x + 2, y - 19, "ARV-NST-101", size=5.5, va="center", color="#666")
+        pg.text(x + 2, y - 19, f"ARV-NST-101 · {D['s']['options'].get('changer') == 'yes' and 'со столиком' or 'без столика'}"
+                f" · {D['s']['hash'][:8]}", size=5.2, va="center", color="#666")
     return pg
 
 
@@ -552,7 +643,7 @@ def write(path, opts):
     D["doc_label"] = "комод"
     G.STEP_PREFIX.update(p="Я", rails="шаги К11–К12 этой инструкции")
     # порядок (проверка 13.11): корпус и цоколь → СТЕНА → направляющие → схема ящиков → ящики Я1–Я10 → итог → столик
-    makers = [page_cover, page_set_carcass, page_pre, page_housings, page_stands, page_top, page_back, page_wall,
+    makers = [page_cover, page_set_carcass, page_pre, page_housings, page_stands, page_top, page_back, page_plinth, page_wall,
               page_runners, page_drawer_map]
     makers += [("drawer", m) for m in G.PAGES]
     makers += [page_final] + ([page_changer] if D["changer"] else [])

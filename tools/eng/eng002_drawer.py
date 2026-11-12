@@ -126,10 +126,17 @@ class Oblique:
         self.sh.ax.add_patch(FancyArrowPatch(self.p(*a), self.p(*b), arrowstyle="-|>", mutation_scale=14, color=color,
                                              lw=lw, zorder=12))
 
-    def dots(self, pts, color=RED, r=1.3):
+    def dots(self, pts, color=RED, r=1.3, shape="o"):
         for q in pts:
             x, y = self.p(*q)
-            self.sh.ax.add_patch(matplotlib.patches.Circle((x, y), r, fc=color, ec="k", lw=0.5, zorder=12))
+            if shape == "s":
+                self.sh.ax.add_patch(matplotlib.patches.Rectangle((x - r, y - r), 2 * r, 2 * r, fc=color, ec="k", lw=0.5,
+                                                                  zorder=12))
+            elif shape == "^":
+                self.sh.ax.add_patch(Polygon([(x - r * 1.2, y - r), (x + r * 1.2, y - r), (x, y + r * 1.3)], fc=color,
+                                             ec="k", lw=0.5, zorder=12))
+            else:
+                self.sh.ax.add_patch(matplotlib.patches.Circle((x, y), r, fc=color, ec="k", lw=0.5, zorder=12))
 
     def visible_entry(self, h):
         """Вход отверстия (сторона, с которой вкручивают крепёж) виден на этом рисунке и ничем не закрыт.
@@ -154,13 +161,13 @@ class Oblique:
                 return f"{h['part']}: вход крепежа закрыт деталью {b['id']}"
         return None
 
-    def fasteners(self, holes, color=RED, r=1.3):
+    def fasteners(self, holes, color=RED, r=1.3, shape="o"):
         """Точки крепежа только с проверкой: вход виден и не закрыт. Ошибки копятся в self.errors."""
         for h in holes:
             e = self.visible_entry(h)
             if e:
                 self.errors.append(e)
-        self.dots([(h["x"], h["y"], h["z"]) for h in holes], color, r)
+        self.dots([(h["x"], h["y"], h["z"]) for h in holes], color, r, shape)
 
 
 def moved(b, dx=0, dy=0, dz=0):
@@ -290,6 +297,8 @@ def sheet_shop(D, n, total):
     for hid, nm, st in (("SLIDES", "Направляющая MOVENTO, пара Л/П", "[Д][О]"), ("SLIDE-LOCK", "Замок MOVENTO, пара Л+П", "[Д][О]"),
                         ("TIPON-SYNC", "TIP-ON BLUMOTION, набор + синхр.", "[Д][О]")):
         rows.append([str(hp[hid]), nm, art(hid), "1", str(nd), st])
+    lq = H["LOCK-SCREW"]["qty"] // max(1, nd)
+    rows.append([str(hp["LOCK-SCREW"]), "Саморез крепления замка", "по поставке Blum", str(lq), str(lq * nd), "[Д][О]"])
     sh.text(205, 186, f"Спецификация одного ящика (ящиков в изделии: {nd})", size=8, weight="bold")
     yb = sh.table(205, 182, ["Поз.", "Наименование", "Размер / артикул", "На 1", f"На {nd}", ""], rows, [10, 72, 46, 11, 11, 21],
                   row_h=4.6, size=6.0)

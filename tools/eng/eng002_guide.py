@@ -27,6 +27,7 @@ from matplotlib.patches import Arc, Circle, FancyArrowPatch, Polygon, Rectangle 
 
 from eng import eng002_drawer as E  # noqa: E402
 from eng.cab import FASTENERS  # noqa: E402
+from eng.kit13 import n_ as kit13_n  # noqa: E402
 from eng.sheetlib import IN, RED, Sheet  # noqa: E402
 
 A4 = (210.0, 297.0)
@@ -252,6 +253,54 @@ def figure(pg, D, box, items, **kw):
     return ob
 
 
+
+# ------------------------------------------------------------------ вид снизу (ящик перевёрнут на стол, перед — к себе)
+def bottom_view(pg, D, box, holes=(), zones=(), title="вид на дно ящика: ящик перевёрнут, перед — к себе"):
+    """Ортогональный вид на наружную нижнюю пласть дна. Ящик перевёрнут через переднюю кромку на стол: лево осталось
+    слева, перед — внизу листа. Видны: торцы боковин (низ), дно между боковинами; стенки стоят на дне — их не видно
+    (пунктир). Крепёж — только отверстия со входом снизу (dir «+z»), иначе ошибка в D["view_errors"]."""
+    p, pos = D["p"], D["pos"]
+    SL, SR, BT, F, B = p["SL"], p["SR"], p["BOT"], p["F"], p["B"]
+    x0, y0, x1, y1 = box
+    X0, X1, Y0, Y1 = SL["x0"], SR["x1"], SL["y0"], SL["y1"]
+    sc = min((x1 - x0) / (X1 - X0), (y1 - y0) / (Y1 - Y0))
+    ox = x0 + ((x1 - x0) - (X1 - X0) * sc) / 2
+    oy = y0 + ((y1 - y0) - (Y1 - Y0) * sc) / 2
+    P_ = lambda x, y: (ox + (x - X0) * sc, oy + (y - Y0) * sc)
+    def R_(a, b, fc, ls="-", lw=0.9, z=5, hatch=None):
+        (u0, v0), (u1, v1) = P_(a[0], a[1]), P_(b[0], b[1])
+        pg.ax.add_patch(Rectangle((u0, v0), u1 - u0, v1 - v0, fc=fc, ec="k", lw=lw, ls=ls, zorder=z, hatch=hatch))
+    R_((SL["x1"], BT["y0"]), (SR["x0"], BT["y1"]), WOOD, z=4)                          # дно — наружная пласть
+    for S in (SL, SR):
+        R_((S["x0"], S["y0"]), (S["x1"], S["y1"]), "#d9d9d9", z=5)                         # низ боковин
+    for W in (F, B):
+        R_((W["x0"], W["y0"]), (W["x1"], W["y1"]), "none", ls=(0, (3, 2)), lw=0.6, z=6)   # стенки — за дном
+    for zn in zones:
+        R_((zn[0], zn[1]), (zn[2], zn[3]), "#cfe0f5", ls=(0, (3, 2)), lw=1.1, z=7)
+    for h in holes:
+        if h["dir"] != "+z":
+            D["view_errors"].append(f"вид снизу: {h['part']} — вход не снизу ({h['dir']})")
+        u, v = P_(h["x"], h["y"])
+        pg.ax.add_patch(Circle((u, v), 1.6, fc=RED, ec="k", lw=0.5, zorder=12))
+    u, v = P_((X0 + X1) / 2, Y0)
+    pg.text(u, v - 4, "ПЕРЕД (фасад) — к себе", size=7.5, ha="center", va="top", weight="bold")
+    for S, let, k in ((SL, "Л", "SL"), (SR, "П", "SR")):
+        u, v = P_((S["x0"] + S["x1"]) / 2, Y1)
+        sticker(pg, u - 6.5, v + 5, pos[k], let)
+    pg.text((x0 + x1) / 2, y1 + 13, title, size=7, ha="center", style="italic")
+    return P_
+
+
+def flip_icon(pg, x, y):
+    """Пиктограмма: ящик переворачивают через переднюю кромку (вид сбоку)."""
+    pg.ax.add_patch(Rectangle((x, y), 16, 7, fc=E.DONE, ec="k", lw=0.8))
+    pg.ax.add_patch(Rectangle((x, y), 16, 1.6, fc=WOOD, ec="k", lw=0.6))
+    pg.ax.add_patch(FancyArrowPatch((x + 16, y + 9), (x + 30, y + 9), connectionstyle="arc3,rad=-0.6",
+                                    arrowstyle="-|>", mutation_scale=10, color=RED, lw=1.3))
+    pg.ax.add_patch(Rectangle((x + 32, y), 16, 7, fc=E.DONE, ec="k", lw=0.8))
+    pg.ax.add_patch(Rectangle((x + 32, y + 5.4), 16, 1.6, fc=WOOD, ec="k", lw=0.6))
+    pg.text(x + 24, y - 3, "дно — вверх", size=6.5, ha="center", va="top")
+
 # ================================================================== страницы
 def page_set(D, n, total):
     pg = Page(D, n, total, "Набор «Ящик»")
@@ -391,13 +440,11 @@ def page_box4(D, n, total):
 def page_box5(D, n, total):
     pg = Page(D, n, total, "Ящик · шаг 6")
     p, pos, hp = D["p"], D["pos"], D["hpos"]
-    all5 = [p[k] for k in ("SL", "SR", "F", "B", "BOT")]
     sc = E.joint_holes(D, "BOT-", "screw_face")
-    step(pg, 12, 279, 6, f"Перевернуть ящик · {len(sc)} самореза через дно {pos['BOT']}")
-    ob = figure(pg, D, (16, 170, 196, 262), [(q, E.HL if q is p["BOT"] else E.DONE, {}) for q in all5], sgn=1, zs=-1)
-    ob.fasteners(sc)
-    E._check_view(D, ob, "A4 шаг 6")
-    count_badge(pg, 16, 160, len(sc), hp["SCREW-4x25D"], "саморез 4 × 25 · отвёртка PH2")
+    step(pg, 12, 279, 6, f"Перевернуть ящик дном вверх · {len(sc)} самореза через дно {pos['BOT']}")
+    flip_icon(pg, 150, 268)
+    bottom_view(pg, D, (30, 172, 180, 252), holes=sc)
+    count_badge(pg, 16, 160, len(sc), hp["SCREW-4x25D"], "саморез 4 × 25 · отвёртка PH2 · в красные точки")
     zinfo = zoom(pg, D, sc[0], 60, 118, R=30, win=30, label="сечение по саморезу дна (из модели)", vertical=True,
                  flip=True, face=(0.62, -0.28, "дно"))
     D["zooms"].append(("A4 шаг 6", sc[0], zinfo))
@@ -412,14 +459,13 @@ def page_box6(D, n, total):
     p, pos, H, nd = D["p"], D["pos"], D["H"], D["nd"]
     all5 = [p[k] for k in ("SL", "SR", "F", "B", "BOT")]
     bt, SL, SR = p["BOT"], p["SL"], p["SR"]
-    step(pg, 12, 279, 7, "Замки Л и П — под дно у передних углов, по шаблону")
-    ob = figure(pg, D, (16, 185, 140, 262), [(q, E.DONE, {}) for q in all5], sgn=1, zs=-1)
-    for x0, x1, t in ((SL["x1"], SL["x1"] + 75, "Л"), (SR["x0"] - 75, SR["x0"], "П")):
-        pts = [ob.p(x0, bt["y0"], bt["z0"]), ob.p(x1, bt["y0"], bt["z0"]), ob.p(x1, bt["y0"] + 90, bt["z0"]),
-               ob.p(x0, bt["y0"] + 90, bt["z0"])]
-        pg.ax.add_patch(Polygon(pts, closed=True, fc="#cfe0f5", ec=BLUE, lw=1.2, ls="--", zorder=11))
-        cx = sum(q[0] for q in pts) / 4; cy = sum(q[1] for q in pts) / 4
-        pg.text(cx, cy, t, size=9, weight="bold", color=BLUE, ha="center", va="center", zorder=12)
+    step(pg, 12, 279, 7, "Замки Л и П — на наружную пласть дна у передних углов")
+    zones = [(SL["x1"], bt["y0"], SL["x1"] + 75, bt["y0"] + 90), (SR["x0"] - 75, bt["y0"], SR["x0"], bt["y0"] + 90)]
+    P_ = bottom_view(pg, D, (22, 196, 138, 258), zones=zones, title="ящик дном вверх (как после шага 6), перед — к себе")
+    for (zx0, zy0, zx1, zy1), t in zip(zones, ("замок Л", "замок П")):
+        u, v = P_((zx0 + zx1) / 2, (zy0 + zy1) / 2)
+        pg.text(u, v, t.split()[1], size=9, weight="bold", color=BLUE, ha="center", va="center", zorder=12)
+    flip_icon(pg, 150, 268)
     lq = H["LOCK-SCREW"]["qty"] // max(1, nd)
     pg.text(144, 250, "зона 75 от боковины", size=7.5, color=BLUE)
     pg.text(144, 245, "(Blum 76XHSK_H_1) [Д]", size=7.5, color=BLUE)
@@ -530,9 +576,14 @@ def page_box8(D, n, total):
     eng = fdims("SCREW-4x25")[1] - (Fw["y1"] - Fw["y0"]) - gap
     check_box(pg, 122, 126, 78, ["выставить по зазорам: 3 между", "фасадами, 1,5 по краям,", "2,5 до корпуса (Blum)",
                                  f"вход в фасад {eng:g}, до лица {fr['y1'] - fr['y0'] - eng:g} [М]"])
-    pg.text(122, 82, "Порядок: фасад крепят на ящике, уже", size=7)
-    pg.text(122, 78, "стоящем на направляющих, — зазоры", size=7)
-    pg.text(122, 74, "видны сразу [М], проверить пробой [О].", size=7)
+    fr0 = p["FR"]
+    pg.text(122, 86, "Удержать фасад: 2 полоски двустороннего", size=6.8)
+    pg.text(122, 82, "скотча на переднюю стенку короба [М][О].", size=6.8)
+    pg.text(122, 77, "Первый (нижний) фасад: база — корпус:", size=6.8, weight="bold")
+    pg.text(122, 73, f"низ на {kit13_n(fr0['z0'] - D['s']['derived']['plinth'])} выше низа боковины, край —", size=6.8)
+    pg.text(122, 69, "1,5 от наружной грани боковины [М].", size=6.8)
+    pg.text(122, 64, "Регулировка MOVENTO [Д: TD-132]: боковая", size=6.8)
+    pg.text(122, 60, "±1,5; высота +3; наклон; глубина −1/+2.", size=6.8)
     pg.ax.add_patch(Rectangle((16, 22), 184, 34, fc="#fff3e0", ec="k", lw=1.2))
     pg.text(22, 47, "ПЕРВЫЙ ящик проверить целиком:", size=9, weight="bold")
     pg.text(22, 40, "нажатие открывает · мягко закрывается · фасад не задевает соседние", size=8)

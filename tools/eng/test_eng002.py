@@ -70,6 +70,17 @@ G.side_letter = lambda name: "" if "Стойка" in name else orig_sl(name)
 _, r5 = C.write("/tmp/eng002_chest_lab.pdf", OPTS)
 res.append(("наклейка стойки без Л / П → ошибка", any(x[0].startswith("Наклейки") and not x[1] for x in r5), ""))
 G.side_letter = orig_sl
+# 10. негатив (Codex 13.11, вид снизу): отверстие со входом не снизу на виде дна → ошибка
+Dn = E.drawer_data(OPTS); Dn["view_errors"] = []
+pgn = G.Page(Dn, 1, 1, "тест")
+bad_h = [dict(h, dir="-z") for h in E.joint_holes(Dn, "BOT-", "screw_face")]
+G.bottom_view(pgn, Dn, (20, 20, 180, 120), holes=bad_h)
+G.plt.close(pgn.fig)
+res.append(("вид снизу: вход не снизу → ошибка", bool(Dn["view_errors"]), Dn["view_errors"][:1]))
+# 11. комплект: один снимок на исполнение (манифест)
+from eng import eng002_kit as K  # noqa: E402
+_, kf = K.build("/tmp/eng002_kit")
+res.append(("комплект: один снимок, проверки пройдены", not kf, kf[:1]))
 for name, ok, t in res:
     print(f"{'✓' if ok else '✗'} {name:44s} | {t}")
 print("ИТОГ:", "все совпали" if all(r[1] for r in res) else "есть расхождения")
