@@ -20,7 +20,9 @@ A3 = (420, 297)  # мм
 IN = 25.4
 RED = "#A23B2A"
 SCALES = (5, 10, 15, 20, 25, 40, 50)
-plt.rcParams["font.family"] = "DejaVu Sans"
+from . import fonts  # noqa: E402
+
+FONTS = fonts.setup()        # шрифт — только из tools/eng/fonts/, иначе ошибка
 NAMES = {k: v["name"] for k, v in json.loads(
     (Path(__file__).resolve().parents[2] / "catalog/prices.json").read_text(encoding="utf-8"))["materials"].items()}
 KIND_RU = {"board": "плита", "tube": "труба", "timber": "брус", "plate": "лист", "cap": "заглушка", "glass": "стекло",

@@ -14,7 +14,13 @@ from dataclasses import dataclass, field
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
-FONT_PATH = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+import sys  # noqa: E402
+from pathlib import Path  # noqa: E402
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from eng.fonts import font_file  # noqa: E402
+
+FONT_PATH = font_file()      # шрифт — из tools/eng/fonts/, не из системы
 
 
 @dataclass

@@ -14,7 +14,9 @@ from matplotlib.patches import Circle, FancyBboxPatch, Polygon, Rectangle  # noq
 A3 = (420.0, 297.0)
 IN = 25.4
 RED = "#A23B2A"
-plt.rcParams["font.family"] = "DejaVu Sans"
+from eng import fonts  # noqa: E402
+
+FONTS = fonts.setup()        # шрифт — только из tools/eng/fonts/, иначе ошибка
 
 # типы линий (толщина в пунктах; 1 pt ≈ 0,35 мм)
 VIS = dict(lw=1.1, color="k", ls="-")                      # видимый контур, ≈0,4 мм

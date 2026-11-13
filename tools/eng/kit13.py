@@ -1036,10 +1036,16 @@ def sheet_control(c):
                  "примыкания — герметиком.",
                  "7. Техника и мойка — по инструкциям изготовителей; цоколь — на клипсы к опорам (узел К); регулировка фасадов."]
     y = 283
-    for t in steps:
+    for j_, t in enumerate(steps):
         bold = not t.startswith(" ") and not t[0].isdigit()
-        sh.text(25, y, t, size=7.0 if bold else 6.2, weight="bold" if bold else "normal", va="top")
-        y -= 5.8 if bold else 4.8
+        nxt = steps[j_ + 1] if j_ + 1 < len(steps) else None
+        if bold and (nxt is None or not (nxt.startswith(" ") or nxt[0].isdigit())):
+            continue                                   # пустой раздел (например, «Монтаж» без столика) не печатаем
+        # новые модели: длинный шаг — переносом, с запасом до рамки при любом шрифте (разбор 13.11, Windows)
+        ls = textwrap.wrap(t, 210, subsequent_indent="    ", drop_whitespace=False) if _is_new(s) and not bold else [t]
+        for i, tt in enumerate(ls):
+            sh.text(25, y, tt.rstrip(), size=7.0 if bold else 6.2, weight="bold" if bold else "normal", va="top")
+            y -= 5.8 if bold else (4.8 if i == len(ls) - 1 else 3.9)
     rows = [["К1", "Размеры деталей после кромки", "рулетка, штангенциркуль", f"по листам {c.detail_ref}; ±0,5 (В-10)"]]
     if _is_new(s):
         rows = rows_new
