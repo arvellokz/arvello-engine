@@ -19,9 +19,10 @@ from eng import bazis as BZ  # noqa: E402
 from eng import eng002_chest as C  # noqa: E402
 from eng import eng002_drawer as E  # noqa: E402
 from eng import eng002_guide as G  # noqa: E402
+from eng import export_cutting as X  # noqa: E402
 from eng import kit13  # noqa: E402
 
-DOC_VERSION = "ENG-002 вид 5 (13.11.2026)"
+DOC_VERSION = "ENG-002 вид 5 + ENG-003 распил (13.11.2026)"
 BASE = {"width": "1200", "handle": "push", "color": "O"}
 WRD = {"width": "2400", "height": "2800", "depth": "450", "handle": "push", "fill": "drawers", "color": "O"}
 
@@ -74,7 +75,7 @@ def write_csv(path, s):
 def build(out):
     out = Path(out)
     out.mkdir(parents=True, exist_ok=True)
-    for f in list(out.glob("*.pdf")) + list(out.glob("*.csv")):
+    for f in list(out.glob("*.pdf")) + list(out.glob("*.csv")) + list(out.glob("*.xlsx")):
         f.unlink()
     rows, fails = [], []
 
@@ -94,6 +95,12 @@ def build(out):
         csvn = f"{stem}_детали_и_покупные.csv"
         write_csv(out / csvn, s3)
         files.append((csvn, s3["hash"], [("из спецификации A3", True, "")]))
+        xn = f"{stem}_распил.xlsx"                     # ENG-003: таблица для распила, сверка с CSV выпуска
+        blocks = X.write_xlsx(out / xn, s3)
+        bad = X.check_xlsx_file(out / xn, blocks) + X.check_vs_csv(s3, blocks, out / csvn)
+        files.append((xn, s3["hash"], [(b, False, "") for b in bad] or [("распил = CSV", True, "")]))
+        notes = [f"кромка {X.EDGE_RU[t]} на пласти: {pid} ({u}) — в таблицу распила не взята, ждёт решения"
+                 for pid, u, _, t in X.plast_edges(s3)]
         if sku == "ARV-NST-101":
             a4n = f"{stem}_инструкция_A4.pdf"
             D1, r1 = C.write(str(out / a4n), o)
@@ -115,12 +122,13 @@ def build(out):
             bad = [x[0] for x in res if not x[1]]
             fails += [f"{name}: {b}" for b in bad]
             rows.append((tag, name, h, "пройдены" if not bad else "ОШИБКА: " + "; ".join(bad)))
+        rows += [(tag, "замечание модели", s3["hash"], n) for n in notes]
     for f in out.glob("*.png"):
         f.unlink()
     md = ["# ENG-002 · манифест выпуска", "",
           f"Версия оформления: **{DOC_VERSION}**. Один запуск `python3 tools/eng/eng002_kit.py` строит всё ниже из одного "
           "состояния модели. Снимок модели — хеш геометрии и опций: у файлов одного исполнения он один (A3 цеха, A4 "
-          "сборщика, CSV). Строки «сверка A4 = A3» — что сказано сборщику, то есть на листах цеха. Статус: R01E, не для "
+          "сборщика, CSV, таблица распила .xlsx). Строки «сверка A4 = A3» — что сказано сборщику, то есть на листах цеха. Статус: R01E, не для "
           "изготовления, не утверждено. Старые копии (в том числе в Obsidian) заменить этим набором.", "",
           "| Исполнение | Файл | Снимок модели | Проверки выпуска |", "|---|---|---|---|"]
     md += [f"| {t} | `{n}` | `{h}` | {r} |" for t, n, h, r in rows]

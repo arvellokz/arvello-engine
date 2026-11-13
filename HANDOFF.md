@@ -45,7 +45,7 @@ python3 tools/eng/test_wrd101.py                 # шкаф
 python3 tools/eng/test_bazis.py                  # правила БАЗИС Б1–Б12 + разбор 13.11 (негатив на каждое)
 ```
 ```bash
-python3 tools/eng/test_movento.py && python3 tools/eng/test_eng002.py && python3 tools/eng/test_fonts.py && python3 tools/eng/test_testutil.py
+python3 tools/eng/test_movento.py && python3 tools/eng/test_eng002.py && python3 tools/eng/test_eng003.py && python3 tools/eng/test_fonts.py && python3 tools/eng/test_testutil.py
 ```
 Все тесты печатают «ИТОГ» и при расхождении выходят с кодом 1 (`tools/eng/testutil.py`). Полный прогон — 10–15 минут; тесты можно запускать параллельно.
 
@@ -53,7 +53,7 @@ python3 tools/eng/test_movento.py && python3 tools/eng/test_eng002.py && python3
 ```bash
 python3 tools/eng/eng002_kit.py                  # → docs/eng-002/выпуск/ + МАНИФЕСТ.md
 ```
-Состав: A3 цеха (комод со столиком, без столика, шкаф 2400 × 2800 × 450), A4 сборщику (комод ×2, ящик), пример листов ящика A3, CSV ×3. Сверка «A4 = A3» внутри. Отдельный комплект:
+Состав: A3 цеха (комод со столиком, без столика, шкаф 2400 × 2800 × 450), A4 сборщику (комод ×2, ящик), пример листов ящика A3, CSV ×3, таблица распила `*_распил.xlsx` ×3 (ENG-003). Сверки «A4 = A3» и «распил = CSV» внутри. Отдельный комплект:
 ```bash
 python3 tools/eng/kit13.py ARV-NST-101 out.pdf width=1200 handle=push changer=yes color=O
 ```
@@ -94,7 +94,7 @@ python3 tools/eng/kit13.py ARV-NST-101 out.pdf width=1200 handle=push changer=ye
 **Ждём:** ответ Kagan (Нурике), в какой версии БАЗИС цех и какой файл нужен станкам (спрошено устно); ответ резчика (примет ли Excel, версия БАЗИС, прайс); ответ на заявку пробного БАЗИС → образец BXF; решение владельца, держать ли PDF выпуска в репозитории. Остальные вопросы цеху (кромка, ручные правки) — при первом заказе.
 
 **Код (по порядку):**
-0. Если резчик примет Excel: выгрузка раскроя — одна строка на деталь: наименование, длина, ширина, кол-во, декор / толщина, кромка по 4 сторонам, направление текстуры (сейчас в CSV кромки по сторонам нет) + проверка «CSV = листы деталей».
+0. ~~Выгрузка раскроя Excel~~ — сделано (ENG-003, `export_cutting.py`). Ждёт решения владельца: кромка ПВХ 0,4 на пласти переднего и заднего цоколя комода (`cab.py`, `plinth`, грань `-y`) — убрать или перенести на торец; от этого меняются метры кромки в спецификации (сейчас завышены на 2,32 м). После ответа резчика — подстроить колонки под его БАЗИС-Раскрой.
 1. Ответы цеха → поправить `cab.TECH`, пересобрать выпуск.
 2. Петли (`docs/blum/2026-11-12_TANDEM_петли_TIP-ON-двери.md`): саморезы чашки screw-on (45 / 9,5 — не данные Blum), адаптер TIP-ON 20 / 52, габарит 173L8100 для проставок (В-105); внутренний ящик MOVENTO (X + 23 / 18) для шкафа.
 3. Справочник фурнитуры (MOVENTO, TANDEM, CLIP top, TIP-ON дверей): формулы от LW / NL / двери, сверка 5–10 конфигураций на семейство.
@@ -119,4 +119,5 @@ python3 tools/eng/kit13.py ARV-NST-101 out.pdf width=1200 handle=push changer=ye
 | `tools/eng/eng002_*.py` | инструкции A4 (ящик, комод), пример A3 ящика, единый выпуск |
 | `tools/eng/fonts.py`, `fonts/` | шрифт листов из репозитория |
 | `tools/eng/export_parts.py` | CSV деталей и покупных для любой модели |
+| `tools/eng/export_cutting.py` | таблица распила .xlsx (ENG-003): `python3 tools/eng/export_cutting.py SKU out.xlsx key=value … [--csv выпуск.csv]` |
 | `catalog/` | оси конфигурации моделей, ревизии |
