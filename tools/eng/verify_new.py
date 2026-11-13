@@ -75,6 +75,37 @@ def wall_before_drawers(texts, qty):
     return OK, f"шаг до ящиков, уголков {qty}"
 
 
+def supplier_ok(s):
+    """ENG-005 п. 1: детали — из того, что есть у поставщика профиля (плита, толщина, кромка, декор; кромка не на пласти)."""
+    from eng import cab
+    sup = s["derived"].get("supplier") or {"profile": "base"}
+    S = cab.SUPPLY[sup["profile"]]
+    if sup["profile"] == "base":
+        return OK, "профиль базовый (проверка не требуется)"
+    mats = {"LDSP16", S["front_mat"], S["back_mat"]}
+    edges = set(S["edge_map"].values())
+    bad = []
+    for p in s["parts"]:
+        if p["kind"] != "board":
+            continue
+        sz = {a: p[a + "1"] - p[a + "0"] for a in "xyz"}
+        th = min(sz, key=sz.get)
+        e = s["derived"]["parts_ext"].get(p["id"], {}).get("edges", {})
+        if p["material"] not in mats:
+            bad.append(f"{p['id']}: плита {p['material']} — нет у поставщика")
+        if abs(sz[th] - cab.MAT_T.get(p["material"], sz[th])) > 0.01:
+            bad.append(f"{p['id']}: толщина {sz[th]:g} ≠ {p['material']}")
+        if set(e.values()) - edges:
+            bad.append(f"{p['id']}: кромка {sorted(set(e.values()) - edges)} — нет у поставщика")
+        if any(f[1] == th for f in e):
+            bad.append(f"{p['id']}: кромка на пласти")
+        if p["finish"] in S["fin_map"]:
+            bad.append(f"{p['id']}: декор {p['finish']} не переведён в декор поставщика")
+    if bad:
+        return ERR, f"{bad[0]}; всего {len(bad)}"
+    return OK, f"{S['name']}: плита, кромка, декоры — из базы поставщика"
+
+
 def verify_new(s, texts):
     out = []
     add = lambda n, st, t: out.append((n, st, str(t)))
@@ -372,6 +403,10 @@ def verify_new(s, texts):
                     cov.append(f"уголок x {a_['x0']:g}…{a_['x1']:g} под {p['id']}")
         add("Уголки к стене не накрыты другими деталями (столик, надстройки)", ERR if cov else OK,
             f"{len(wa)} уголка свободны" if not cov else f"{cov[0]}; всего {len(cov)}")
+
+    # 18. Материалы — по профилю поставщика (ENG-005 п. 1, 14.11)
+    st, t_ = supplier_ok(s)
+    add("Материалы по профилю поставщика (плита, толщина, кромка, декор)", st, t_)
 
     # 17. Разные позиции — разные названия (разбор БАЗИС 13.11, шкаф: две «Боковина левая», две «Дверь»)
     st, t = distinct_names(s)

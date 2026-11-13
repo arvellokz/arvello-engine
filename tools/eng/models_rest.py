@@ -379,7 +379,7 @@ def wardrobe_sliding(o):
     BK = b.part("BACK", "Задняя стенка", 2, yc1, PL + 2, W - 2, yc1 + TB, H - 2, "HDF4", "INNER", "carcass")
     b._back_screws("", verts, [c["TOP"], c["BOT"]] + [p for p in b.P if p.id.startswith("SH")], yc1, PL, H, 0, W)
     pl = b.part("PL-F", "Цоколь", T, 60, 0, W - T, 60 + T, PL, "LDSP16", color, "carcass", unit="Цоколь",
-                edges={"-y": "ABS2", "-z": "PVC04"})
+                edges={"-z": "PVC04"})   # 14.11: ABS 2 на «-y» (пласть) убрана
     b.conf(c["BOT"], pl, "-z", "x", [T + 80 + (W - 2 * T - 160) * k / 4 for k in range(5)], "J-BOT-PL")
     # двери-купе: система профиля (кандидат)
     nd = 2 if W <= 1800 else 3
@@ -619,7 +619,7 @@ def bed_lift(o):
     b.conf(HB, DV, "-y", "z", [120, 240], "J-HEAD-DIV")
     b.conf(FT, DV, "+y", "z", [120, 240], "J-FOOT-DIV")
     # цоколь-рамка под дном
-    pf = b.part("PL-F", "Цоколь", 40, 40, 0, W - 40, 56, 40, "LDSP16", "black", "base", edges={"-y": "PVC04"})
+    pf = b.part("PL-F", "Цоколь", 40, 40, 0, W - 40, 56, 40, "LDSP16", "black", "base")   # 14.11: кромка «-y» была на пласти
     pb = b.part("PL-B", "Цоколь", 40, L - 56, 0, W - 40, L - 40, 40, "LDSP16", "black", "base")
     ps = [b.part(f"PL-S{k}", "Цоколь", x, 56, 0, x + 16, L - 56, 40, "LDSP16", "black", "base")
           for k, x in ((1, 40), (2, W / 2 - 8), (3, W - 56))]
@@ -955,7 +955,7 @@ def bed_cocoon(o):
         b.conf(R, S, "+z", "y", [Y0 + 200, (Y0 + Y1) / 2, Y1 - 200], f"J-{R.id}-{S.id}")
     b.conf(ring[2], FT, "+z", "x", [X0 + 300, (X0 + X1) / 2, X1 - 300], "J-RG-F")
     b.conf(ring[3], HB, "+z", "x", [X0 + 300, (X0 + X1) / 2, X1 - 300], "J-RG-B")
-    pls = [b.part("PL-F", "Цоколь", x0 + 60, 60, 0, x0 + W - 60, 76, 60, "LDSP16", "black", "base", edges={"-y": "PVC04"}),
+    pls = [b.part("PL-F", "Цоколь", x0 + 60, 60, 0, x0 + W - 60, 76, 60, "LDSP16", "black", "base"),   # 14.11: кромка «-y» была на пласти — убрана
            b.part("PL-B", "Цоколь", x0 + 60, L - 76, 0, x0 + W - 60, L - 60, 60, "LDSP16", "black", "base"),
            b.part("PL-L", "Цоколь", x0 + 60, 76, 0, x0 + 76, L - 76, 60, "LDSP16", "black", "base"),
            b.part("PL-R", "Цоколь", x0 + W - 76, 76, 0, x0 + W - 60, L - 76, 60, "LDSP16", "black", "base")]

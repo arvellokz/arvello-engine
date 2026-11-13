@@ -13,8 +13,8 @@ from .sheetlib import CTR, DIM, HID, PHANTOM, THIN, VIS
 
 AX = {"x": 0, "y": 1, "z": 2}
 NAME = {"-y": "перед", "+y": "зад", "+z": "верх", "-z": "низ", "-x": "лево", "+x": "право"}
-EDGE_TXT = {"ABS2": "ABS 2", "PVC04": "0,4"}
-EDGE_T = {"ABS2": 2.0, "PVC04": 0.4}
+EDGE_TXT = {"ABS2": "ABS 2", "PVC04": "0,4", "PVC2": "ПВХ 2", "PVC1": "ПВХ 1"}
+EDGE_T = {"ABS2": 2.0, "PVC04": 0.4, "PVC2": 2.0, "PVC1": 1.0}
 
 
 def vec(d):
@@ -137,7 +137,7 @@ def detail(sh, s, pid, x, y, scale, n, up, holes=None, ext=None, ord_top=True, o
     for face, typ in edges.items():
         sd = fr.side(face)
         o = 1.1
-        lw = dict(lw=2.4 if typ == "ABS2" else 1.2, color="#A23B2A", ls="-")
+        lw = dict(lw=2.4 if typ in ("ABS2", "PVC2") else 1.2, color="#A23B2A", ls="-")
         if sd == "L":
             sh.line(x - o, y, x - o, y1, lw)
         elif sd == "R":

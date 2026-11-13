@@ -77,6 +77,26 @@ TECH = {
 }
 MOVENTO["bottom_clear"] = TECH["bottom_clear"]
 
+# Профиль материалов поставщика (ENG-005 п. 1, решение владельца 14.11: ориентир — ДСП Центр, Алматы). Профиль меняет
+# толщину фасада и ХДФ (геометрия строится от них), заменяет кромку и декоры на то, что есть в базе поставщика.
+# «base» — как было до 14.11 (36 старых моделей и шкаф WRD-101 пока на нём). Данные ДСП Центра:
+# docs/поставщики/dspc/ДСП_Центр_база_материалов_2026-11-13.xlsx и смета 14.11 (кромка только ПВХ 1 и 2 мм × 19,
+# ХДФ только 3 мм, ЛДСП 18 — только 13 декоров LT 2800 × 2120; к «Дуб натуральный» (Амберг 4090) нет кромки в цвет).
+SUPPLY = {
+    "base": {"name": "базовый (до 14.11)", "TF": 18, "TB": 4, "front_mat": "LDSP18", "back_mat": "HDF4",
+             "edge_map": {}, "fin_map": {}, "back_fin": "INNER", "plinth_fin": "black", "base_names": {}},
+    "dspc": {"name": "ДСП Центр (Алматы), 14.11", "TF": 16, "TB": 3, "front_mat": "LDSP16", "back_mat": "HDF3",
+             # видимые кромки (фасады, передние торцы) ABS 2 → ПВХ 2 × 19; остальные ПВХ 0,4 → ПВХ 1 × 19
+             "edge_map": {"ABS2": "PVC2", "PVC04": "PVC1"},
+             "fin_map": {"O": "B4069", "INNER": "W110"},      # W, G — не сопоставлены (предупреждение)
+             "back_fin": "HDFW", "plinth_fin": "body",
+             "base_names": {"B4069": "ЛДСП Дуб Бунратти 4069 16*2750*1830 SwissKrono",
+                            "W110": "ЛДСП Белый 110 (корпус) SM 16*2750*1830 SwissKrono",
+                            "HDFW": "HDF ламинированный Белый фасадный 3*2500*2070 SH"}},
+}
+GRAIN_FINS = {"O", "B4069"}           # декоры с рисунком: деталь — с направлением текстуры
+MAT_T = {"LDSP16": 16, "LDSP18": 18, "HDF4": 4, "HDF3": 3}
+
 
 def _ru(x):
     return format(x, "g").replace(".", ",")
@@ -169,8 +189,11 @@ def _mid(p, ax):
 class Build:
     """Накопитель изделия: детали, отверстия, соединения, фурнитура, проверки."""
 
-    def __init__(self, sku, rev, rev_status, options):
+    def __init__(self, sku, rev, rev_status, options, profile="base"):
         self.sku, self.rev, self.rev_status, self.options = sku, rev, rev_status, options
+        self.profile = profile
+        self.S = SUPPLY[profile]
+        self.TF, self.TB = self.S["TF"], self.S["TB"]
         self.P, self.holes, self.joints = [], [], {}
         self.back_opts = {}           # {"step", "round", "skip": [id]} — крепёж ХДФ модели; пусто — как у всех (шаг ≤ 150)
         self.hw = {}
@@ -186,6 +209,20 @@ class Build:
             raise ValueError(f"{pid}: пустой объём {x0, y0, z0, x1, y1, z1}")
         e = EPart(pid, name, kind, round(x0, 3), round(y0, 3), round(z0, 3), round(x1, 3), round(y1, 3), round(z1, 3),
                   mat, fin, group, axis=axis, unit=unit or name, note=note)
+        if kind == "board":
+            S = self.S
+            if fin in S["fin_map"] and not mat.startswith("HDF"):
+                e.finish = S["fin_map"][fin]
+            edges = {f: S["edge_map"].get(ty, ty) for f, ty in (edges or {}).items()}
+            sz = {"x": e.x1 - e.x0, "y": e.y1 - e.y0, "z": e.z1 - e.z0}
+            th = min(sz, key=sz.get)
+            bad = [f for f in edges if f[1] == th]
+            if bad:                  # 13.11 (ENG-003): кромка на пласти не бывает — ошибка модели, а не данные
+                if self.profile != "base":
+                    raise ValueError(f"{pid}: кромка на пласти {bad}")
+                self.warnings.append(f"{pid}: кромка на пласти {bad} — проверить (ENG-005)")
+            if mat in MAT_T and abs(sz[th] - MAT_T[mat]) > 0.01:
+                raise ValueError(f"{pid}: толщина {sz[th]} ≠ материал {mat}")
         e.edges = dict(edges or {})
         e.grain = ""
         e.pos = pos
@@ -344,7 +381,8 @@ class Build:
                 self.dowel(V, S_, n, "y", ys2["dowel"], j)
             parts["shelves"].append(S_)
         if back:
-            BK = self.part(f"{pre}BACK", "Задняя стенка", x0 + 2, yc1, z0 + 2, x1 - 2, yc1 + TB, z1 - 2, "HDF4", "INNER",
+            BK = self.part(f"{pre}BACK", "Задняя стенка", x0 + 2, yc1, z0 + 2, x1 - 2, yc1 + self.TB, z1 - 2,
+                           self.S["back_mat"], self.S["back_fin"],
                            "carcass")
             parts["BACK"] = BK
             self._back_screws(pre, verts, [b for b in (TOP, BOT) if b] + parts["shelves"], yc1, z0, z1, x0, x1)
@@ -374,16 +412,18 @@ class Build:
                 self.hole(Hh.id, f"J-{pre}BACK", "back_pilot", x, yc1, _mid(Hh, "z"), "-y", 2.5, 12, "SCREW-3.5x16")
 
     # ------------------------------------------------------------------ основания корпуса
-    def plinth(self, pre, c, h, front=40, side=20, back=16, fin="black"):
+    def plinth(self, pre, c, h, front=40, side=20, back=16, fin=None):
         """Рамка цоколя «Самал»: 4 детали на шкантах, к дну — конфирматами через дно."""
         BOT = c["BOT"]
+        if fin is None:                               # ENG-005: у ДСП Центра цоколь в цвет корпуса (без листа ради 4 планок)
+            fin = c["L"].finish if self.S["plinth_fin"] == "body" else self.S["plinth_fin"]
         x0, x1 = c["L"].x0, c["R"].x1
         yc0, yc1 = c["L"].y0, c["L"].y1
-        px0, px1, py0, py1 = x0 + side, x1 - side, yc0 - TF + front, yc1 - back
+        px0, px1, py0, py1 = x0 + side, x1 - side, yc0 - self.TF + front, yc1 - back
         F = self.part(f"{pre}PL-F", "Цоколь продольный", px0, py0, 0, px1, py0 + T, h, "LDSP16", fin, "carcass",
-                      edges={"-x": "PVC04", "+x": "PVC04", "-y": "PVC04"})
+                      edges={"-x": "PVC04", "+x": "PVC04"})
         Bk = self.part(f"{pre}PL-B", "Цоколь продольный", px0, py1 - T, 0, px1, py1, h, "LDSP16", fin, "carcass",
-                       edges={"-x": "PVC04", "+x": "PVC04", "-y": "PVC04"})
+                       edges={"-x": "PVC04", "+x": "PVC04"})
         SL = self.part(f"{pre}PL-SL", "Цоколь боковой", px0, py0 + T, 0, px0 + T, py1 - T, h, "LDSP16", fin, "carcass")
         SR = self.part(f"{pre}PL-SR", "Цоколь боковой", px1 - T, py0 + T, 0, px1, py1 - T, h, "LDSP16", fin, "carcass")
         zz = (12, h - 12) if h >= 40 else (h / 2,)
@@ -425,7 +465,7 @@ class Build:
 
     # ------------------------------------------------------------------ фасады и ящики
     def drawers(self, pre, c, colL, colR, floor_z, ceil_z, fronts, color, inner_fin, handle="bar128", tipon=False,
-                front_mat="LDSP18", front_t=18, front_edges=None, front_unit="Фасад ящика", box_max=None,
+                front_mat=None, front_t=None, front_edges=None, front_unit="Фасад ящика", box_max=None,
                 handle_through=False, notch=None, caps=None, setback=0, movento=False, load=None):
         """Ящики Blum 560H (или MOVENTO 760H + TIP-ON BLUMOTION при movento=True) в проёме между colL и colR.
         fronts — [(fx0, fx1, fz0, fz1)] снизу вверх. Короба — по правилам «Самал» R02E (LW − 42, NL − 10, утопление 13);
@@ -433,6 +473,8 @@ class Build:
         if movento and (not tipon or handle or notch or setback):
             raise ValueError("MOVENTO: только накладной ящик TIP-ON BLUMOTION без ручки и выреза")
         sysd = MOVENTO if movento else BLUM[tipon]
+        front_mat = front_mat or self.S["front_mat"]
+        front_t = front_t or self.TF
         yc0, yc1 = colL.y0 + setback, colL.y1
         Dc = yc1 - yc0
         NL = pick_nl(Dc, MOV_SERIES if movento else NL_SERIES)
@@ -676,7 +718,8 @@ class Build:
         центр чашки 22,5 от кромки двери; планка — 2 отверстия Ø5 гл. 13 на 37 от передней кромки боковины, ± 16."""
         recs = []
         for i, ((fx0, fx1, fz0, fz1), S) in enumerate(zip(fronts, hinge_side), 1):
-            d = self.part(f"{pre}DOOR-{i}", "Дверь", fx0, 0, fz0, fx1, TF, fz1, "LDSP18", color, "fronts", unit="Дверь",
+            d = self.part(f"{pre}DOOR-{i}", "Дверь", fx0, 0, fz0, fx1, self.TF, fz1, self.S["front_mat"], color, "fronts",
+                          unit="Дверь",
                           edges={"-x": "ABS2", "+x": "ABS2", "-z": "ABS2", "+z": "ABS2"})
             left = abs(S.x0 - min(p.x0 for p in self.P if p.group == "carcass")) < 400 and S.id.endswith("SIDE-L")
             if lefts is not None:
@@ -690,10 +733,10 @@ class Build:
             xin = 9.5 if left else -9.5                          # отверстия чашки — к середине двери
             xf, dr = (S.x1, "-x") if left else (S.x0, "+x")
             for k, z in enumerate(hs, 1):
-                self.hole(d.id, f"J-{pre}HINGE{i}", "hinge_cup", xc, TF, z, "-y", 35, 13, "HINGE",
+                self.hole(d.id, f"J-{pre}HINGE{i}", "hinge_cup", xc, self.TF, z, "-y", 35, 13, "HINGE",
                           note="кандидат: размер C и глубина — по каталогу петли")
                 for dz in (-22.5, 22.5):
-                    self.hole(d.id, f"J-{pre}HINGE{i}", "hinge_cup_screw", xc + xin, TF, z + dz, "-y", 2.5, 8, "SCREW-3.5x15",
+                    self.hole(d.id, f"J-{pre}HINGE{i}", "hinge_cup_screw", xc + xin, self.TF, z + dz, "-y", 2.5, 8, "SCREW-3.5x15",
                               note="засверловка под саморез чашки, схема 45 / 9,5")
                 for dz in (-16, 16):
                     self.hole(S.id, f"J-{pre}HINGE{i}", "hinge_plate", xf, S.y0 + 37, z + dz, dr, 5, 13, "SCREW-6.3x13",
@@ -702,7 +745,7 @@ class Build:
                 hx = fx1 - 40 if left else fx0 + 40
                 zc = fz1 - hz_from_top
                 for z in (zc - 160, zc + 160):
-                    self.hole(d.id, f"J-{pre}DHANDLE{i}", "handle", hx, 0, z, "+y", 5, TF, "SCREW-M4x22", through=True)
+                    self.hole(d.id, f"J-{pre}DHANDLE{i}", "handle", hx, 0, z, "+y", 5, self.TF, "SCREW-M4x22", through=True)
                 self.part(f"{pre}DHANDLE-{i}", "Ручка-скоба 320", hx - 6, -26, zc - 176, hx + 6, -14, zc + 176, "HANDLE-320",
                           "black", "fronts", kind="buy")
                 for s_, zz in (("a", zc - 160), ("b", zc + 160)):
@@ -713,7 +756,7 @@ class Build:
                 hz = fz1 - hz_from_top
                 xc2 = (fx0 + fx1) / 2
                 for x in (xc2 - 64, xc2 + 64):
-                    self.hole(d.id, f"J-{pre}DHANDLE{i}", "handle", x, 0, hz, "+y", 5, TF, "SCREW-M4x22", through=True)
+                    self.hole(d.id, f"J-{pre}DHANDLE{i}", "handle", x, 0, hz, "+y", 5, self.TF, "SCREW-M4x22", through=True)
                 self.part(f"{pre}DHANDLE-{i}", "Ручка-скоба 128", xc2 - 80, -26, hz - 6, xc2 + 80, -14, hz + 6, "HANDLE-128", "black",
                           "fronts", kind="buy")
                 for s_, xx in (("a", xc2 - 64), ("b", xc2 + 64)):
@@ -788,7 +831,7 @@ class Build:
         d.hardware = hw
         boards = [p for p in self.P if p.kind == "board"]
         for p in boards:
-            if p.finish == "O":
+            if p.finish in GRAIN_FINS:
                 sz = {"x": p.x1 - p.x0, "y": p.y1 - p.y0, "z": p.z1 - p.z0}
                 p.grain = self.grain_override.get(p.id) or max(sz, key=sz.get)
         for p in boards:
@@ -808,6 +851,12 @@ class Build:
         der["parts_ext"] = {p.id: {"edges": p.edges, "grain": p.grain, "pos": p.pos} for p in self.P if p.kind == "board"}
         der["joints"] = self.joints
         der["edge_abs2_m"] = round(sum(max(_edge_len(p, f)) for p in boards for f, t in p.edges.items() if t == "ABS2") / 1000, 2)
+        der["edge_m"] = {}
+        for p in boards:
+            for f_, t_ in p.edges.items():
+                der["edge_m"][t_] = der["edge_m"].get(t_, 0) + max(_edge_len(p, f_)) / 1000
+        der["edge_m"] = {k: round(v, 2) for k, v in der["edge_m"].items()}
+        der["supplier"] = {"profile": self.profile, **{k: self.S[k] for k in ("name", "base_names")}}
         der["edge_04_m"] = round(sum(max(_edge_len(p, f)) for p in boards for f, t in p.edges.items() if t == "PVC04") / 1000, 2)
         d.derived = der
         d.ops = {"board_cut": len(boards), "drill_hole": len(self.holes), "tube_cut": sum(p.kind == "tube" for p in self.P),

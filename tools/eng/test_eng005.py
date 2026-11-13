@@ -1,0 +1,94 @@
+"""ENG-005 п. 1: профиль материалов поставщика «ДСП Центр» (cab.SUPPLY) для комода ARV-NST-101; негатив на каждое правило.
+
+    python3 tools/eng/test_eng005.py
+"""
+from __future__ import annotations
+
+import copy
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from eng import cab, kit13  # noqa: E402
+from eng import models_new as MN  # noqa: E402
+from eng.testutil import finish  # noqa: E402
+from eng.verify_new import ERR, OK, supplier_ok  # noqa: E402
+
+res = []
+O = {"width": "1200", "handle": "push", "color": "O"}
+
+
+def ok(name, cond, info=""):
+    res.append((name, bool(cond), info))
+
+
+for ch in ("yes", "no"):
+    s = kit13.make("ARV-NST-101", {**O, "changer": ch})
+    B = [p for p in s["parts"] if p["kind"] == "board"]
+    ext = s["derived"]["parts_ext"]
+    st, t = supplier_ok(s)
+    ok(f"{ch}: материалы по профилю ДСП Центр", st == OK, t)
+    ok(f"{ch}: плита только ЛДСП 16 и ХДФ 3", {p["material"] for p in B} == {"LDSP16", "HDF3"}, {p["material"] for p in B})
+    ok(f"{ch}: фасады 16 мм", all(p["y1"] - p["y0"] == 16 for p in B if "FRONT" in p["id"]))
+    ok(f"{ch}: кромка только ПВХ 2 и ПВХ 1", {t_ for p in B for t_ in ext[p["id"]]["edges"].values()} == {"PVC2", "PVC1"})
+    ok(f"{ch}: фасады — ПВХ 2 по кругу", all(set(ext[p["id"]]["edges"].values()) == {"PVC2"} and len(ext[p["id"]]["edges"]) == 4
+                                             for p in B if "FRONT" in p["id"]))
+    ok(f"{ch}: цоколь в цвет корпуса", {p["finish"] for p in B if p["id"].startswith("PL-")} ==
+       {next(p["finish"] for p in B if p["id"] == "SIDE-L")})
+    ok(f"{ch}: «Дуб натуральный» → Дуб Бунратти 4069", "O" not in {p["finish"] for p in B} and
+       "B4069" in {p["finish"] for p in B})
+    ok(f"{ch}: текстура у Бунратти", all(ext[p["id"]]["grain"] for p in B if p["finish"] == "B4069"))
+    ok(f"{ch}: ХДФ 3 — белый фасадный", {p["finish"] for p in B if p["material"] == "HDF3"} == {"HDFW"})
+    ok(f"{ch}: кромки на пласти нет", not any(f[1] == min("xyz", key=lambda a: p[a + "1"] - p[a + "0"])
+                                              for p in B for f in ext[p["id"]]["edges"]))
+    g = next(c for c in s["checks"] if c["name"].startswith("Глубина"))
+    ok(f"{ch}: глубина = фасад 16 + зазор + корпус + ХДФ 3", g["ok"] and g["expected"] == g["actual"], g)
+    ok(f"{ch}: MOVENTO NL {'480' if ch == 'yes' else '450'}",
+       {r["NL"] for r in s["derived"]["drawers"]} == ({480} if ch == "yes" else {450}))
+    # негативы: каждая порча ловится проверкой verify_new
+    for name, fn in [("фасад ЛДСП 18", lambda p: p.update(material="LDSP18") if "FRONT" in p["id"] else None),
+                     ("декор не переведён (O)", lambda p: p.update(finish="O") if p["id"] == "SIDE-L" else None),
+                     ("ХДФ толщиной 4 при материале ХДФ 3", lambda p: p.update(y1=p["y0"] + 4) if p["id"] == "BACK" else None)]:
+        s2 = copy.deepcopy(s)
+        for p in s2["parts"]:
+            fn(p)
+        ok(f"{ch}: негатив — {name}", supplier_ok(s2)[0] == ERR, supplier_ok(s2)[1])
+    s2 = copy.deepcopy(s)
+    s2["derived"]["parts_ext"]["SIDE-L"]["edges"]["-y"] = "ABS2"
+    ok(f"{ch}: негатив — кромка ABS 2 (нет у ДСП Центра)", supplier_ok(s2)[0] == ERR)
+    s2 = copy.deepcopy(s)
+    s2["derived"]["parts_ext"]["PL-F"]["edges"]["-y"] = "PVC1"
+    ok(f"{ch}: негатив — кромка на пласти цоколя", supplier_ok(s2)[0] == ERR)
+
+# ядро: профиль ДСП Центр не даёт построить кромку на пласти и плиту не той толщины
+b = cab.Build("T", "R01E", "", {}, profile="dspc")
+try:
+    b.part("X", "Цоколь", 0, 0, 0, 1000, 16, 60, "LDSP16", "O", "carcass", edges={"-y": "PVC04"})
+    ok("ядро: кромка на пласти — ошибка", False)
+except ValueError:
+    ok("ядро: кромка на пласти — ошибка", True)
+try:
+    b.part("Y", "Фасад", 0, 0, 0, 500, 18, 300, "LDSP16", "O", "fronts")
+    ok("ядро: толщина 18 при ЛДСП 16 — ошибка", False)
+except ValueError:
+    ok("ядро: толщина 18 при ЛДСП 16 — ошибка", True)
+p = b.part("Z", "Фасад", 0, 0, 0, 500, 16, 300, "LDSP16", "O", "fronts", edges={"-x": "ABS2", "+x": "PVC04"})
+ok("ядро: ABS 2 → ПВХ 2, ПВХ 0,4 → ПВХ 1, O → B4069", p.edges == {"-x": "PVC2", "+x": "PVC1"} and p.finish == "B4069")
+
+# старые модели и шкаф — на базовом профиле (не тронуты профилем ДСП Центра)
+w = kit13.make("ARV-WRD-101", {"width": "2400", "height": "2800", "depth": "450", "handle": "push", "fill": "drawers", "color": "O"})
+ok("шкаф WRD-101: профиль базовый, двери ЛДСП 18", w["derived"]["supplier"]["profile"] == "base" and
+   {p["material"] for p in w["parts"] if "DOOR" in p["id"]} == {"LDSP18"})
+# декор, которого нет в базе ДСП Центра, — предупреждение
+sw = kit13.make("ARV-NST-101", {**O, "changer": "no", "color": "W"})
+ok("декор W — предупреждение «не сопоставлен»", any("не сопоставлен" in x for x in sw.get("warnings", [])))
+# комод на базовом профиле строится как раньше (профиль отделим)
+MN.NST_PROFILE = "base"
+sb = kit13.make("ARV-NST-101", {**O, "changer": "no"})
+MN.NST_PROFILE = "dspc"
+ok("комод на базовом профиле: фасады ЛДСП 18, ХДФ 4", {p["material"] for p in sb["parts"] if p["kind"] == "board"} ==
+   {"LDSP16", "LDSP18", "HDF4"})
+
+for n, o_, info in res:
+    print("ok  " if o_ else "FAIL", n, "" if o_ else info)
+finish(all(o_ for _, o_, _ in res))

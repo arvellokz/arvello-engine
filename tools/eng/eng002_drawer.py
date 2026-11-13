@@ -23,6 +23,7 @@ from matplotlib.backends.backend_pdf import PdfPages  # noqa: E402
 from matplotlib.patches import FancyArrowPatch, Polygon  # noqa: E402
 
 from eng import kit13  # noqa: E402
+from eng.boardkit import EDGE_TXT  # noqa: E402
 from eng.cab import TECH as TECH_  # noqa: E402
 from eng.sheetlib import CTR, HID, RED, THIN, VIS, Sheet, View  # noqa: E402
 
@@ -303,11 +304,13 @@ def sheet_shop(D, n, total):
     yb = sh.table(205, 182, ["Поз.", "Наименование", "Размер / артикул", "На 1", f"На {nd}", ""], rows, [10, 72, 46, 11, 11, 21],
                   row_h=4.6, size=6.0)
     # таблица операций по деталям — кто и где
-    ops = [[str(pos["SL"]) + ", " + str(pos["SR"]), "раскрой; кромка 0,4 — верх; Ø7 насквозь ×4; паз " + kit13.n_(16 + TECH_["groove_w_add"]) + " × 5", "цех", "[М] [С]"],
+    ext = D["s"]["derived"]["parts_ext"]
+    etx = lambda k: EDGE_TXT[next(iter(ext[p[k]["id"]]["edges"].values()))]     # кромка детали — из модели (профиль)
+    ops = [[str(pos["SL"]) + ", " + str(pos["SR"]), f"раскрой; кромка {etx('SL')} — верх; Ø7 насквозь ×4; паз " + kit13.n_(16 + TECH_["groove_w_add"]) + " × 5", "цех", "[М] [С]"],
            [str(pos["BOT"]), "раскрой без кромки; Ø4,5 насквозь, зенковка ×6", "цех", "[М] [С]"],
-           [str(pos["F"]) + ", " + str(pos["B"]), "раскрой; кромка 0,4 — верх; Ø5 гл. 36 ×4; Ø3 снизу ×3", "цех", "[М] [С]"],
+           [str(pos["F"]) + ", " + str(pos["B"]), f"раскрой; кромка {etx('F')} — верх; Ø5 гл. 36 ×4; Ø3 снизу ×3", "цех", "[М] [С]"],
            [str(pos["F"]), "дополнительно Ø4,5 насквозь ×4 (крепление фасада)", "цех", "[М]"],
-           [str(pos["FR"]), "раскрой; кромка ABS 2 по контуру; без присадки", "цех", "[М]"],
+           [str(pos["FR"]), f"раскрой; кромка {etx('FR')} по контуру; без присадки", "цех", "[М]"],
            ["ящик", "крючок Ø6 гл. 10 и замки — шаблон Blum T65.1000.02", "сборщик", "[Д] [М] [О]"],
            ["ящик", "фасад — 4 самореза 4 × 25 изнутри, по месту", "сборщик", "[М] [О]"]]
     sh.text(205, yb - 4, "Таблица операций (по образцу БАЗИС «таблица операций», разд. 3.2.2)", size=8, weight="bold")

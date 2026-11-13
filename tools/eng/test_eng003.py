@@ -66,9 +66,12 @@ wb.save(xp)
 e = X.check_xlsx_file(xp, blocks)
 res.append(("негатив — две пустые строки между блоками", bool(e), e[:1]))
 
-# кромка на пласти в модели ловится (цоколь комода, 13.11 — ждёт решения владельца)
+# кромка на пласти: цоколь комода исправлен 14.11 (ENG-005 п. 1) — нет; искусственная — находится
 pl = X.plast_edges(s)
-res.append(("кромка на пласти в модели находится (цоколь PL-F/PL-B)", {p for p, *_ in pl} == {"PL-F", "PL-B"}, pl))
+res.append(("комод: кромки на пласти нет (цоколь исправлен 14.11)", not pl, pl))
+s_pl = copy.deepcopy(s)
+s_pl["derived"]["parts_ext"]["PL-F"]["edges"]["-y"] = "PVC1"
+res.append(("негатив — кромка на пласти цоколя находится", {p for p, *_ in X.plast_edges(s_pl)} == {"PL-F"}, ""))
 res.append(("шкаф: кромки на пласти нет", not X.plast_edges(kit13.make("ARV-WRD-101", dict(WRD))), ""))
 
 for n, ok, info in res:

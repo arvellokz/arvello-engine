@@ -195,7 +195,7 @@ def _image(sh, P, x, y, sc, mirror, reg, labels, title):
         if mirror and sd in ("L", "R"):
             sd = "R" if sd == "L" else "L"
         o = 1.2
-        lw = dict(lw=2.2 if e["typ"] == "ABS2" else 1.1, color=RED, ls="-")
+        lw = dict(lw=2.2 if e["typ"] in ("ABS2", "PVC2") else 1.1, color=RED, ls="-")
         if sd == "L":
             sh.line(x - o, y, x - o, y1, lw); px, py = x - 3.2, y + (y1 - y) * 0.15
         elif sd == "R":

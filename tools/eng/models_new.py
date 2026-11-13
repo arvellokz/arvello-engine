@@ -336,6 +336,9 @@ KQ3.update({
 _MR.KQ2.update(KQ3)
 
 
+NST_PROFILE = "dspc"          # ENG-005 п. 1 (14.11): комод — по материалам ДСП Центра (cab.SUPPLY)
+
+
 def chest6(o):
     """Комод 2 × 3 ящика на цоколе; ручки или нажатие (MOVENTO TIP-ON BLUMOTION); опция — съёмный пеленальный столик."""
     W, color, handle, changer = int(o["width"]), o["color"], o["handle"], o["changer"] == "yes"
@@ -343,7 +346,9 @@ def chest6(o):
     D = 530 if changer else 500                  # со столиком глубже: матрас 700 × 500 ложится целиком (внутри 514)
     push = handle == "push"
     gap = (2.5 if USE_MOVENTO_TOB else TIPON_GAP) if push else 0   # зазор фасад — корпус под TIP-ON
-    b = Build("ARV-NST-101", REV, NEW_STATUS, {"width": W, "handle": handle, "changer": o["changer"], "color": color})
+    b = Build("ARV-NST-101", REV, NEW_STATUS, {"width": W, "handle": handle, "changer": o["changer"], "color": color},
+              profile=NST_PROFILE)
+    TF, TB = b.TF, b.TB
     yc0, yc1 = TF + gap, D - TB
     # стойка двойная (2 × 16): саморезы профилей Blum 4 × 15 с двух сторон одной плиты 16 встретились бы
     # корпуса эксцентриков каждой стойки — со стороны своей колонны (к ним есть доступ после стыковки стоек)
@@ -353,7 +358,7 @@ def chest6(o):
                                                                   (W / 2, T, "Стойка правая", "-")], label="корпус")
     st, st2 = c["parts"][0], c["parts"][1]
     b.screws_into(st, st2, "+x", "y", [yc0 + 60, yc1 - 60], "SCREW-4x25P", "J-ST-PAIR", pilot=(3, 8), at=(PL + H) / 2)
-    b.plinth("", c, PL, front=50, side=20, back=16)
+    b.plinth("", c, PL, front=50, side=20, back=16)           # цвет — по профилю (ДСП Центр: в цвет корпуса)
     fl, ce = c["BOT"].z1, c["TOP"].z0
     for k, (cl, cr, x0, x1) in enumerate(((c["L"], st, 0, W / 2), (st2, c["R"], W / 2, W)), 1):
         hs = [(H - PL) / 3] * 3
@@ -427,6 +432,14 @@ def chest6(o):
                 if push and USE_MOVENTO_TOB else "Blum TANDEM со встроенным TIP-ON (нажатие)." if push else
                 "Blum TANDEM BLUMOTION с ручками (мягкое закрытие)."),
                 "Крепление к стене обязательно (детская комната): 2 уголка (В-48)."]
+    if b.profile == "dspc":
+        b.notes.append(f"Материалы — по базе ДСП Центра (ENG-005): ЛДСП 16 везде, фасады {TF}; кромка ПВХ 2 × 19 на фасадах и "
+                       f"видимых торцах, ПВХ 1 × 19 на остальном; ХДФ {TB}; цоколь в цвет корпуса.")
+        if color not in cab.SUPPLY["dspc"]["fin_map"]:
+            b.warnings.append(f"Декор «{color}» не сопоставлен базе ДСП Центра (ENG-005 п. 1) — выбрать декор и кромку в цвет.")
+        if push and USE_MOVENTO_TOB:
+            b.warnings.append(f"Фасад {TF} мм под MOVENTO + TIP-ON BLUMOTION: толщину фасада по документам Blum не сверяли "
+                              "(Blum — на замену, ENG-005 п. 2).")
     _MR._kq(b, "В-48")
     return b
 

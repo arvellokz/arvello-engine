@@ -45,7 +45,7 @@ python3 tools/eng/test_wrd101.py                 # шкаф
 python3 tools/eng/test_bazis.py                  # правила БАЗИС Б1–Б12 + разбор 13.11 (негатив на каждое)
 ```
 ```bash
-python3 tools/eng/test_movento.py && python3 tools/eng/test_eng002.py && python3 tools/eng/test_eng003.py && python3 tools/eng/test_fonts.py && python3 tools/eng/test_testutil.py
+python3 tools/eng/test_movento.py && python3 tools/eng/test_eng002.py && python3 tools/eng/test_eng003.py && python3 tools/eng/test_eng005.py && python3 tools/eng/test_fonts.py && python3 tools/eng/test_testutil.py
 ```
 Все тесты печатают «ИТОГ» и при расхождении выходят с кодом 1 (`tools/eng/testutil.py`). Полный прогон — 10–15 минут; тесты можно запускать параллельно.
 
@@ -97,7 +97,7 @@ python3 tools/eng/kit13.py ARV-NST-101 out.pdf width=1200 handle=push changer=ye
 **Код — сначала (14.11):** `docs/экономика/ENG-005_каталог_под_ДСП_Центр_без_Blum.md` (стандарт материалов ДСП Центра, фурнитура уровнями, себестоимость из движка, порядок моделей) и `ENG-004_выгрузка_в_БАЗИС-Облако.md`. Пункты 2–3 ниже про Blum — отложены.
 
 **Код (по порядку, до 14.11):**
-0. ~~Выгрузка раскроя Excel~~ — сделано (ENG-003, `export_cutting.py`). Ждёт решения владельца: кромка ПВХ 0,4 на пласти переднего и заднего цоколя комода (`cab.py`, `plinth`, грань `-y`) — убрать или перенести на торец; от этого меняются метры кромки в спецификации (сейчас завышены на 2,32 м). После ответа резчика — подстроить колонки под его БАЗИС-Раскрой.
+0. ~~Выгрузка раскроя Excel~~ — сделано (ENG-003, `export_cutting.py`). Кромка на пласти цоколя убрана 14.11 (ENG-005 п. 1); в ядре кромка на пласти — ошибка (профиль ДСП Центр) или предупреждение (базовый; осталась у реек LIV-001, МДФ 22 — решить).
 1. Ответы цеха → поправить `cab.TECH`, пересобрать выпуск.
 2. Петли (`docs/blum/2026-11-12_TANDEM_петли_TIP-ON-двери.md`): саморезы чашки screw-on (45 / 9,5 — не данные Blum), адаптер TIP-ON 20 / 52, габарит 173L8100 для проставок (В-105); внутренний ящик MOVENTO (X + 23 / 18) для шкафа.
 3. Справочник фурнитуры (MOVENTO, TANDEM, CLIP top, TIP-ON дверей): формулы от LW / NL / двери, сверка 5–10 конфигураций на семейство.
@@ -122,5 +122,6 @@ python3 tools/eng/kit13.py ARV-NST-101 out.pdf width=1200 handle=push changer=ye
 | `tools/eng/eng002_*.py` | инструкции A4 (ящик, комод), пример A3 ящика, единый выпуск |
 | `tools/eng/fonts.py`, `fonts/` | шрифт листов из репозитория |
 | `tools/eng/export_parts.py` | CSV деталей и покупных для любой модели |
+| `tools/eng/cab.py` `SUPPLY` | профили материалов поставщика (ENG-005 п. 1): `base` — как до 14.11; `dspc` — ДСП Центр (ЛДСП 16 везде, фасад 16, ХДФ 3, ПВХ 2 / 1 × 19, Бунратти 4069, Белый 110, цоколь в цвет корпуса). Комод — `models_new.NST_PROFILE`. Тест `test_eng005.py` |
 | `tools/eng/export_cutting.py` | таблица распила .xlsx (ENG-003): `python3 tools/eng/export_cutting.py SKU out.xlsx key=value … [--csv выпуск.csv]` |
 | `catalog/` | оси конфигурации моделей, ревизии |

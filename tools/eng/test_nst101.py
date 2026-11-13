@@ -102,7 +102,8 @@ expect("уголок под столиком", ch, "Уголки к стене",
 def angle_low(o):
     b = orig_chest(o)
     a_ = [x for x in b.derived.get("wall_angles", []) if x.get("inside")][0]
-    a_.update(z0=a_["z0"] - 100, z1=a_["z1"] - 100)          # опустили в зону верхнего ящика
+    # опустили в зону верхнего ящика и сдвинули вперёд на 50 (14.11: ХДФ 3 — короб кончается за 1 мм до уголка)
+    a_.update(z0=a_["z0"] - 100, z1=a_["z1"] - 100, y0=a_["y0"] - 50, y1=a_["y1"] - 50)
     return b
 MN.NEW["ARV-NST-101"] = ("Комод на 6 ящиков", angle_low); MN.MODELS.update(MN.NEW)
 _, ch = run(BASE, "wa3")

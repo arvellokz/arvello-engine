@@ -584,7 +584,7 @@ def reception(o):
     ledge_up = b.part("LEDGE-U", "Полка посетителя, верхний слой", -20, -40, ZL + 18, W + 20, 320, ZL + 36, "LDSP18", color, "top",
                       edges={"-y": "ABS2", "+y": "ABS2", "-x": "ABS2", "+x": "ABS2"})
     work = b.part("WORK", "Столешница рабочая", 36, 40, 725, W - 36, D, 750, "LDSP25", color, "top", edges={"+y": "ABS2"})
-    pl = b.part("PLINTH", "Цоколь", 36, 44, 0, W - 36, 60, 60, "LDSP16", "black", "carcass", edges={"-y": "PVC04"})
+    pl = b.part("PLINTH", "Цоколь", 36, 44, 0, W - 36, 60, 60, "LDSP16", "black", "carcass")   # 14.11: кромка «-y» была на пласти — убрана
     # соединения
     b.ecc(sides["L"][1], fs, "+x", "z", [120, ZL / 2, ZL - 80], "+", "J-SIDEL-FS")
     b.ecc(sides["R"][1], fs, "-x", "z", [120, ZL / 2, ZL - 80], "+", "J-SIDER-FS")
