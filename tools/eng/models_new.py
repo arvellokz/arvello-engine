@@ -341,13 +341,18 @@ NST_PROFILE = "dspc"          # ENG-005 п. 1 (14.11): комод — по ма�
 
 def chest6(o):
     """Комод 2 × 3 ящика на цоколе; ручки или нажатие (MOVENTO TIP-ON BLUMOTION); опция — съёмный пеленальный столик."""
-    W, color, handle, changer = int(o["width"]), o["color"], o["handle"], o["changer"] == "yes"
+    W, handle, changer = int(o["width"]), o["handle"], o["changer"] == "yes"
+    # цвет — реальные декоры ДСП Центра (14.11): корпус (+ цоколь, столик) и фасады отдельно; короба и ХДФ — белые
+    color, fcol = o.get("body", "K110"), o.get("front", "K4069")
+    for k_, v_ in (("корпус", color), ("фасады", fcol)):
+        if v_ not in cab.DSPC_DECORS:
+            raise ValueError(f"{k_}: декор «{v_}» — не из базы ДСП Центра (cab.DSPC_DECORS)")
     H, PL = 880, 60
     D = 530 if changer else 500                  # со столиком глубже: матрас 700 × 500 ложится целиком (внутри 514)
     push = handle == "push"
     gap = (2.5 if USE_MOVENTO_TOB else TIPON_GAP) if push else 0   # зазор фасад — корпус под TIP-ON
-    b = Build("ARV-NST-101", REV, NEW_STATUS, {"width": W, "handle": handle, "changer": o["changer"], "color": color},
-              profile=NST_PROFILE)
+    b = Build("ARV-NST-101", REV, NEW_STATUS, {"width": W, "handle": handle, "changer": o["changer"], "body": color,
+                                                "front": fcol}, profile=NST_PROFILE)
     TF, TB = b.TF, b.TB
     yc0, yc1 = TF + gap, D - TB
     # стойка двойная (2 × 16): саморезы профилей Blum 4 × 15 с двух сторон одной плиты 16 встретились бы
@@ -367,7 +372,7 @@ def chest6(o):
             fr.append((x0 + (GAP / 2 if k == 1 else GAP / 2), x1 - GAP / 2, z + GAP / 2, z + h - GAP / 2))
             z += h
         mov = push and USE_MOVENTO_TOB
-        b.drawers(f"C{k}-", c, cl, cr, fl, ce, fr, color, "INNER" if color != "W" else "W",
+        b.drawers(f"C{k}-", c, cl, cr, fl, ce, fr, fcol, "INNER",
                   handle=None if push else "bar128", tipon=push, box_max=150 if mov else 170, movento=mov,
                   load=DRAWER_LOAD if mov else None)
     if push and USE_MOVENTO_TOB:
@@ -435,8 +440,10 @@ def chest6(o):
     if b.profile == "dspc":
         b.notes.append(f"Материалы — по базе ДСП Центра (ENG-005): ЛДСП 16 везде, фасады {TF}; кромка ПВХ 2 × 19 на фасадах и "
                        f"видимых торцах, ПВХ 1 × 19 на остальном; ХДФ {TB}; цоколь в цвет корпуса.")
-        if color not in cab.SUPPLY["dspc"]["fin_map"]:
-            b.warnings.append(f"Декор «{color}» не сопоставлен базе ДСП Центра (ENG-005 п. 1) — выбрать декор и кромку в цвет.")
+        for k_, v_ in (("корпуса", color), ("фасадов", fcol)):
+            if not cab.DSPC_DECORS[v_][3]:
+                b.warnings.append(f"Кромка в цвет декора {k_} «{cab.DSPC_DECORS[v_][0]}» у ДСП Центра не проверена — "
+                                  "проверить наличие до заказа.")
         if push and USE_MOVENTO_TOB:
             b.warnings.append(f"Фасад {TF} мм под MOVENTO + TIP-ON BLUMOTION: толщину фасада по документам Blum не сверяли "
                               "(Blum — на замену, ENG-005 п. 2).")

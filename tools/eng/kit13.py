@@ -217,7 +217,9 @@ def cfg_ru(s, short=False):
     ax = {a["key"]: a for a in products()[s["sku"]]["axes"]}
     out = []
     for k, v in o.items():
-        if k == "color":                   # декор — как у поставщика профиля (ENG-005: O → Бунратти 4069)
+        if k in ("body", "front"):         # декоры ДСП Центра (14.11)
+            out.append(("корпус " if k == "body" else "фасады ") + fin_ru(v))
+        elif k == "color":                   # декор — как у поставщика профиля (ENG-005: O → Бунратти 4069)
             from eng.cab import SUPPLY
             prof = SUPPLY[s["derived"].get("supplier", {}).get("profile", "base")]
             out.append("цвет " + fin_ru(prof["fin_map"].get(v, v)))

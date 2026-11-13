@@ -24,7 +24,7 @@ from eng import export_cutting as X  # noqa: E402
 from eng import kit13  # noqa: E402
 
 DOC_VERSION = "ENG-002 вид 5 + ENG-003 распил (13.11.2026)"
-BASE = {"width": "1200", "handle": "push", "color": "O"}
+BASE = {"width": "1200", "handle": "push", "body": "K110", "front": "K4069"}
 WRD = {"width": "2400", "height": "2800", "depth": "450", "handle": "push", "fill": "drawers", "color": "O"}
 
 
@@ -108,7 +108,8 @@ def build(out):
             cst = EC.cost(s3)
             cn = f"{stem}_себестоимость.md"
             (out / cn).write_text(EC.to_md(s3, cst), encoding="utf-8")
-            files.append((cn, s3["hash"], [(m, False, "") for m in cst["missing"]] or [("всё сопоставлено поставщику", True, "")]))
+            files.append((cn, s3["hash"], [("смета собрана", True, "")]))      # нет цены — пробел сметы, не ошибка чертежа
+            notes += [f"себестоимость: нет цены — {m}" for m in cst["missing"]]
             tg = lambda v: f"{round(v):,}".replace(",", " ")
             notes.append(f"себестоимость: плита + кромка + распил {tg(cst['dspc'])} ₸; с направляющими "
                          + ", ".join(f"{lv} {tg(v)}" for lv, v in cst["totals"].items()) + " ₸ (без крепежа, сборки, "

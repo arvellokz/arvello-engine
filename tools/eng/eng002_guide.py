@@ -626,7 +626,7 @@ def write(path, opts):
 
 if __name__ == "__main__":
     out = sys.argv[1] if len(sys.argv) > 1 else "eng002_guide.pdf"
-    o = {"width": "1200", "handle": "push", "changer": "yes", "color": "O"}
+    o = {"width": "1200", "handle": "push", "changer": "yes", "body": "K110", "front": "K4069"}
     for a in sys.argv[2:]:
         k, v = a.split("=", 1)
         o[k] = v

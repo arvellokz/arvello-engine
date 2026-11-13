@@ -9,7 +9,7 @@ import matplotlib
 matplotlib.use("Agg")
 from eng import cab, kit13, models_new as MN  # noqa: E402
 
-BASE = dict(width=1200, handle="push", changer="yes", color="O")
+BASE = dict(width=1200, handle="push", changer="yes", body="K110", front="K4069")
 res = []
 
 

@@ -44,7 +44,7 @@ def variant_code(s):
     vals = []
     for k, v in s["options"].items():
         v = str(v)
-        vals.append(v if v.isdigit() else v[:4].upper())
+        vals.append(v if v.isdigit() or k in ("body", "front") else v[:4].upper())   # декор — полным кодом
     return "-".join(vals)
 
 

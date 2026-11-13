@@ -12,7 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from eng import eng002_drawer as E  # noqa: E402
 from eng.sheetlib import Sheet  # noqa: E402
 
-OPTS = {"width": "1200", "handle": "push", "changer": "yes", "color": "O"}
+OPTS = {"width": "1200", "handle": "push", "changer": "yes", "body": "K110", "front": "K4069"}
 res = []
 D = E.drawer_data(OPTS)
 p = D["p"]

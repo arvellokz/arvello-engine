@@ -19,7 +19,7 @@ from eng import models_new as MN  # noqa: E402
 from eng.testutil import finish  # noqa: E402
 
 res = []
-O = {"width": "1200", "handle": "push", "color": "O", "changer": "no"}
+O = {"width": "1200", "handle": "push", "changer": "no", "body": "K4069", "front": "K4069"}
 
 
 def ok(name, cond, info=""):
@@ -65,9 +65,9 @@ del p2["sheets"]["ЛДСП Белый 110 (корпус) SM 16*2750*1830 SwissKr
 c2 = EC.cost(s, p2)
 ok("негатив: нет цены листа — «не сопоставлено», в сумму не идёт", c2["missing"] and c2["dspc"] < c["dspc"], c2["missing"][:1])
 p2 = copy.deepcopy(pr)
-del p2["edge"]["PVC2|B4069"]
+del p2["edge"]["PVC2|K4069"]
 ok("негатив: нет цены кромки — «не сопоставлено»", any("кромка PVC2" in m for m in EC.cost(s, p2)["missing"]))
-ok("негатив: декор W не сопоставлен — ошибка сметы", EC.cost(kit13.make("ARV-NST-101", {**O, "color": "W"}))["missing"])
+ok("негатив: декор без цены (Графит 3114) — «не сопоставлено»", EC.cost(kit13.make("ARV-NST-101", {**O, "body": "K3114"}))["missing"])
 s2 = copy.deepcopy(s)
 for p in s2["parts"]:
     if p["id"] == "SIDE-L":

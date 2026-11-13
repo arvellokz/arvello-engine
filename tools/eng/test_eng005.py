@@ -15,7 +15,7 @@ from eng.testutil import finish  # noqa: E402
 from eng.verify_new import ERR, OK, supplier_ok  # noqa: E402
 
 res = []
-O = {"width": "1200", "handle": "push", "color": "O"}
+O = {"width": "1200", "handle": "push"}
 
 
 def ok(name, cond, info=""):
@@ -35,9 +35,10 @@ for ch in ("yes", "no"):
                                              for p in B if "FRONT" in p["id"]))
     ok(f"{ch}: цоколь в цвет корпуса", {p["finish"] for p in B if p["id"].startswith("PL-")} ==
        {next(p["finish"] for p in B if p["id"] == "SIDE-L")})
-    ok(f"{ch}: «Дуб натуральный» → Дуб Бунратти 4069", "O" not in {p["finish"] for p in B} and
-       "B4069" in {p["finish"] for p in B})
-    ok(f"{ch}: текстура у Бунратти", all(ext[p["id"]]["grain"] for p in B if p["finish"] == "B4069"))
+    ok(f"{ch}: по умолчанию корпус Белый 110, фасады Бунратти 4069",
+       {p["finish"] for p in B if "FRONT" in p["id"]} == {"K4069"} and next(p["finish"] for p in B if p["id"] == "SIDE-L") == "K110")
+    ok(f"{ch}: короба ящиков белые (K110)", {p["finish"] for p in B if "-BOX" in p["id"]} == {"K110"})
+    ok(f"{ch}: текстура у Бунратти", all(ext[p["id"]]["grain"] for p in B if p["finish"] == "K4069"))
     ok(f"{ch}: ХДФ 3 — белый фасадный", {p["finish"] for p in B if p["material"] == "HDF3"} == {"HDFW"})
     ok(f"{ch}: кромки на пласти нет", not any(f[1] == min("xyz", key=lambda a: p[a + "1"] - p[a + "0"])
                                               for p in B for f in ext[p["id"]]["edges"]))
@@ -73,15 +74,31 @@ try:
 except ValueError:
     ok("ядро: толщина 18 при ЛДСП 16 — ошибка", True)
 p = b.part("Z", "Фасад", 0, 0, 0, 500, 16, 300, "LDSP16", "O", "fronts", edges={"-x": "ABS2", "+x": "PVC04"})
-ok("ядро: ABS 2 → ПВХ 2, ПВХ 0,4 → ПВХ 1, O → B4069", p.edges == {"-x": "PVC2", "+x": "PVC1"} and p.finish == "B4069")
+ok("ядро: ABS 2 → ПВХ 2, ПВХ 0,4 → ПВХ 1, O → K4069", p.edges == {"-x": "PVC2", "+x": "PVC1"} and p.finish == "K4069")
 
 # старые модели и шкаф — на базовом профиле (не тронуты профилем ДСП Центра)
 w = kit13.make("ARV-WRD-101", {"width": "2400", "height": "2800", "depth": "450", "handle": "push", "fill": "drawers", "color": "O"})
 ok("шкаф WRD-101: профиль базовый, двери ЛДСП 18", w["derived"]["supplier"]["profile"] == "base" and
    {p["material"] for p in w["parts"] if "DOOR" in p["id"]} == {"LDSP18"})
-# декор, которого нет в базе ДСП Центра, — предупреждение
-sw = kit13.make("ARV-NST-101", {**O, "changer": "no", "color": "W"})
-ok("декор W — предупреждение «не сопоставлен»", any("не сопоставлен" in x for x in sw.get("warnings", [])))
+# опция цвета — декоры базы ДСП Центра (14.11): другой декор фасадов и корпуса; кромка в цвет не проверена — предупреждение
+sw = kit13.make("ARV-NST-101", {**O, "changer": "no", "body": "K3114", "front": "K4446"})
+ok("декоры K3114 / K4446: фасады и корпус в своих декорах", {p["finish"] for p in sw["parts"] if "FRONT" in p["id"]} == {"K4446"}
+   and next(p["finish"] for p in sw["parts"] if p["id"] == "SIDE-L") == "K3114")
+ok("короба и ХДФ белые при любом декоре", {p["finish"] for p in sw["parts"] if "-BOX" in p["id"] or p["id"] == "BACK"} == {"K110", "HDFW"})
+ok("декор без проверенной кромки — предупреждение", sum("не проверена" in x for x in sw.get("warnings", [])) == 2, sw["warnings"])
+ok("по умолчанию (Белый 110 + Бунратти 4069) — без предупреждения о кромке",
+   not any("не проверена" in x for x in kit13.make("ARV-NST-101", {**O, "changer": "no"}).get("warnings", [])))
+try:
+    MN.chest6({**O, "changer": "no", "body": "W", "front": "K4069"})
+    ok("негатив: декор не из базы — ошибка", False)
+except ValueError:
+    ok("негатив: декор не из базы — ошибка", True)
+from eng import bazis as BZ  # noqa: E402
+ok("обозначение — полный код декоров", BZ.designation(sw).endswith("-K3114-K4446"), BZ.designation(sw))
+from eng.catalog import products  # noqa: E402
+ax = {a["key"]: a for a in products()["ARV-NST-101"]["axes"]}
+ok("каталог: оси корпус и фасады — 16 декоров, по умолчанию K110 / K4069", ax["body"]["values"][0] == "K110" and
+   ax["front"]["values"][0] == "K4069" and len(ax["body"]["values"]) == len(ax["front"]["values"]) == 16 and "color" not in ax)
 # комод на базовом профиле строится как раньше (профиль отделим)
 MN.NST_PROFILE = "base"
 sb = kit13.make("ARV-NST-101", {**O, "changer": "no"})
