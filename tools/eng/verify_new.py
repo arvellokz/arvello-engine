@@ -33,6 +33,21 @@ def _ov(a0, a1, b0, b1):
     return min(a1, b1) - max(a0, b0)
 
 
+def wall_before_drawers(texts, qty):
+    """Шаг крепления к стене стоит раньше шагов ящиков (короба / профили) и называет число уголков из спецификации."""
+    T = " ".join(texts)
+    iw = T.find("закрепить к стене ДО направляющих")
+    ib = min([i for i in (T.find(". Короба"), T.find(". Профили")) if i >= 0] or [-1])
+    if iw < 0:
+        return ERR, "шага «закрепить к стене ДО направляющих» нет"
+    if ib >= 0 and ib < iw:
+        return ERR, "крепление к стене стоит после ящиков"
+    m = re.search(r"закрепить к стене ДО направляющих и ящиков: уголки (\d+)", T)
+    if not m or int(m.group(1)) != qty:
+        return ERR, f"в шаге уголков {m.group(1) if m else '—'}, в спецификации {qty}"
+    return OK, f"шаг до ящиков, уголков {qty}"
+
+
 def verify_new(s, texts):
     out = []
     add = lambda n, st, t: out.append((n, st, str(t)))
@@ -197,6 +212,9 @@ def verify_new(s, texts):
         ok = re.search(r"\d+\.[^.]*к стене", T) is not None
         add("Порядок сборки: крепление к стене до навески дверей", OK if ok else ERR,
             "шаг есть" if ok else "уголки в спецификации, шага крепления нет")
+    if "WALL-ANGLE" in H and not doors and d.get("drawers"):
+        st, t = wall_before_drawers(texts, H["WALL-ANGLE"]["qty"])
+        add("Изделие без дверей: крепление к стене ДО направляющих и ящиков, число уголков = спецификации", st, t)
     lv = d.get("levels")
     if lv and d.get("ceiling_gap"):
         Hh = s["options"].get("height")

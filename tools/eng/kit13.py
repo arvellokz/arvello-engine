@@ -231,7 +231,9 @@ def stamp_for(s):
     o = s["options"]
     cfg = cfg_ru(s, short=True)
     d = s["derived"]
-    return {"product": f"{s['product']} {d['width']:g} × {d['depth']:g} × {d['height']:g}"[:44], "doc": f"{s['sku']}.{s['rev']}",
+    from eng import bazis as BZ
+    doc = BZ.designation(s) if _is_new(s) else f"{s['sku']}.{s['rev']}"
+    return {"product": f"{s['product']} {d['width']:g} × {d['depth']:g} × {d['height']:g}"[:44], "doc": doc,
             "rev": s["rev"], "hash": s["hash"], "config": f"{s['sku']} · {cfg}"[:70 if not _is_new(s) else 86],
             "status": "ИНЖЕНЕРНОЕ ПРЕДЛОЖЕНИЕ R01E — НЕ ДЛЯ ИЗГОТОВЛЕНИЯ: открытые вопросы на последнем листе"}
 
@@ -772,7 +774,11 @@ def spec_rows(c):
             if p["kind"] == "board":
                 n, up = view_dirs(s, p)
                 fr = Frame(p, n, up)
-                bu, bv = blank(fr, s["derived"]["parts_ext"].get(p["id"], {}).get("edges", {}))
+                if _is_new(s):
+                    from eng import bazis as BZ
+                    bu, bv = BZ.blank_size(fr, s["derived"]["parts_ext"].get(p["id"], {}).get("edges", {}))
+                else:
+                    bu, bv = blank(fr, s["derived"]["parts_ext"].get(p["id"], {}).get("edges", {}))
                 blk = f"{n_(round(bu, 1))} × {n_(round(bv, 1))}"
         rows.append([str(ps), p["unit"], str(len(ids)), f"{MAT_RU.get(p['material'], p['material'])} {fin_ru(p['finish'], p['kind'])}",
                      size, blk, ""])
@@ -798,13 +804,20 @@ def spec_rows(c):
 def sheet_spec(c, chunk, k, last):
     s = c.s
     sh = Sheet("Спецификация" + (", кромка, раскрой" if last else ""), stamp_for(s), c.no["spec"][k], c.total, "—")
-    y = sh.table(25, 283, ["Поз.", "Наименование", "Кол.", "Материал / артикул", "Готовый", "Заготовка", "Статус"], chunk,
-                 [11, 82, 16, 142, 46, 32, 40], row_h=5.0, size=5.6)
+    y0 = 283
+    if _is_new(s):
+        from eng import bazis as BZ
+        sh.text(25, 285.5, f"Спецификация исполнения {BZ.designation(s)} · снимок модели {s['hash']} — только для этого "
+                "исполнения (П8)", size=6.6, weight="bold", va="top")
+        y0 = 279
+    y = sh.table(25, y0, ["Поз.", "Наименование", "Кол.", "Материал / артикул", "Готовый", "Заготовка", "Статус"], chunk,
+                 [11, 82, 16, 142, 46, 32, 40], row_h=5.0, size=5.6) if chunk else y0
     if last:
         d = s["derived"]
         sh.text(25, y - 5, "Кромка", size=8, weight="bold", va="top")
         sh.text(27, y - 11, f"ABS 2 в цвет — {n_(d['edge_abs2_m'])} м; ПВХ 0,4 — {n_(d['edge_04_m'])} м (без запаса). Заготовка = "
-                "готовый − кромка, без припуска на фуговку (В-2).", size=6.1, va="top")
+                + (f"готовый − кромка + припуск {n_(cab.TECH['edge_allow'])} на фуговку на сторону [М]."
+                   if _is_new(s) else "готовый − кромка, без припуска на фуговку (В-2)."), size=6.1, va="top")
         b = bom(s)
         sh.text(25, y - 18, "Расход плиты — оценка по листам 2800 × 2070 (карту строит программа раскроя цеха)", size=8,
                 weight="bold", va="top")
@@ -888,6 +901,14 @@ def control_new(c):
     if any("SPACER" in p["id"] for p in parts):
         steps.append(f"{k}. Проставки направляющих: к боковинам секций с ящиками, саморезы 4 × 25 через проставку (узел Н);")
         steps.append("     передний торец проставки — за планкой петли (В-105)."); k += 1
+    wall_early = "WALL-ANGLE" in H and not d.get("doors")
+    if wall_early:                       # изделие без дверей: к стене ДО направляющих и ящиков (как инструкция К10, 13.11)
+        wa = d.get("wall_angles", [])
+        top_ = [a for a in wa if not a.get("inside")]
+        ins = [a for a in wa if a.get("inside")]
+        steps.append(f"{k}. Установить на место и закрепить к стене ДО направляющих и ящиков: уголки {H['WALL-ANGLE']['qty']} шт."
+                     f" — {len(top_)} на крышке у стены" + (f", {len(ins)} внутри левой колонны под крышкой" if ins else "") +
+                     " [М]; крепёж в стену по типу стены — монтажник (В-48)."); k += 1
     if drs:
         box = (f"{k}. Короба: дно в пазы боковин, передняя и задняя стенки — на дно, конфирматы (узел В); дно к стенкам"
                " саморезами 4 × 25 снизу (узел Н)." if drs[0].get("sys") == "movento" else f"{k}. Короба на конфирматах (узел В).")
@@ -921,7 +942,7 @@ def control_new(c):
     if any(p["id"].startswith("S1-M-") for p in parts):
         steps.append(f"{k}. Антресоли на секции: саморезы 4 × 25 снизу через крышку секции в дно антресоли, 2 на секцию"
                      " (узел Н); стяжки антресолей."); k += 1
-    if "WALL-ANGLE" in H:
+    if "WALL-ANGLE" in H and not wall_early:
         steps.append(f"{k}. Крепление к стене: уголки, {H['WALL-ANGLE']['qty']} шт. по верху, " +
                      ("до навески дверей и загрузки;" if d.get("doors") else "до загрузки;") +
                      " дюбель / анкер по основанию — монтажник (В-48)."); k += 1
@@ -1198,34 +1219,64 @@ def write_kit(sku, path, options=None):
     newm = sku in models_new.NEW
     if newm:
         no["sections"] = k; k += 1
-    no["details"] = list(range(k, k + len(det))); k += len(det)
-    dpages = []
-    if newm:
-        c_tmp = Ctx(s, 0, dict(no, nodes=0, drill=[0]))
-        dpages = drill_pages(c_tmp)
-        no["drill"] = list(range(k, k + len(dpages))); k += len(dpages)
+    dpages, bz_plan, bz_units = [], [], []
+    if newm:                                     # чертежи панелей и узлов по руководству БАЗИС (решение 13.11)
+        from eng import bazis as BZ
+        det = []
+        for ps_, ids_ in rep:
+            if next(q for q in s["parts"] if q["id"] == ids_[0])["kind"] != "board":
+                continue
+            m_ = BZ.n_sheets(s, ids_[0])
+            bz_plan.append((ps_, ids_, k)); k += m_
+        no["details"] = [n for _, _, n in bz_plan]
+        bz_units, _, _ = BZ.units(s)
+        no["units"] = list(range(k, k + len(bz_units))); k += len(bz_units)
+    else:
+        no["details"] = list(range(k, k + len(det))); k += len(det)
     if has_metal:
         no["metal"] = k; k += 1
     no["nodes"] = k; k += 1
     c0 = Ctx(s, 0, no)
     rows = spec_rows(c0)
-    chunks = [rows[i:i + 44] for i in range(0, len(rows), 44)]
-    if len(chunks[-1]) > 40:
-        chunks.append([])
+    if newm:                                     # по высоте строк с переносом (П7)
+        from eng.sheetlib import wrap_cell
+        Wd = [11, 82, 16, 142, 46, 32, 40]
+        chunks, cur, hsum = [], [], 0.0
+        for r in rows:
+            nl = max(len(wrap_cell(str(v), max(3, int(w / (5.6 * 0.225))))) for v, w in zip(r, Wd))
+            hh = 5.0 + (nl - 1) * 5.6 * 0.42
+            if cur and hsum + hh > 205:
+                chunks.append(cur); cur, hsum = [], 0.0
+            cur.append(r); hsum += hh
+        chunks.append(cur)
+        if hsum > 150:
+            chunks.append([])
+    else:
+        chunks = [rows[i:i + 44] for i in range(0, len(rows), 44)]
+        if len(chunks[-1]) > 40:
+            chunks.append([])
     no["spec"] = list(range(k, k + len(chunks))); k += len(chunks)
     no["control"] = k; k += 1
     no["questions"] = k
     total = k
     s["_total_sheets"] = total
     c = Ctx(s, total, no)
-    c.detail_ref = f"{no['details'][0]:02d}–{no['details'][-1]:02d}" if len(no["details"]) > 1 else f"{no['details'][0]:02d}"
+    if newm:
+        last_ = bz_plan[-1][2] + BZ.n_sheets(s, bz_plan[-1][1][0]) - 1
+        c.detail_ref = f"{no['details'][0]:02d}–{last_:02d}"
+    else:
+        c.detail_ref = f"{no['details'][0]:02d}–{no['details'][-1]:02d}" if len(no["details"]) > 1 else f"{no['details'][0]:02d}"
     c.questions, c.decisions, known = questions_for(s)
     c.tech_req = tech_req(s, c)
     kit_set = "kitchen_set" in s["derived"]["modules"]
     cont = ["01 Общий вид", "02 План и модули" if kit_set else ("02 Карта сборки" if newm else "02 Сборочный чертёж")]
     if newm:
         cont.append(f"{no['sections']:02d} Разрезы и размеры")
-    cont += [f"{x:02d} Детали" for x in no["details"]] + [f"{x:02d} Таблица присадки" for x in no.get("drill", [])]
+    if newm:
+        cont.append(f"{c.detail_ref} Чертежи деталей (БАЗИС)")
+        cont += [f"{n:02d} Узел: {u['name']}" for n, u in zip(no["units"], bz_units)]
+    else:
+        cont += [f"{x:02d} Детали" for x in no["details"]] + [f"{x:02d} Таблица присадки" for x in no.get("drill", [])]
     if has_metal:
         cont.append(f"{no['metal']:02d} Металл")
     cont += [f"{no['nodes']:02d} Узлы"] + [f"{x:02d} Спецификация" for x in no["spec"]] + \
@@ -1237,6 +1288,11 @@ def write_kit(sku, path, options=None):
         fns += [("assembly", lambda: sheet_assembly_map(c)), ("sections", lambda: sheet_assembly(c))]
     else:
         fns.append(("assembly", lambda: sheet_kitchen(c) if kit_set else sheet_assembly(c)))
+    bz = {"panels": {}, "units": []}
+    for ps_, ids_, n_0 in bz_plan:
+        fns.append((f"panel{ps_}", (lambda ps_=ps_, ids_=ids_, n_0=n_0: BZ.panel_sheets(c, ps_, ids_, bz["panels"], n_0))))
+    for n_u, U in zip(no.get("units", []), bz_units):
+        fns.append((f"unit{n_u}", (lambda U=U, n_u=n_u: BZ.unit_sheet(c, U, bz["units"], n_u))))
     for i, blk in enumerate(det):
         fns.append((f"details{i}", (lambda b=blk, i=i: sheet_details(c, b, i))))
     for i, pg in enumerate(dpages):
@@ -1247,18 +1303,31 @@ def write_kit(sku, path, options=None):
     for i, ch in enumerate(chunks):
         fns.append((f"spec{i}", (lambda ch=ch, i=i: sheet_spec(c, ch, i, i == len(chunks) - 1))))
     fns += [("control", lambda: sheet_control(c)), ("questions", lambda: sheet_questions(c))]
-    with PdfPages(path) as pdf:
-        for name, fn in fns:
-            sh = fn()
-            report[name] = sh.check_overlaps()
-            texts += [t.get_text() for t in sh.ax.texts]
-            pdf.savefig(sh.fig)
-            figs.append(sh.fig)
-        pdf.infodict()["Title"] = f"{sku} {s['rev']} {s['hash']}"
+    sheet_texts = []
+    Sheet.WRAP = newm
+    try:
+        with PdfPages(path) as pdf:
+            for name, fn in fns:
+                shs = fn()
+                for j, sh in enumerate(shs if isinstance(shs, list) else [shs]):
+                    report[f"{name}.{j}"] = sh.check_overlaps()
+                    tt = [t.get_text() for t in sh.ax.texts]
+                    texts += tt
+                    sheet_texts.append(tt)
+                    pdf.savefig(sh.fig)
+                    figs.append(sh.fig)
+            pdf.infodict()["Title"] = f"{sku} {s['rev']} {s['hash']}"
+    finally:
+        Sheet.WRAP = False
     checks = verify(s, report, texts, known)
     if _is_new(s):
         from eng.verify_new import ERR, verify_new
         checks += [(n, st != ERR, f"[{st}] {t}") for n, st, t in verify_new(s, texts)]
+    if newm:
+        checks += BZ.verify_bazis(s, bz, sheet_texts, rows)
+        s["_bazis"] = (bz, sheet_texts, rows)
+    if len(figs) != total:
+        checks.append(("Число листов = плану нумерации", False, f"{len(figs)} ≠ {total}"))
     return s, checks, figs
 
 

@@ -25,6 +25,15 @@ PHANTOM = dict(lw=0.5, color="#555", ls=(0, (8, 2, 2, 2, 2, 2)))  # смежна
 DIM = dict(lw=0.45, color="k", ls="-")
 
 
+def wrap_cell(s, lim):
+    """Перенос по словам, длинные слова — по символам; без обрезки."""
+    import textwrap
+    out = []
+    for part in str(s).split("\n"):
+        out += textwrap.wrap(part, lim, break_long_words=True, break_on_hyphens=False) or [""]
+    return out
+
+
 class Sheet:
     def __init__(self, title, stamp, n, total, scale_note):
         self.fig = plt.figure(figsize=(A3[0] / IN, A3[1] / IN))
@@ -199,23 +208,35 @@ class Sheet:
         self._arrow(x + dx * 9, y + dy * 9, dx, dy)
         self.text(x + 2, y - 2 if dy < 0 else y + 2, label, size=7, weight="bold", va="center")
 
+    WRAP = False          # True — перенос строк вместо обрезки «…» (комплекты новых моделей, правило БАЗИС П7)
+
     def table(self, x, y_top, cols, rows, widths, row_h=5.2, head=True, size=6.5, max_chars=None):
-        """Таблица: cols — заголовки, widths — ширины колонок (мм). Возвращает y низа таблицы."""
+        """Таблица: cols — заголовки, widths — ширины колонок (мм). Возвращает y низа таблицы.
+        При Sheet.WRAP длинный текст переносится в ячейке (высота строки растёт), иначе обрезается «…»."""
         y = y_top
         total = sum(widths)
         allrows = ([cols] if head else []) + rows
+        lh = size * 0.42
+        ys = [y]
         for i, r in enumerate(allrows):
             self.line(x, y, x + total, y, THIN if i else dict(lw=0.8, color="k", ls="-"))
             cx = x
+            cells = []
             for c, w in zip(r, widths):
                 s = str(c)
                 lim = max_chars or int(w / (size * 0.21))
-                if len(s) > lim:
-                    s = s[:lim - 1] + "…"
-                self.text(cx + 1.2, y - row_h / 2, s, size=size, va="center",
-                          weight="bold" if (head and i == 0) else "normal")
+                if self.WRAP:
+                    cells.append(wrap_cell(s, max(3, int(w / (size * 0.225)))))
+                else:
+                    cells.append([s[:lim - 1] + "…" if len(s) > lim else s])
+            nl = max(len(cl) for cl in cells)
+            h = row_h if nl == 1 else row_h + (nl - 1) * lh
+            for cl, w in zip(cells, widths):
+                for j, t in enumerate(cl):
+                    self.text(cx + 1.2, y - row_h / 2 - j * lh, t, size=size, va="center",
+                              weight="bold" if (head and i == 0) else "normal")
                 cx += w
-            y -= row_h
+            y -= h
         self.line(x, y, x + total, y, dict(lw=0.8, color="k", ls="-"))
         cx = x
         for w in widths + [0]:

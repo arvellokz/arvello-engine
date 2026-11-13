@@ -31,6 +31,7 @@ python3 tools/eng/check_catalog.py technical                 # 6538 вариан
 python3 tools/eng/test_wrd101.py                             # негативные тесты шкафа
 python3 tools/eng/test_nst101.py                             # тесты комода
 python3 tools/eng/test_movento.py                            # MOVENTO против данных Blum
+python3 tools/eng/test_bazis.py                              # правила БАЗИС (комод и шкаф)
 python3 tools/eng/kit13.py ARV-WRD-101 out.pdf width=2400 height=2800 depth=450 handle=push fill=drawers color=O
 python3 tools/eng/kit13.py ARV-NST-101 out.pdf width=1200 handle=push changer=yes color=O
 python3 tools/eng/export_parts.py SKU out_dir key=value ...
@@ -49,6 +50,7 @@ python3 tools/eng/export_parts.py SKU out_dir key=value ...
 | `tools/eng/verify13.py` | базовые проверки комплекта |
 | `tools/eng/verify_new.py` | проверки по разборам: TIP-ON зазор, планка/крепёж петли, саморезы чашки, ящик мимо петли, место Blum, зазоры, допуски, вход и остаток самореза, крепление к стене, высота проёма, чужие шаги, ссылки К, текстура, **доступ инструмента**, высота в штампе, помещается ли аксессуар, двери у изделия без дверей |
 | `tools/eng/test_wrd101.py`, `test_nst101.py` | негативные тесты: подставляется старая ошибка → проверка должна дать «ошибка» |
+| `tools/eng/bazis.py`, `test_bazis.py` | листы для цеха новых моделей по руководству БАЗИС (правила Б1–Б11, `docs/eng-002/04_правила_БАЗИС.md`) |
 | `tools/eng/eng002_drawer.py`, `eng002_guide.py`, `eng002_chest.py`, `test_eng002.py` | ENG-002: пример листов ящика (лист цеху + инструкция сборщику) с проверкой видимости крепежа на рисунках, см. `docs/eng-002/` |
 | `tools/eng/test_movento.py` | точки профиля и короб MOVENTO против данных Blum для NL 350 / 400 / 450 / 500 |
 | `catalog/products/*.json` | оси конфигурации моделей; `catalog/revisions.json` — ревизии |
