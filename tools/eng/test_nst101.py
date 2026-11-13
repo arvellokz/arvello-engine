@@ -117,4 +117,5 @@ for k, want in (("SCREW-3.5x16", 34), ("SCREW-4x25D", 24), ("SLIDE-SCREW-M", 72)
     res.append(("крепёж комода", k, str(want), str(Hq.get(k)), Hq.get(k) == want))
 for tag, name, want, got, good in res:
     print(f"{'✓' if good else '✗'} {tag:36s} | {name:28s} | ожидалось: {want:13s} | получено: {got}")
-print("ИТОГ:", "все совпали" if all(r[-1] for r in res) else "есть расхождения")
+from eng.testutil import finish  # noqa: E402
+finish(all(r[-1] for r in res))

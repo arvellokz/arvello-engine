@@ -52,4 +52,5 @@ except ValueError:
     res.append(("NL 550 вне ряда", True, "ValueError"))
 for name, ok, t in res:
     print(f"{'✓' if ok else '✗'} {name:40s} | {t}")
-print("ИТОГ:", "все совпали" if all(r[1] for r in res) else "есть расхождения")
+from eng.testutil import finish  # noqa: E402
+finish(all(r[1] for r in res))

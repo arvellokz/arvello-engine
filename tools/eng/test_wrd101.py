@@ -95,4 +95,5 @@ for D in (450, 600):
 ok = all(r[-1] for r in res)
 for tag, name, want, got, good in res:
     print(f"{'✓' if good else '✗'} {tag:28s} | {name:40s} | ожидалось: {want:14s} | получено: {got}")
-print("ИТОГ:", "все совпали" if ok else "есть расхождения")
+from eng.testutil import finish  # noqa: E402
+finish(ok)

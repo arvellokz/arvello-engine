@@ -55,7 +55,14 @@ class Sheet:
             ax.plot([x0, x0 + w], [y0 + yy, y0 + yy], lw=0.4, c="k")
         for xx in (50, 100, 130):
             ax.plot([x0 + xx, x0 + xx], [y0 + 8, y0 + 32], lw=0.4, c="k")
-        t = lambda x, y, txt, **kw: ax.text(x, y, txt, va="center", **{"fontsize": 6.3, **kw})
+        def t(x, y, txt, **kw):
+            """Текст штампа: не обрезается — если не влезает в штамп, шрифт уменьшается (разбор 13.11)."""
+            a_ = ax.text(x, y, txt, va="center", **{"fontsize": 6.3, **kw})
+            r_ = self.fig.canvas.get_renderer()
+            lim = (x0 + w - 1) * self.fig.bbox.width / A3[0]
+            while a_.get_window_extent(r_).x1 > lim and a_.get_fontsize() > 4.0:
+                a_.set_fontsize(a_.get_fontsize() - 0.2)
+            return a_
         t(x0 + 2, y0 + 44, s["product"], fontsize=9, weight="bold")
         t(x0 + 2, y0 + 36, f"{s['doc']}-{n:02d}  ·  {title}", fontsize=7.0, weight="bold")
         t(x0 + 2, y0 + 28, "Разработал (Arvello)"); t(x0 + 52, y0 + 28, "____________")
@@ -233,8 +240,9 @@ class Sheet:
             h = row_h if nl == 1 else row_h + (nl - 1) * lh
             for cl, w in zip(cells, widths):
                 for j, t in enumerate(cl):
-                    self.text(cx + 1.2, y - row_h / 2 - j * lh, t, size=size, va="center",
-                              weight="bold" if (head and i == 0) else "normal")
+                    a = self.text(cx + 1.2, y - row_h / 2 - j * lh, t, size=size, va="center",
+                                  weight="bold" if (head and i == 0) else "normal")
+                    self.cells.append((a, cx + w))
                 cx += w
             y -= h
         self.line(x, y, x + total, y, dict(lw=0.8, color="k", ls="-"))
@@ -245,6 +253,22 @@ class Sheet:
         return y
 
     # ---------------------------------------------------------------- проверка
+    @property
+    def cells(self):
+        if not hasattr(self, "_cells"):
+            self._cells = []
+        return self._cells
+
+    def check_cells(self, tol=0.3):
+        """Текст ячейки таблицы не выходит за правую границу ячейки (разбор 13.11: обрезка без «…» не видна)."""
+        r = self.fig.canvas.get_renderer()
+        px = self.fig.bbox.width / self.ax.get_xlim()[1]
+        bad = []
+        for a, xr in self.cells:
+            if a.get_text().strip() and a.get_window_extent(r).x1 > (xr + tol) * px:
+                bad.append(a.get_text()[:40])
+        return bad
+
     def check_overlaps(self, tol=0.6):
         """Пары накладывающихся текстов и тексты за рамкой. tol — допустимое перекрытие, мм."""
         r = self.fig.canvas.get_renderer()

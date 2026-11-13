@@ -250,6 +250,29 @@ def _sections_var(b, W, n, H, PL, top, D, color, pattern, push=False, inner_draw
     b.derived["levels"] = [0, PL, top, H]
     b.derived["ceiling_gap"] = 40
     b.derived["cut_x"] = round(sw * (1.5 if n > 1 else 0.5) + 77)   # разрез по секции с полками, мимо опор
+    # различающие названия позиций (разбор 13.11: одинаковые имена у разных позиций — цех перепутает)
+    kinds = {f"S{i + 1}-": ("со штангой" if k == "H" else ("с полками и ящиками" if inner_drawers else "с полками"))
+             for i, k in enumerate(pattern)}
+    hinge = {r["door"]: r["left"] for r in b.derived["doors"]}
+    for p_ in b.P:
+        if p_.kind != "board":
+            continue
+        pre = next((k for k in kinds if p_.id.startswith(k)), None)
+        kd = kinds.get(pre, "")
+        if "-SIDE-" in p_.id and "BOX" not in p_.id:
+            base = "Боковина " + ("левая" if p_.id.endswith("-L") else "правая")
+            p_.name = p_.unit = f"{base} {'антресоли над секцией' if '-M-' in p_.id else 'секции'} {kd}"
+        elif "-SHELF-" in p_.id:
+            p_.name = p_.unit = "Полка над штангой" if kd == "со штангой" else f"Полка жёсткая секции {kd}"
+        elif "DOOR" in p_.id:
+            side = "левая (петли слева)" if hinge.get(p_.id, True) else "правая (петли справа)"
+            p_.name = p_.unit = f"Дверь {'антресоли ' if '-M-' in p_.id else ''}{side}"
+        elif "-BOX" in p_.id and p_.id.endswith(("-SL", "-SR")):
+            p_.name = p_.unit = "Боковина ящика " + ("левая" if p_.id.endswith("-SL") else "правая")
+        elif p_.id == "PLINTH":
+            p_.name = p_.unit = "Цоколь передний"
+        elif p_.id in ("PLINTH-L", "PLINTH-R"):
+            p_.name = p_.unit = "Цоколь торцевой"
 
 
 # ============================================================ ARV-WRD-101 Шкаф распашной до потолка

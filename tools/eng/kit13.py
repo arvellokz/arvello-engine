@@ -233,8 +233,12 @@ def stamp_for(s):
     d = s["derived"]
     from eng import bazis as BZ
     doc = BZ.designation(s) if _is_new(s) else f"{s['sku']}.{s['rev']}"
-    return {"product": f"{s['product']} {d['width']:g} × {d['depth']:g} × {d['height']:g}"[:44], "doc": doc,
-            "rev": s["rev"], "hash": s["hash"], "config": f"{s['sku']} · {cfg}"[:70 if not _is_new(s) else 86],
+    prod = f"{s['product']} {d['width']:g} × {d['depth']:g} × {d['height']:g}"
+    conf = f"{s['sku']} · {cfg}"
+    if not _is_new(s):                     # старые модели — как были; новые — без обрезки (разбор 13.11)
+        prod, conf = prod[:44], conf[:70]
+    return {"product": prod, "doc": doc,
+            "rev": s["rev"], "hash": s["hash"], "config": conf,
             "status": "ИНЖЕНЕРНОЕ ПРЕДЛОЖЕНИЕ R01E — НЕ ДЛЯ ИЗГОТОВЛЕНИЯ: открытые вопросы на последнем листе"}
 
 
@@ -294,7 +298,9 @@ def sheet_general(c):
     sh.text(xt, 62, "Вид сверху", size=7.6, weight="bold", va="top")
     sh.text(32, 56, f"Масштаб видов 1:{n_(sc)}", size=6.2, va="top")
     hw = {h["id"]: h for h in s["hardware"]}
-    rows = [["Обозначение", f"{s['sku']} · {s['rev']}"], ["Конфигурация", cfg_ru(s, short=_is_new(s))],
+    from eng import bazis as BZ
+    rows = [["Обозначение", BZ.designation(s) if _is_new(s) else f"{s['sku']} · {s['rev']}"],
+            ["Конфигурация", cfg_ru(s, short=_is_new(s))],
             *([["Высоты", "; ".join(f"{t} {n_(v)}" for t, v in d["height_marks"])]] if d.get("height_marks") else []),
             ["Габарит Ш × Г × В", f"{n_(d['width'])} × {n_(d['depth'])} × {n_(d['height'])} мм" +
              (" (с ручками / выступами — по видам)" if abs(D - d["depth"]) > 1 else "")]]
@@ -305,13 +311,13 @@ def sheet_general(c):
     for k in list(mats)[:7]:
         rows.append(["Материал", k])
     if "SLIDES" in hw:
-        rows.append(["Направляющие", hw["SLIDES"]["spec"][:60 if not _is_new(s) else 90]])
+        rows.append(["Направляющие", hw["SLIDES"]["spec"] if _is_new(s) else hw["SLIDES"]["spec"][:60]])
     if "HINGE" in hw:
         rows.append(["Петли", "кандидат: " + hw["HINGE"]["spec"][:48]] if not _is_new(s) else
-                    ["Петли", hw["HINGE"]["spec"][:90]])
+                    ["Петли", hw["HINGE"]["spec"]])
     if _is_new(s) and "LEGK" in hw:
-        rows.append(["Опоры", hw["LEGK"]["spec"][:90]])
-    rows += [["Масса (оценка)", f"≈ {d['mass_kg']} кг"], ["Снимок конфигурации", s["hash"]]]
+        rows.append(["Опоры", hw["LEGK"]["spec"]])
+    rows += [["Масса (оценка)", f"≈ {n_(d['mass_kg'])} кг"], ["Снимок конфигурации", s["hash"]]]
     sh.text(232, 282, "Материалы и характеристики", size=8.5, weight="bold", va="top")
     y = sh.table(232, 276, ["Параметр", "Значение"], rows, [40, 138], row_h=5.6, size=6.1)
     sh.text(232, y - 5, "Состав комплекта", size=8.5, weight="bold", va="top")
@@ -777,6 +783,8 @@ def spec_rows(c):
                 if _is_new(s):
                     from eng import bazis as BZ
                     bu, bv = BZ.blank_size(fr, s["derived"]["parts_ext"].get(p["id"], {}).get("edges", {}))
+                    if abs(bu - a) + abs(bv - b_) > abs(bv - a) + abs(bu - b_):
+                        bu, bv = bv, bu             # заготовка — в том же порядке сторон, что готовый размер
                 else:
                     bu, bv = blank(fr, s["derived"]["parts_ext"].get(p["id"], {}).get("edges", {}))
                 blk = f"{n_(round(bu, 1))} × {n_(round(bv, 1))}"
@@ -848,7 +856,8 @@ def control_new(c):
                          f"−0,5 / +0; паз {n_(16 + cab.TECH['groove_w_add'])} × 5 на 13 от низа — дно от руки, без люфта [О]"])
         else:
             rows.append([f"К{len(rows) + 1}", "Стенки и дно короба по ширине (до сборки)", "штангенциркуль",
-                         f"{n_(drs[0]['inner_w'])} −0,5 / +0 — иначе короб выйдет за К ниже"])
+                         f"{n_(drs[0]['inner_w'])} −0,5 / +0 — чтобы собранный короб уложился в допуск Blum +0 / −1,5"
+                     " (строка «Короб: внутренняя ширина»)"])
     groups = {}
     for cc in d.get("carcasses", []):
         lab = cc["label"]
@@ -901,35 +910,51 @@ def control_new(c):
     if any("SPACER" in p["id"] for p in parts):
         steps.append(f"{k}. Проставки направляющих: к боковинам секций с ящиками, саморезы 4 × 25 через проставку (узел Н);")
         steps.append("     передний торец проставки — за планкой петли (В-105)."); k += 1
-    wall_early = "WALL-ANGLE" in H and not d.get("doors")
-    if wall_early:                       # изделие без дверей: к стене ДО направляющих и ящиков (как инструкция К10, 13.11)
+    def wall_step(k):
         wa = d.get("wall_angles", [])
         top_ = [a for a in wa if not a.get("inside")]
         ins = [a for a in wa if a.get("inside")]
-        steps.append(f"{k}. Установить на место и закрепить к стене ДО направляющих и ящиков: уголки {H['WALL-ANGLE']['qty']} шт."
-                     f" — {len(top_)} на крышке у стены" + (f", {len(ins)} внутри левой колонны под крышкой" if ins else "") +
-                     " [М]; крепёж в стену по типу стены — монтажник (В-48)."); k += 1
-    if drs:
+        where = (f" — {len(top_)} на крышке у стены" + (f", {len(ins)} внутри левой колонны под крышкой" if ins else "")
+                 if wa else " — по верху секций")
+        return [f"{k}. Установить на место и закрепить к стене ДО направляющих и ящиков" +
+                (" и навески дверей" if d.get("doors") else "") + f": уголки {H['WALL-ANGLE']['qty']} шт.{where} [М]; "
+                "крепёж в стену по типу стены — монтажник (В-48)."], k + 1
+
+    def drawer_steps(k):
+        out = []
+        if not drs:
+            return out, k
         box = (f"{k}. Короба: дно в пазы боковин, передняя и задняя стенки — на дно, конфирматы (узел В); дно к стенкам"
                " саморезами 4 × 25 снизу (узел Н)." if drs[0].get("sys") == "movento" else f"{k}. Короба на конфирматах (узел В).")
-        steps += ["Ящики",
-                  box + " Сборщик после сборки короба: отверстия под задний крючок Ø6 и"
-                  " замки — шаблоном Blum T65.1000.02 (в цехе не сверлятся); первый ящик собрать и проверить с фасадом.",
-                  f"{k + 1}. Профили — " + ("саморезами Blum 609.1500 Ø3,5 × 15 по точкам таблицы NL (узел Ж), после сборки"
-                  " корпуса: ось 38 над низом профиля, профиль на 1 выше дна — запас к минимуму Blum 38 [М]"
-                  if drs[0].get("sys") == "movento" else
-                  "саморезами Ø4 × 15 по точкам таблицы NL (узел Ж)") +
-                  (" на проставки" if any("SPACER" in p["id"] for p in parts) else "") + "; установить короба."]
+        out += ["Ящики",
+                box + " Сборщик после сборки короба: отверстия под задний крючок Ø6 и"
+                " замки — шаблоном Blum T65.1000.02 (в цехе не сверлятся); первый ящик собрать и проверить с фасадом.",
+                f"{k + 1}. Профили — " + ("саморезами Blum 609.1500 Ø3,5 × 15 по точкам таблицы NL (узел Ж), после сборки"
+                " корпуса: ось 38 над низом профиля, профиль на 1 выше дна — запас к минимуму Blum 38 [М]"
+                if drs[0].get("sys") == "movento" else
+                "саморезами Ø4 × 15 по точкам таблицы NL (узел Ж)") +
+                (" на проставки" if any("SPACER" in p["id"] for p in parts) else "") + "; установить короба."]
         k += 2
         outer = [r for r in drs if not r.get("setback_front")]
         if outer:
-            steps.append(f"{k}. Фасады ящиков: зазоры 3 между фасадами, 1,5 по краям, прижать, саморезы изнутри короба"
-                         " (узел Г)."); k += 1
+            out.append(f"{k}. Фасады ящиков: зазоры 3 между фасадами, 1,5 по краям, прижать, саморезы изнутри короба"
+                       " (узел Г)."); k += 1
         if gaps:
-            steps.append(f"{k}. Передние панели внутренних ящиков: зазор {n_(gaps[0])} между панелями, прижать, саморезы"
-                         " изнутри короба (узел Г)."); k += 1
+            out.append(f"{k}. Передние панели внутренних ящиков: зазор {n_(gaps[0])} между панелями, прижать, саморезы"
+                       " изнутри короба (узел Г)."); k += 1
         if any(r["tipon"] for r in drs):
-            steps.append("     TIP-ON ящиков: " + (H["TIPON-SYNC"]["spec"].replace(".0 ", " ") if "TIPON-SYNC" in H else "по каталогу Blum") + ".")
+            src = ("Blum TANDEM, каталог RU v4 стр. 23" if drs[0].get("sys") != "movento" else "Blum, каталог 2022/23 стр. 436")
+            out.append("     TIP-ON ящиков: " + (H["TIPON-SYNC"]["spec"].replace(".0 ", " ").replace("(стр. 23)", f"({src})")
+                                                if "TIPON-SYNC" in H else "по каталогу Blum") + ".")
+        return out, k
+
+    # порядок (разбор 13.11): крепление к стене — ДО направляющих и ящиков. Изделие без дверей (комод) — корпус ставят
+    # на место и крепят сразу после сборки; шкаф — ящики после монтажа секций и крепления к стене, до дверей.
+    wall_early = "WALL-ANGLE" in H and not d.get("doors")
+    if wall_early:
+        w_, k = wall_step(k); steps += w_
+    if not d.get("doors"):
+        ds, k = drawer_steps(k); steps += ds
     steps.append("Монтаж на объекте")
     if d.get("ceiling_gap"):
         steps.append(f"{k}. Проём: высота изделия {Hh} на опорах в середине регулировки; потолок не ниже "
@@ -943,9 +968,9 @@ def control_new(c):
         steps.append(f"{k}. Антресоли на секции: саморезы 4 × 25 снизу через крышку секции в дно антресоли, 2 на секцию"
                      " (узел Н); стяжки антресолей."); k += 1
     if "WALL-ANGLE" in H and not wall_early:
-        steps.append(f"{k}. Крепление к стене: уголки, {H['WALL-ANGLE']['qty']} шт. по верху, " +
-                     ("до навески дверей и загрузки;" if d.get("doors") else "до загрузки;") +
-                     " дюбель / анкер по основанию — монтажник (В-48)."); k += 1
+        w_, k = wall_step(k); steps += w_
+    if d.get("doors"):
+        ds, k = drawer_steps(k); steps += ds
     if d.get("mount_steps_after"):
         for t_ in d["mount_steps_after"]:
             steps.append(f"{k}. {t_}"); k += 1
@@ -1086,7 +1111,10 @@ def questions_for(s):
                  "коробов; наличие нужных толщин в одном декоре", "раскрой всех позиций, глубины присадки", "Arvello + поставщик",
           "паспорт плиты, замер 3 листов"),
          ("В-2", "Кромка ABS 2 и ПВХ 0,4 в цвет; припуск на фуговку станка (заготовки даны без припуска)", "размеры заготовок",
-          "цех плиты", "паспорт станка, проба"),
+          "цех плиты", "паспорт станка, проба") if sku not in models_new.NEW else
+         ("В-2", f"Кромка ABS 2 и ПВХ 0,4 в цвет. Припуск на фуговку {n_(cab.TECH['edge_allow'])} мм на сторону с кромкой УЖЕ "
+                 "включён в столбец «Заготовка» [М]; если у станка цеха другой — сообщить, заготовки пересчитаем",
+          "размеры заготовок", "цех плиты", "паспорт станка, проба"),
          ("В-10", "Допуски: раскрой ±0,5; присадка ±0,3 (ЧПУ) или ±0,5 (кондуктор); диагонали корпуса ≤ 1,5; рамы ≤ 2; "
                   "зазоры фасадов 3 ± 0,5", "контроль", "технолог цеха + Arvello", "записать в техкарту"),
          ("В-12", "Образец: пробная сборка, программа испытаний (нагрузка на ящики, полки" +
@@ -1267,6 +1295,9 @@ def write_kit(sku, path, options=None):
     else:
         c.detail_ref = f"{no['details'][0]:02d}–{no['details'][-1]:02d}" if len(no["details"]) > 1 else f"{no['details'][0]:02d}"
     c.questions, c.decisions, known = questions_for(s)
+    if newm:
+        from eng.verify_new import allowance_consistent
+        c.allow_chk = allowance_consistent([q[1] for q in c.questions], cab.TECH["edge_allow"])
     c.tech_req = tech_req(s, c)
     kit_set = "kitchen_set" in s["derived"]["modules"]
     cont = ["01 Общий вид", "02 План и модули" if kit_set else ("02 Карта сборки" if newm else "02 Сборочный чертёж")]
@@ -1304,6 +1335,7 @@ def write_kit(sku, path, options=None):
         fns.append((f"spec{i}", (lambda ch=ch, i=i: sheet_spec(c, ch, i, i == len(chunks) - 1))))
     fns += [("control", lambda: sheet_control(c)), ("questions", lambda: sheet_questions(c))]
     sheet_texts = []
+    cell_bad = []
     Sheet.WRAP = newm
     try:
         with PdfPages(path) as pdf:
@@ -1311,6 +1343,8 @@ def write_kit(sku, path, options=None):
                 shs = fn()
                 for j, sh in enumerate(shs if isinstance(shs, list) else [shs]):
                     report[f"{name}.{j}"] = sh.check_overlaps()
+                    if newm:
+                        cell_bad += [(len(figs) + 1, t_) for t_ in sh.check_cells()]
                     tt = [t.get_text() for t in sh.ax.texts]
                     texts += tt
                     sheet_texts.append(tt)
@@ -1325,6 +1359,11 @@ def write_kit(sku, path, options=None):
         checks += [(n, st != ERR, f"[{st}] {t}") for n, st, t in verify_new(s, texts)]
     if newm:
         checks += BZ.verify_bazis(s, bz, sheet_texts, rows)
+        checks.append(("Текст влезает в ячейки таблиц (без скрытой обрезки)", not cell_bad,
+                       "да" if not cell_bad else cell_bad[:3]))
+        s["_cells_bad"] = cell_bad
+        st_, tx_ = c.allow_chk
+        checks.append(("В-2: вопрос о припуске не противоречит заготовкам (припуск уже включён)", st_ != ERR, f"[{st_}] {tx_}"))
         s["_bazis"] = (bz, sheet_texts, rows)
     if len(figs) != total:
         checks.append(("Число листов = плану нумерации", False, f"{len(figs)} ≠ {total}"))
@@ -1450,7 +1489,7 @@ def sheet_assembly_map(c):
             sh.balloon(ax_, ay_, xr, ty, ps, r=2.4)
             nm = p["unit"] + (f" {_side_word(p)}" if p["unit"].startswith("Боковина") and _side_word(p) and
                               _side_word(p) not in p["unit"] else "")
-            sh.text(xr + 4, ty, nm[:34], size=5.9, va="center")
+            sh.text(xr + 4, ty, nm if _is_new(s) else nm[:34], size=5.9, va="center")
     return sh
 
 
@@ -1493,7 +1532,7 @@ def _parts_map(c, sh):
         gap_ -= 0.3
     for ((ax_, ay_), ps, p), ty in zip(anchors, ys):
         sh.balloon(ax_, ay_, xr, ty, ps, r=2.4)
-        sh.text(xr + 4, ty, p["unit"][:40], size=6.0, va="center")
+        sh.text(xr + 4, ty, p["unit"] if _is_new(s) else p["unit"][:40], size=6.0, va="center")
     return sh
 
 

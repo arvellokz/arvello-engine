@@ -83,4 +83,5 @@ _, kf = K.build("/tmp/eng002_kit")
 res.append(("комплект: один снимок, проверки пройдены", not kf, kf[:1]))
 for name, ok, t in res:
     print(f"{'✓' if ok else '✗'} {name:44s} | {t}")
-print("ИТОГ:", "все совпали" if all(r[1] for r in res) else "есть расхождения")
+from eng.testutil import finish  # noqa: E402
+finish(all(r[1] for r in res))

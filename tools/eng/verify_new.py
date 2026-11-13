@@ -33,6 +33,33 @@ def _ov(a0, a1, b0, b1):
     return min(a1, b1) - max(a0, b0)
 
 
+def distinct_names(s):
+    """Одно и то же наименование у разных позиций — ошибка (позиции = разные детали по размеру или отверстиям)."""
+    from eng.kit13 import positions
+    _, rep, _ = positions(s)
+    seen = {}
+    for ps, ids in rep:
+        p = next(q for q in s["parts"] if q["id"] == ids[0])
+        if p["kind"] != "board":
+            continue
+        seen.setdefault(p["unit"], []).append(ps)
+    dup = {k: v for k, v in seen.items() if len(v) > 1}
+    if dup:
+        k, v = next(iter(dup.items()))
+        return ERR, f"«{k}» у поз. {', '.join(map(str, v))}; всего {len(dup)} названий"
+    return OK, f"{len(seen)} позиций — названия различаются"
+
+
+def allowance_consistent(questions, edge_allow):
+    """Разбор 13.11, п. 4: если припуск на фуговку включён в заготовку, вопросы цеху не должны говорить «без припуска»."""
+    q2 = [t for t in questions if "фуговк" in t]
+    if edge_allow > 0 and any("без припуска" in t for t in q2):
+        return ERR, f"припуск {edge_allow} включён в заготовку, а вопрос говорит «без припуска»"
+    if edge_allow > 0 and not any("включён" in t for t in q2):
+        return ERR, "вопрос о фуговке не говорит, что припуск уже включён"
+    return OK, f"припуск {edge_allow} на сторону — включён, цех подтверждает по своему станку"
+
+
 def wall_before_drawers(texts, qty):
     """Шаг крепления к стене стоит раньше шагов ящиков (короба / профили) и называет число уголков из спецификации."""
     T = " ".join(texts)
@@ -42,7 +69,7 @@ def wall_before_drawers(texts, qty):
         return ERR, "шага «закрепить к стене ДО направляющих» нет"
     if ib >= 0 and ib < iw:
         return ERR, "крепление к стене стоит после ящиков"
-    m = re.search(r"закрепить к стене ДО направляющих и ящиков: уголки (\d+)", T)
+    m = re.search(r"закрепить к стене ДО направляющих и ящиков[^:]*: уголки (\d+)", T)
     if not m or int(m.group(1)) != qty:
         return ERR, f"в шаге уголков {m.group(1) if m else '—'}, в спецификации {qty}"
     return OK, f"шаг до ящиков, уголков {qty}"
@@ -212,9 +239,9 @@ def verify_new(s, texts):
         ok = re.search(r"\d+\.[^.]*к стене", T) is not None
         add("Порядок сборки: крепление к стене до навески дверей", OK if ok else ERR,
             "шаг есть" if ok else "уголки в спецификации, шага крепления нет")
-    if "WALL-ANGLE" in H and not doors and d.get("drawers"):
+    if "WALL-ANGLE" in H and d.get("drawers"):
         st, t = wall_before_drawers(texts, H["WALL-ANGLE"]["qty"])
-        add("Изделие без дверей: крепление к стене ДО направляющих и ящиков, число уголков = спецификации", st, t)
+        add("Крепление к стене ДО направляющих и ящиков, число уголков = спецификации", st, t)
     lv = d.get("levels")
     if lv and d.get("ceiling_gap"):
         Hh = s["options"].get("height")
@@ -345,6 +372,10 @@ def verify_new(s, texts):
                     cov.append(f"уголок x {a_['x0']:g}…{a_['x1']:g} под {p['id']}")
         add("Уголки к стене не накрыты другими деталями (столик, надстройки)", ERR if cov else OK,
             f"{len(wa)} уголка свободны" if not cov else f"{cov[0]}; всего {len(cov)}")
+
+    # 17. Разные позиции — разные названия (разбор БАЗИС 13.11, шкаф: две «Боковина левая», две «Дверь»)
+    st, t = distinct_names(s)
+    add("Разные позиции — разные названия (цех не перепутает при раскрое и маркировке)", st, t)
 
     # 9. Текстура дубовых дверей — одним направлением (вертикально)
     gr = {d["parts_ext"].get(p["id"], {}).get("grain") for p in doors if p["finish"] == "O"}
