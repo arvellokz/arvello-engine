@@ -19,6 +19,7 @@ from eng import bazis as BZ  # noqa: E402
 from eng import eng002_chest as C  # noqa: E402
 from eng import eng002_drawer as E  # noqa: E402
 from eng import eng002_guide as G  # noqa: E402
+from eng import export_cost as EC  # noqa: E402
 from eng import export_cutting as X  # noqa: E402
 from eng import kit13  # noqa: E402
 
@@ -75,7 +76,7 @@ def write_csv(path, s):
 def build(out):
     out = Path(out)
     out.mkdir(parents=True, exist_ok=True)
-    for f in list(out.glob("*.pdf")) + list(out.glob("*.csv")) + list(out.glob("*.xlsx")):
+    for f in list(out.glob("*.pdf")) + list(out.glob("*.csv")) + list(out.glob("*.xlsx")) + list(out.glob("*_себестоимость.md")):
         f.unlink()
     rows, fails = [], []
 
@@ -101,6 +102,19 @@ def build(out):
         files.append((xn, s3["hash"], [(b, False, "") for b in bad] or [("распил = CSV", True, "")]))
         notes = [f"кромка {X.EDGE_RU[t]} на пласти: {pid} ({u}) — в таблицу распила не взята, ждёт решения"
                  for pid, u, _, t in X.plast_edges(s3)]
+        hd = EC.holes_by_d(s3)                         # ENG-005 п. 3: счётчик отверстий по диаметрам (для цены)
+        notes.append(f"отверстий {sum(hd.values())}: " + ", ".join(f"Ø{kit13.n_(d)} × {q}" for d, q in hd.items()))
+        if s3["derived"]["supplier"]["profile"] != "base":         # ENG-005 п. 5: смета по прайсу поставщика
+            cst = EC.cost(s3)
+            cn = f"{stem}_себестоимость.md"
+            (out / cn).write_text(EC.to_md(s3, cst), encoding="utf-8")
+            files.append((cn, s3["hash"], [(m, False, "") for m in cst["missing"]] or [("всё сопоставлено поставщику", True, "")]))
+            tg = lambda v: f"{round(v):,}".replace(",", " ")
+            notes.append(f"себестоимость: плита + кромка + распил {tg(cst['dspc'])} ₸; с направляющими "
+                         + ", ".join(f"{lv} {tg(v)}" for lv, v in cst["totals"].items()) + " ₸ (без крепежа, сборки, "
+                         f"доставки; присадка у поставщика — опция {tg(cst['drill'])} ₸)")
+        else:
+            notes.append("себестоимость: модель на базовом профиле — смета после перевода на ДСП Центр (ENG-005 п. 6)")
         if sku == "ARV-NST-101":
             a4n = f"{stem}_инструкция_A4.pdf"
             D1, r1 = C.write(str(out / a4n), o)
@@ -122,7 +136,7 @@ def build(out):
             bad = [x[0] for x in res if not x[1]]
             fails += [f"{name}: {b}" for b in bad]
             rows.append((tag, name, h, "пройдены" if not bad else "ОШИБКА: " + "; ".join(bad)))
-        rows += [(tag, "замечание модели", s3["hash"], n) for n in notes]
+        rows += [(tag, "сведения", s3["hash"], n) for n in notes]
     for f in out.glob("*.png"):
         f.unlink()
     md = ["# ENG-002 · манифест выпуска", "",

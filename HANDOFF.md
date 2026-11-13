@@ -45,7 +45,7 @@ python3 tools/eng/test_wrd101.py                 # шкаф
 python3 tools/eng/test_bazis.py                  # правила БАЗИС Б1–Б12 + разбор 13.11 (негатив на каждое)
 ```
 ```bash
-python3 tools/eng/test_movento.py && python3 tools/eng/test_eng002.py && python3 tools/eng/test_eng003.py && python3 tools/eng/test_eng005.py && python3 tools/eng/test_fonts.py && python3 tools/eng/test_testutil.py
+python3 tools/eng/test_movento.py && python3 tools/eng/test_eng002.py && python3 tools/eng/test_eng003.py && python3 tools/eng/test_eng005.py && python3 tools/eng/test_cost.py && python3 tools/eng/test_fonts.py && python3 tools/eng/test_testutil.py
 ```
 Все тесты печатают «ИТОГ» и при расхождении выходят с кодом 1 (`tools/eng/testutil.py`). Полный прогон — 10–15 минут; тесты можно запускать параллельно.
 
@@ -123,5 +123,6 @@ python3 tools/eng/kit13.py ARV-NST-101 out.pdf width=1200 handle=push changer=ye
 | `tools/eng/fonts.py`, `fonts/` | шрифт листов из репозитория |
 | `tools/eng/export_parts.py` | CSV деталей и покупных для любой модели |
 | `tools/eng/cab.py` `SUPPLY` | профили материалов поставщика (ENG-005 п. 1): `base` — как до 14.11; `dspc` — ДСП Центр (ЛДСП 16 везде, фасад 16, ХДФ 3, ПВХ 2 / 1 × 19, Бунратти 4069, Белый 110, цоколь в цвет корпуса). Комод — `models_new.NST_PROFILE`. Тест `test_eng005.py` |
+| `tools/eng/export_cost.py` | себестоимость из модели (ENG-005 п. 5): `python3 tools/eng/export_cost.py SKU key=value … [--batch N] [--md out.md]`; цены — `docs/поставщики/dspc/прайс_2026-11-14.json`; тест `test_cost.py` (= смете ДСП Центра 74 065 ₸) |
 | `tools/eng/export_cutting.py` | таблица распила .xlsx (ENG-003): `python3 tools/eng/export_cutting.py SKU out.xlsx key=value … [--csv выпуск.csv]` |
 | `catalog/` | оси конфигурации моделей, ревизии |

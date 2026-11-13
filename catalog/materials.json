@@ -6,7 +6,8 @@
     "G": {"name": "Графит", "rgb": [84, 86, 90], "prompt": "matte graphite dark grey laminated board", "swatch": "refs/materials/MAT-002.jpg"},
     "O": {"name": "Дуб натуральный", "rgb": [196, 160, 118], "prompt": "natural light oak wood-grain laminate with straight grain", "swatch": "refs/materials/MAT-003.jpg"},
     "B4069": {"name": "Дуб Бунратти 4069", "rgb": [184, 148, 108], "prompt": "natural oak wood-grain laminate with straight grain", "supplier": "ДСП Центр: ЛДСП Дуб Бунратти 4069 16*2750*1830 SwissKrono, код 00003114"},
-    "W110": {"name": "Белый 110", "rgb": [237, 235, 231], "prompt": "warm white matte laminated board", "supplier": "ДСП Центр: ЛДСП Белый 110 (корпус) SM 16*2750*1830 SwissKrono, код 000000218"}
+    "W110": {"name": "Белый 110", "rgb": [237, 235, 231], "prompt": "warm white matte laminated board", "supplier": "ДСП Центр: ЛДСП Белый 110 (корпус) SM 16*2750*1830 SwissKrono, код 000000218"},
+    "K0190": {"name": "Чёрный 0190", "rgb": [33, 33, 35], "prompt": "matte black laminated board", "supplier": "ДСП Центр: ЛДСП 2 0190 PE Черный 16*2750*1830 SH, код 000009600"}
   },
   "metal": {
     "black": {"name": "Чёрный муар", "rgb": [38, 38, 40], "prompt": "black matte powder-coated steel"},
