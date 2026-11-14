@@ -127,9 +127,12 @@ def operations(s, P):
     if drill:
         ops.append([str(len(ops) + 1), "присадка", f"{len(drill)} отв. по таблице, {TECH['dims_from']} [М]", "цех"])
     mark = [q for q in hs if not (q["h"]["depth"] or q["h"]["through"])]
+    samet = any(r.get("sys") == "samet" for r in s["derived"].get("drawers", []))
+    sysn = "направляющих Samet" if samet else "профилей Blum"
     if mark:
-        ops.append([str(len(ops) + 1), "разметка (накол)", f"{len(mark)} точек под саморезы профилей Blum", "цех"])
-        ops.append([str(len(ops) + 1), "профили Blum", f"{len(mark)} саморезов по разметке", "сборщик"])
+        ops.append([str(len(ops) + 1), "разметка (накол)", f"{len(mark)} точек под шурупы {sysn}", "цех"])
+        ops.append([str(len(ops) + 1), "направляющие Samet" if samet else "профили Blum", f"{len(mark)} шурупов по разметке",
+                    "сборщик"])
     for g in P["grooves"]:
         gg = g["g"]
         along_u = (g["u1"] - g["u0"]) >= (g["v1"] - g["v0"])
@@ -137,7 +140,9 @@ def operations(s, P):
         ops.append([str(len(ops) + 1), "паз", f"{g['name']}: {_n(gg['w'])} × {_n(gg['depth'])}, {_n(dist)} от "
                     f"{'нижнего' if along_u else 'левого'} края (база A)", "цех"])
     box = [r for r in s["derived"].get("drawers", []) if p["id"] in r["box"][:2]]
-    if box:
+    if box and samet:
+        ops.append([str(len(ops) + 1), "замки Samet SmartLock", "по рисунку AA каталога Samet, по месту [М]", "сборщик"])
+    elif box:
         ops.append([str(len(ops) + 1), "крючок, замки Blum", "по шаблону T65.1000.02 после сборки короба [М]", "сборщик"])
     return ops
 
@@ -477,7 +482,8 @@ def units(s):
         lq = next((hh["qty"] for hh in s["hardware"] if hh["id"] == "LOCK-SCREW"), 0)
         if lq:
             blum["LOCK-SCREW"] = lq // max(1, len(s["derived"]["drawers"]))
-        out.append(dict(kind="ящик", name=f"Ящик ({'MOVENTO' if r.get('sys') == 'movento' else 'TANDEM'}) NL {r['NL']}",
+        out.append(dict(kind="ящик", name=f"Ящик ({ {'movento': 'MOVENTO', 'samet': 'Samet'}.get(r.get('sys'), 'TANDEM')}) "
+                        f"{'NS' if r.get('sys') == 'samet' else 'NL'} {r['NL']}",
                         rec=r, ids=ids, count=len(lst), fast=fast, blum=blum, parts={pos[i]: ids.count(i) for i in ids}))
     ch = [q["id"] for q in s["parts"] if q["id"].startswith("CH-") and q["kind"] == "board"]
     if ch:

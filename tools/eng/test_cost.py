@@ -45,7 +45,10 @@ c = EC.cost(s)
 ok("комод: всё сопоставлено", not c["missing"], c["missing"])
 ok("комод: 3 листа (без чёрного)", len(c["sheets"]) == 3, c["sheets"])
 ok("комод: дешевле сметы на чёрный лист + распил (≈ 18 600)", 18000 < cb["dspc"] - c["dspc"] < 19500, cb["dspc"] - c["dspc"])
-ok("комод: эконом < стандарт < комфорт", c["totals"]["эконом"] < c["totals"]["стандарт"] < c["totals"]["комфорт"])
+ok("комод: эконом и стандарт (MILAT) — пусто, нет данных производителя", c["totals"]["эконом"] is None and
+   c["totals"]["стандарт"] is None and "нет данных производителя" in c["slides"]["эконом"]["name"])
+ok("комод без столика: комфорт — Samet 127230305 по цене прайса", "127230305" in c["slides"]["комфорт"]["name"] and
+   c["totals"]["комфорт"] == round(c["dspc"] + 6 * 10816))
 ok("комод: направляющих = ящиков (6)", all(x["nd"] == 6 for x in c["slides"].values()))
 ok("комод: метры кромки = модели", abs(sum(c["edge_m"].values()) - sum(s["derived"]["edge_m"].values())) < 0.02)
 ok("комод: отверстий в счётчике = в модели", sum(c["holes"].values()) == len(s["holes"]))
@@ -55,8 +58,9 @@ c3 = EC.cost(s, batch=3)
 ok("партия 3: на изделие не дороже одного заказа", c3["dspc"] <= c["dspc"], (c3["dspc"], c["dspc"]))
 sw = EC.cost(kit13.make("ARV-NST-101", {**O, "changer": "yes"}))
 ok("со столиком дороже без столика", sw["dspc"] > c["dspc"], (sw["dspc"], c["dspc"]))
-ok("без столика NL 450 — цена направляющих своей длины", not c["slide_note"], c["slide_note"])
-ok("со столиком NL 480 — пометка «цена для 450, уточнить»", "NL 480" in sw["slide_note"], sw["slide_note"])
+ok("без столика NS 450 — цена направляющих своего артикула", not c["slide_note"], c["slide_note"])
+ok("со столиком NS 500 (127230306) — нет цены, «уточнить», в сумму не идёт", "127230306" in sw["slide_note"] and
+   sw["totals"]["комфорт"] is None, sw["slide_note"])
 
 # 3. негативы
 pr = EC.load_prices()

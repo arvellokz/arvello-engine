@@ -9,6 +9,8 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from eng import models_new as MN  # noqa: E402
+MN.NST_SLIDES = "blum"      # 14.11 (ENG-005 п. 2): инструкции A4 нарисованы под Blum MOVENTO — проверяем их на варианте Blum
 from eng import eng002_drawer as E  # noqa: E402
 from eng.sheetlib import Sheet  # noqa: E402
 

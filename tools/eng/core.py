@@ -149,10 +149,13 @@ def sheet_plan(snap: dict):
             continue
         a, b, _ = sorted(p.get("bom_size") or _dims(p), reverse=True)
         groups.setdefault((p["material"], p["finish"]), []).append((a, b, p["id"]))
-    W, H = SHEET[0] - 2 * SHEET_TRIM, SHEET[1] - 2 * SHEET_TRIM
+    fmt = snap["derived"].get("supplier", {}).get("sheet", {})    # формат листа поставщика (ENG-005: 2750 × 1830)
+    ext = snap["derived"].get("parts_ext", {})
     out = []
     for (mat, fin), items in sorted(groups.items()):
-        grain = fin == "O"
+        SW, SH = fmt.get(mat, SHEET)
+        W, H = SW - 2 * SHEET_TRIM, SH - 2 * SHEET_TRIM
+        grain = fin == "O" or any(ext.get(pid, {}).get("grain") for _, _, pid in items)   # рисунок — без поворота
         over, fit = [], []
         for a, b, pid in items:
             if (a <= W and b <= H) or (not grain and b <= W and a <= H):
@@ -176,7 +179,7 @@ def sheet_plan(snap: dict):
         area = sum(a * b for a, b, _ in fit) / 1e6
         n = len(sheets)
         out.append({"material": mat, "finish": fin, "parts": len(items), "sheets": n, "area_m2": round(area, 3),
-                    "use": round(area / (n * SHEET[0] * SHEET[1] / 1e6), 2) if n else 0, "oversize": over})
+                    "use": round(area / (n * SW * SH / 1e6), 2) if n else 0, "oversize": over, "format": (SW, SH)})
     return out
 
 

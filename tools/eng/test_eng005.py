@@ -44,8 +44,8 @@ for ch in ("yes", "no"):
                                               for p in B for f in ext[p["id"]]["edges"]))
     g = next(c for c in s["checks"] if c["name"].startswith("Глубина"))
     ok(f"{ch}: глубина = фасад 16 + зазор + корпус + ХДФ 3", g["ok"] and g["expected"] == g["actual"], g)
-    ok(f"{ch}: MOVENTO NL {'480' if ch == 'yes' else '450'}",
-       {r["NL"] for r in s["derived"]["drawers"]} == ({480} if ch == "yes" else {450}))
+    ok(f"{ch}: Samet NS {'500' if ch == 'yes' else '450'}",
+       {r["NL"] for r in s["derived"]["drawers"]} == ({500} if ch == "yes" else {450}))
     # негативы: каждая порча ловится проверкой verify_new
     for name, fn in [("фасад ЛДСП 18", lambda p: p.update(material="LDSP18") if "FRONT" in p["id"] else None),
                      ("декор не переведён (O)", lambda p: p.update(finish="O") if p["id"] == "SIDE-L" else None),

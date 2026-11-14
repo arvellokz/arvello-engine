@@ -44,7 +44,7 @@ boardkit.KIND_RU.update({
 })
 
 NODE = {"ecc_stem": "А", "ecc_bolt": "А", "ecc_housing": "А", "dowel_face": "Б", "dowel_edge": "Б", "conf_face": "В",
-        "conf_edge": "В", "front_screw": "Г", "handle": "Д", "handle_box": "Д", "back_pilot": "Е", "runner_mark": "Ж",
+        "conf_edge": "В", "front_screw": "Г", "handle": "Д", "handle_box": "Д", "back_pilot": "Е", "runner_mark": "Ж", "slide_rear": "Ж",
         "hinge_cup": "И", "hinge_plate": "И", "hinge_cup_screw": "И", "foot_screw": "К", "hanger_screw": "К", "tube_top": "Л", "tube_access": "Л",
         "insert": "Л", "tube_side": "М", "wall_bolt": "М", "plate_hole": "М", "rivnut6": "М", "screw_face": "Н",
         "led_screw": "П", "cable": "П", "cutout_round": "П", "lock": "П", "top_conn": "П", "bracket_pilot": "Н",
@@ -747,7 +747,11 @@ def sheet_nodes(c):
             pl = next((q for q in s["holes"] if q["joint"] == h["joint"] and q["kind"] == "pilot"), None)
             if pl:
                 notes = [f"Ø{n_(h['d'])} насквозь с зенковкой;", f"засверловка Ø{n_(pl['d'])} гл. {n_(pl['depth'])}."]
-        if L == "Ж" and any(r.get("sys") == "movento" for r in s["derived"].get("drawers", [])):
+        if L == "Ж" and any(r.get("sys") == "samet" for r in s["derived"].get("drawers", [])):
+            tit = "Направляющая Samet Smart Slide"
+            notes = ["Шуруп Ø3,5 по разметке, без сверления:", "37 / +32 / +96 / +96 / +32 от конца", "направляющей, она на 2 от края корпуса;",
+                     "ось 11 над низом проёма [М] (10–12);", "сзади в ящике Ø6 гл. 10 (Samet стр. 6–8)."]
+        elif L == "Ж" and any(r.get("sys") == "movento" for r in s["derived"].get("drawers", [])):
             tit = "Профиль Blum MOVENTO 760H"
             notes = ["Саморез Blum 609.1500 Ø3,5 × 15 по", "разметке, без сверления; ось 38 над", "низом профиля, профиль на 1 выше",
                      "дна (запас [М]); каталог 2024 с. 428."]
@@ -832,12 +836,14 @@ def sheet_spec(c, chunk, k, last):
                 + (f"готовый − кромка + припуск {n_(cab.TECH['edge_allow'])} на фуговку на сторону [М]."
                    if _is_new(s) else "готовый − кромка, без припуска на фуговку (В-2)."), size=6.1, va="top")
         b = bom(s)
-        sh.text(25, y - 18, "Расход плиты — оценка по листам 2800 × 2070 (карту строит программа раскроя цеха)", size=8,
-                weight="bold", va="top")
+        fm = sorted({tuple(r.get("format", (2800, 2070))) for r in b["sheets"]})
+        sh.text(25, y - 18, "Расход плиты — оценка по листам " + ", ".join(f"{a_} × {b_}" for a_, b_ in fm)
+                + " (полосами; карту строит программа раскроя цеха)", size=8, weight="bold", va="top")
         for i, r in enumerate(b["sheets"][:8]):
             over = f"; не помещаются: {', '.join(r['oversize'])}" if r["oversize"] else ""
+            f_ = r.get("format", (2800, 2070))
             sh.text(27, y - 24 - i * 4.4, f"{MAT_RU.get(r['material'], r['material'])} {fin_ru(r['finish'])}: деталей {r['parts']}, "
-                    f"{n_(r['area_m2'])} м² — {r['sheets']} лист(а){over}", size=6.0, va="top")
+                    f"{n_(r['area_m2'])} м² — {r['sheets']} лист(а) {f_[0]} × {f_[1]}{over}", size=6.0, va="top")
     return sh
 
 
@@ -859,6 +865,10 @@ def control_new(c):
             rows.append([f"К{len(rows) + 1}", "Стенки и дно короба по ширине; паз под дно (до сборки)", "штангенциркуль",
                          f"стенки {n_(drs[0]['inner_w'])}, дно {n_(drs[0]['inner_w'] + 10 - 2 * (drs[0].get('bottom_clear') or 0))}: "
                          f"−0,5 / +0; паз {n_(16 + cab.TECH['groove_w_add'])} × 5 на 13 от низа — дно от руки, без люфта [О]"])
+        elif drs[0].get("sys") == "samet":
+            rows.append([f"К{len(rows) + 1}", "Стенки и дно короба по ширине (до сборки)", "штангенциркуль",
+                         f"{n_(drs[0]['inner_w'])} −0,5 / +0 — чтобы собранный короб уложился в допуск Samet ±0,5"
+                         " (строка «Короб: внутренняя ширина»)"])
         else:
             rows.append([f"К{len(rows) + 1}", "Стенки и дно короба по ширине (до сборки)", "штангенциркуль",
                          f"{n_(drs[0]['inner_w'])} −0,5 / +0 — чтобы собранный короб уложился в допуск Blum +0 / −1,5"
@@ -878,7 +888,8 @@ def control_new(c):
         diag.append(k)
     if drs:
         rows.append([f"К{len(rows) + 1}", "Короб: внутренняя ширина спереди и сзади", "штангенциркуль",
-                     f"{n_(drs[0]['inner_w'])} +0 / −1,5 (Blum LW − 42)"])
+                     f"{n_(drs[0]['inner_w'])} ±0,5 (Samet: проём − 45); длина {n_(drs[0]['box_l'])} +0 / −2 (NS − 10)"
+                     if drs[0].get("sys") == "samet" else f"{n_(drs[0]['inner_w'])} +0 / −1,5 (Blum LW − 42)"])
     inner = sorted([p for p in parts if p["name"].startswith("Передняя панель внутреннего")], key=lambda p: (p["x0"], p["z0"]))
     gaps = sorted({round(b["z0"] - a["z1"], 1) for a, b in zip(inner, inner[1:]) if abs(a["x0"] - b["x0"]) < 0.1})
     if gaps:
@@ -896,7 +907,8 @@ def control_new(c):
     steps = ["Детали (по независимым размерам)",
              f"1. Раскроить и окромковать детали по листам {c.detail_ref}; присадка от баз A по таблицам отверстий.",
              "2. Левые и правые детали — по своему виду; у каждой группы отверстий подписаны база и сторона входа;",
-             "     «разметка» — без сверления (профили Blum, узел Ж).",
+             "     «разметка» — без сверления (" + ("направляющие Samet" if any(r.get("sys") == "samet" for r in
+                                                       s["derived"].get("drawers", [])) else "профили Blum") + ", узел Ж).",
              "Корпуса (каждая секция и антресоль отдельно)" if any(p["id"].startswith("S1-") for p in parts) else "Корпус"]
     k = 3
     hasfix = any(p["name"].startswith("Полка жёсткая") for p in parts)
@@ -931,6 +943,14 @@ def control_new(c):
             return out, k
         box = (f"{k}. Короба: дно в пазы боковин, передняя и задняя стенки — на дно, конфирматы (узел В); дно к стенкам"
                " саморезами 4 × 25 снизу (узел Н)." if drs[0].get("sys") == "movento" else f"{k}. Короба на конфирматах (узел В).")
+        if drs[0].get("sys") == "samet":
+            out += ["Ящики",
+                    box + " Задние Ø6 гл. 10 под штифт направляющей — сверлит цех (таблица задней стенки); замки "
+                    "SmartLock — сборщик по каталогу Samet, по месту; первый ящик собрать и проверить с фасадом.",
+                    f"{k + 1}. Направляющие Samet NS {drs[0]['NL']} — шурупами Ø3,5 по разметке (узел Ж), после сборки корпуса: "
+                    "передний конец на 2 от края корпуса, ось 11 над низом проёма [М]; нижняя — с подъёмом "
+                    f"{n_(drs[0].get('lift', 0))} над дном (над крепежом стоек) [М]; установить ящики."]
+            return out, k + 2
         out += ["Ящики",
                 box + " Сборщик после сборки короба: отверстия под задний крючок Ø6 и"
                 " замки — шаблоном Blum T65.1000.02 (в цехе не сверлятся); первый ящик собрать и проверить с фасадом.",
@@ -1214,6 +1234,16 @@ def questions_for(s):
                   f"{n_(r0['NL'] + r0['front_t'] + 7)}")
         t += ". Общее: SKW = LW − 42 (+0/−1,5), SKL = NL − 10, место NL + 3, утопление дна 12–15 (принято 13), замки " + \
              ("T51.7600" if mv else "T51.1700.04") + ", крючок и замки — шаблон T65.1000.02. Ряд NL по глубине корпуса: " + ", ".join(sorted({str(r["NL"]) for r in drs})) + "."
+        sm = [r for r in drs if r.get("sys") == "samet"]
+        if sm:
+            r0 = sm[0]
+            from eng.cab import SAMET
+            t = (f"Samet Smart Slide full | Power, {SAMET['name'][r0['samet_kind']]}, арт. "
+                 f"{SAMET['codes'][r0['samet_kind']][r0['NL']]} (каталог стр. 9): DIW = CIW − 45 = {n_(r0['inner_w'])}, "
+                 f"DD = NS − 10 = {r0['box_l']}, глубина корпуса ≥ NS + 3 ({n_(r0['Dc'])} ≥ {r0['NL'] + 3}), боковина ≤ 18, "
+                 f"низ ящика ≥ {SAMET['under'][r0['samet_kind']]} над низом проёма, над ящиком ≥ 7 (стр. 6–8); шурупы "
+                 f"{' / '.join(str(v) for v in r0['pts'])} от конца направляющей, она на 2 от края корпуса (стр. 6, 8); "
+                 "сзади Ø6 гл. 10, 11 от низа, 7 от боковины (рис. BB стр. 6). Допущения [М] — В-108.")
         dec.append(("В-4", t))
         if any(r.get("sys") == "movento" for r in drs):
             dec.append(("В-107", "MOVENTO закрыт данными Blum 12.11: места саморезов — каталог 2024/25 с. 428 и DXF Blum; точка 28 у "
@@ -1240,8 +1270,12 @@ def tech_req(s, c):
           f" — лист {c.no['nodes']:02d}.")]
     if d.get("drawers"):
         r = d["drawers"][0]
-        t += [f"4. Ящики Blum {'MOVENTO 760H' if r.get('sys') == 'movento' else '560H'} NL {r['NL']}: профили по точкам NL (узел Ж);",
-              "   крючок и замки — шаблоном T65.1000.02."]
+        if r.get("sys") == "samet":
+            t += [f"4. Ящики Samet Smart Slide NS {r['NL']}: направляющие по разметке (узел Ж), сзади Ø6 гл. 10;",
+                  "   замки SmartLock — по каталогу Samet, по месту."]
+        else:
+            t += [f"4. Ящики Blum {'MOVENTO 760H' if r.get('sys') == 'movento' else '560H'} NL {r['NL']}: профили по точкам NL (узел Ж);",
+                  "   крючок и замки — шаблоном T65.1000.02."]
     t.append(f"5. Открытые вопросы — лист {c.no['questions']:02d}.")
     return t
 

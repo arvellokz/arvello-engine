@@ -396,6 +396,12 @@ def verify_new(s, texts):
                 for p in boards:
                     if all(_ov(p[k + "0"], p[k + "1"], a_[k + "0"], a_[k + "1"]) > 0.01 for k in "xyz"):
                         cov.append(f"внутренний уголок x {a_['x0']:g}…{a_['x1']:g} z {a_['z0']:g}…{a_['z1']:g} в {p['id']}")
+                # 14.11: и не в объёме ящика (габарит короба — ящик выдвигается через весь этот объём)
+                for r in d.get("drawers", []):
+                    bx = [P[i] for i in r["box"] if i in P]
+                    env = {k: (min(q[k + "0"] for q in bx), max(q[k + "1"] for q in bx)) for k in "xyz"}
+                    if all(_ov(env[k][0], env[k][1], a_[k + "0"], a_[k + "1"]) > 0.01 for k in "xyz"):
+                        cov.append(f"внутренний уголок в объёме ящика {r['pre']}{r['n']}")
                 continue
             for p in boards:
                 if abs(p["z0"] - a_["z"]) < 0.6 and _ov(p["x0"], p["x1"], a_["x0"], a_["x1"]) > 0.01 and \

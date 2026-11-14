@@ -124,14 +124,28 @@ def cost(s, prices=None, batch=1):
         else:
             drill += q * pr["drill"][c]
     # фурнитура
-    nd = len(s["derived"].get("drawers", []))
-    slides = {lv: dict(nd=nd, **pr["slides"][lv], sum=nd * pr["slides"][lv]["price"]) for lv in LEVELS}
-    nls = sorted({r["NL"] for r in s["derived"].get("drawers", [])})
-    slide_note = "" if nls in ([], [450]) else \
-        f"цены — для длины 450, в модели ящики NL {', '.join(map(str, nls))}: цену своей длины уточнить"
+    drs = s["derived"].get("drawers", [])
+    nd = len(drs)
+    # ENG-005 п. 2: уровни «эконом» / «стандарт» (MILAT) — нет данных производителя: пусто. «Комфорт» — то, что в модели
+    # (Samet), по артикулу модели; нет цены артикула — «нет цены».
+    slides, slide_note = {}, ""
+    for lv in ("эконом", "стандарт"):
+        slides[lv] = dict(nd=nd, name=pr["slides"][lv]["name"], src=pr["slides"][lv]["src"], price=None, sum=None)
+    sm = [r for r in drs if r.get("sys") == "samet"]
+    if sm:
+        codes = sorted({cab.SAMET["codes"][r["samet_kind"]][r["NL"]] for r in sm})
+        p_ = [pr["slides"]["samet"].get(c_) for c_ in codes]
+        nm = f"Samet {cab.SAMET['name'][sm[0]['samet_kind']]} NS {sm[0]['NL']}, арт. {', '.join(codes)}"
+        if all(p_):
+            slides["комфорт"] = dict(nd=nd, name=nm, src=p_[0]["src"], price=p_[0]["price"], sum=nd * p_[0]["price"])
+        else:
+            slides["комфорт"] = dict(nd=nd, name=nm, src="—", price=None, sum=None)
+            slide_note = f"нет цены артикула {', '.join(codes)} (в прайсе только 127230305 — 450 мм): уточнить"
+    elif drs:
+        slides["комфорт"] = dict(nd=nd, name="Blum (в модели) — цены нет", src="—", price=None, sum=None)
     hw_nopr = [f"{h['name']} × {n_(h['qty'])} {h.get('uom', 'шт')}" for h in s["hardware"] if h["id"] not in SLIDE_IDS]
     dspc = sum(x["sum"] for x in lines)
-    totals = {lv: round(dspc + slides[lv]["sum"]) for lv in LEVELS}
+    totals = {lv: (round(dspc + x["sum"]) if x["sum"] is not None else None) for lv, x in slides.items()}
     return dict(lines=lines, dspc=round(dspc, 2), mat=round(sum(x["sum"] for x in lines if x["group"] == "материалы"), 2),
                 work=round(sum(x["sum"] for x in lines if x["group"] == "работы"), 2), sheets=sheets,
                 edge_m={f"{t}|{f}": round(m, 2) for (t, f), m in em.items()}, holes=hd, drill=drill,
@@ -152,9 +166,10 @@ def to_md(s, c):
           f"работы {n_(round(c['work']))} |", ""]
     L += ["| Уровень фурнитуры | Направляющие | Ящиков | Цена, ₸ | Итого с плитой, ₸ |", "|---|---|---|---|---|"]
     for lv, x in c["slides"].items():
-        L.append(f"| {lv} | {x['name']} ({x['src']}) | {x['nd']} | {n_(x['price'])} | **{n_(c['totals'][lv])}** |")
-    L += [f"Направляющие — только цена уровня (система в модели пока Blum, ENG-005 п. 2)"
-          + (f"; **{c['slide_note']}**." if c["slide_note"] else ".")]
+        L.append(f"| {lv} | {x['name']} ({x['src']}) | {x['nd']} | {n_(x['price']) if x['price'] else '—'} | "
+                 f"**{n_(c['totals'][lv]) if c['totals'][lv] is not None else 'нет данных'}** |")
+    L += ["Уровни «эконом» и «стандарт» (MILAT): документов производителя нет — в чертёж не ставятся, цена не считается."
+          + (f" **{c['slide_note']}**." if c["slide_note"] else "")]
     L += ["", f"**Присадка у поставщика (опция; по умолчанию сверлит сборщик):** {n_(c['drill'])} ₸ — отверстия "
           + ", ".join(f"Ø{n_(d)} × {q}" for d, q in c["holes"].items()) + "."]
     if c["drill_missing"]:

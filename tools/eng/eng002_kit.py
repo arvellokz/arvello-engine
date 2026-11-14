@@ -112,11 +112,16 @@ def build(out):
             notes += [f"себестоимость: нет цены — {m}" for m in cst["missing"]]
             tg = lambda v: f"{round(v):,}".replace(",", " ")
             notes.append(f"себестоимость: плита + кромка + распил {tg(cst['dspc'])} ₸; с направляющими "
-                         + ", ".join(f"{lv} {tg(v)}" for lv, v in cst["totals"].items()) + " ₸ (без крепежа, сборки, "
+                         + ", ".join(f"{lv} {tg(v) + ' ₸' if v is not None else '— нет данных'}" for lv, v in cst["totals"].items())
+                         + " (без крепежа, сборки, "
                          f"доставки; присадка у поставщика — опция {tg(cst['drill'])} ₸)")
         else:
             notes.append("себестоимость: модель на базовом профиле — смета после перевода на ДСП Центр (ENG-005 п. 6)")
-        if sku == "ARV-NST-101":
+        samet = any(r.get("sys") == "samet" for r in s3["derived"].get("drawers", []))
+        if sku == "ARV-NST-101" and samet:      # ENG-005 п. 2: инструкции A4 нарисованы под Blum MOVENTO — не выдаём
+            notes.append("инструкция сборщику A4 и пример ящика A3 — переделываются под Samet (старые, под Blum MOVENTO, "
+                         "из выпуска убраны; не выдавать)")
+        elif sku == "ARV-NST-101":
             a4n = f"{stem}_инструкция_A4.pdf"
             D1, r1 = C.write(str(out / a4n), o)
             files.append((a4n, D1["s"]["hash"], r1))

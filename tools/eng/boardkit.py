@@ -213,7 +213,8 @@ def detail(sh, s, pid, x, y, scale, n, up, holes=None, ext=None, ord_top=True, o
 
 KIND_RU = {"ecc_stem": "шток эксцентрика", "ecc_bolt": "под стяжку эксцентрика", "ecc_housing": "корпус эксцентрика",
            "dowel_face": "шкант", "dowel_edge": "шкант", "conf_face": "конфирмат", "conf_edge": "конфирмат",
-           "back_pilot": "засверловка под саморез ХДФ", "runner_mark": "разметка: саморез профиля Blum (Ø — в столбце, тип — в спецификации)", "front_screw": "саморез фасада", "handle": "винт ручки",
+           "back_pilot": "засверловка под саморез ХДФ", "runner_mark": "разметка: саморез направляющей (Ø — в столбце, тип — в спецификации)",
+           "slide_rear": "штифт направляющей Samet (Lock-Fix, сзади)", "front_screw": "саморез фасада", "handle": "винт ручки",
            "shelf_pin": "полкодержатель Ø5 (ряд ± 32)",
            "hinge_cup_screw": "саморез чашки петли"}
 

@@ -14,6 +14,8 @@ warnings.filterwarnings("ignore")
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import matplotlib  # noqa: E402
 matplotlib.use("Agg")
+from eng import models_new as _MNs  # noqa: E402
+_MNs.NST_SLIDES = "blum"   # 14.11: тест — про Blum MOVENTO / пазы; Samet — test_samet.py
 from eng import bazis as BZ  # noqa: E402
 from eng import kit13  # noqa: E402
 from eng import eng002_kit as K  # noqa: E402
