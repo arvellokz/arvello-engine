@@ -82,6 +82,32 @@ for p in s2["parts"]:
         p["z1"] += 2000                          # деталь больше листа по площади — лишний лист
 ok("негатив: площадь выросла — листов больше", sum(EC.cost(s2)["sheets"].values()) > sum(c["sheets"].values()))
 
+# 4. себестоимость для сайта (решение 14.11, 22:55): JSON по модели и уровню
+it = EC.site_entry("ARV-NST-101", {"width": "1200", "changer": "no", "level": "comf"})
+ok("сайт: комфорт без столика — 346 станковых отверстий, пилотные 36 и разметка 60 — сборщик, без цены",
+   (it["detail"]["holes"]["machine"], it["detail"]["holes"]["assembler_pilot_d_le_3"],
+    it["detail"]["holes"]["assembler_runner_marks"]) == (346, 36, 60), it["detail"]["holes"])
+ok("сайт: отверстия 346 × 30 = 10 380", it["parts"]["drilling"] == 10380)
+ok("сайт: сборка 10 000 и доставка 2 700 [М]", (it["parts"]["assembly"], it["parts"]["delivery"]) == (10000, 2700))
+ok("сайт: направляющие комфорт 6 × 10 816", it["parts"]["slides"] == 6 * 10816)
+ok("сайт: итог = сумма статей", it["total"] == sum(it["parts"].values()))
+ok("сайт: цена ×1,5 вверх до 1 000", it["site_price"] == -(-it["total"] * 3 // 2000) * 1000 and it["site_price"] % 1000 == 0)
+ok("сайт: нет цены кромки ПВХ 2 Белый 110 — «нижняя граница»", not it["total_complete"] and any("PVC2 K110" in m for m in it["missing"]))
+ie = EC.site_entry("ARV-NST-101", {"width": "1200", "changer": "no", "level": "eco"})
+ok("сайт: эконом — на 12 станковых больше (ручки Ø5) и пометка о коде Slidea",
+   ie["detail"]["holes"]["machine"] == 358 and any("12722325" in m for m in ie["missing"]))
+iy = EC.site_entry("ARV-NST-101", {"width": "1200", "changer": "yes", "level": "std"})
+ok("сайт: со столиком NS 500 — направляющие без цены, в сумму не идут, в missing", iy["parts"]["slides"] == 0 and
+   any("127240236" in m for m in iy["missing"]))
+iw = EC.site_entry("ARV-WRD-101", {"width": "2400", "height": "2800", "depth": "450", "handle": "push", "fill": "drawers"})
+ok("сайт: шкаф — Blum (петли, внутренние ящики) без цены, уровня нет", iw["level"] is None and
+   any("Blum" in m for m in iw["missing"]))
+pr = EC.load_prices()
+ok("прайс: 30 ₸ за отверстие и 2 700 ₸ доставки — «ориентир 14.11, не подтверждено»",
+   "ориентир 14.11, не подтверждено" in pr["site"]["drill_machine"]["src"] and
+   "ориентир 14.11, не подтверждено" in pr["site"]["delivery"]["src"])
+p5 = EC.cost(kit13.make("ARV-NST-101", {"width": "1200", "changer": "no", "level": "comf"}), batch=5)
+ok("сайт: плита + кромка + распил — партия 5", it["parts"]["plate_edge_cut"] == round(p5["dspc"]))
 for n, o_, info in res:
     print("ok  " if o_ else "FAIL", n, "" if o_ else info)
 finish(all(o_ for _, o_, _ in res))

@@ -9,6 +9,7 @@
 Цены — только из docs/поставщики/dspc/прайс_2026-11-14.json (источник у каждой). Нет цены — строка «без цены», в сумму не идёт.
 
     python3 tools/eng/export_cost.py SKU [key=value ...] [--batch N] [--md out.md]
+    python3 tools/eng/export_cost.py --site [out.json]     (себестоимость для сайта, решение 14.11 22:55)
 """
 from __future__ import annotations
 
@@ -164,6 +165,106 @@ def level_totals(sku, options, prices=None):
     return out
 
 
+# ------------------------------------------------------------------ себестоимость для сайта (решение 14.11, 22:55)
+SITE_OUT = ROOT / "docs" / "экономика" / "себестоимость_движок.json"
+SITE_SET = [  # модель, опции, подпись — что выгружаем для сайта
+    *[("ARV-NST-101", {"width": "1200", "changer": ch, "level": lv}, f"комод 1200, {'со столиком' if ch == 'yes' else 'без столика'}")
+      for ch in ("no", "yes") for lv in ("eco", "std", "comf")],
+    ("ARV-WRD-101", {"width": "2400", "height": "2800", "depth": "450", "handle": "push", "fill": "drawers"},
+     "шкаф 2400 × 2800 × 450"),
+]
+
+
+def drill_split(s):
+    """Станковые отверстия (цена за отверстие) и то, что делает сборщик без цены: разметка под шурупы направляющих
+    и пилотные Ø ≤ 3."""
+    mach, mark, pilot = 0, 0, 0
+    for h in s["holes"]:
+        if h["kind"] == "runner_mark":
+            mark += 1
+        elif h["d"] <= 3:
+            pilot += 1
+        else:
+            mach += 1
+    return mach, mark, pilot
+
+
+def site_entry(sku, options, label="", prices=None):
+    """Строка себестоимости для сайта: плита + кромка + распил (партия), станковые отверстия, направляющие по уровню,
+    сборка и доставка [М]. total_complete = False, если чего-то нет в прайсе (тогда total — нижняя граница)."""
+    pr = prices or load_prices()
+    S = pr["site"]
+    s = kit13.make(sku, dict(options))
+    c = cost(s, pr, batch=S["batch"])
+    mach, mark, pilot = drill_split(s)
+    missing = list(c["missing"])
+    (lv, sl), = c["slides"].items() if c["slides"] else (("нет ящиков", None),)
+    slides = None
+    if sl and lv in LEVELS:
+        slides = {"level": lv, "name": sl["name"], "qty": sl["nd"], "price": sl["price"], "sum": sl["sum"], "src": sl["src"]}
+        if sl["sum"] is None:
+            missing.append(f"направляющие {sl['name']}: нет цены")
+    elif sl:
+        lv, sl = None, None
+        missing.append("внутренние ящики Blum: цены нет")
+    if c["slide_note"]:
+        missing.append(c["slide_note"])
+    other_hw = [x for x in c["hw_nopr"]]
+    blum = [h["name"] for h in s["hardware"] if "Blum" in h["spec"] and h["id"] not in SLIDE_IDS]
+    if blum:
+        missing.append("фурнитура Blum без цены: " + "; ".join(blum))
+    drill = mach * S["drill_machine"]["price"]
+    parts = {
+        "plate_edge_cut": round(c["dspc"]),
+        "drilling": drill,
+        "slides": slides["sum"] if slides and slides["sum"] is not None else 0,
+        "assembly": S["assembly"]["price"],
+        "delivery": S["delivery"]["price"],
+    }
+    total = sum(parts.values())
+    mk = S["markup"]
+    from eng import bazis as BZ
+    return {
+        "sku": sku, "label": label, "options": dict(s["options"]), "designation": BZ.designation(s), "snapshot": s["hash"],
+        "level": lv if sl else None, "batch": S["batch"],
+        "parts": parts,
+        "detail": {
+            "sheets": c["sheets"], "edge_m": c["edge_m"], "material": round(c["mat"]), "work": round(c["work"]),
+            "holes": {"machine": mach, "price_each": S["drill_machine"]["price"], "assembler_pilot_d_le_3": pilot,
+                      "assembler_runner_marks": mark, "by_d": {str(k): v for k, v in c["holes"].items()}},
+            "slides": slides,
+            "not_priced": other_hw,
+        },
+        "total": total, "total_complete": not missing, "missing": missing,
+        "site_price": int(math.ceil(total * mk["factor"] / mk["round_up"]) * mk["round_up"]),
+    }
+
+
+def site_export(path=SITE_OUT, prices=None):
+    pr = prices or load_prices()
+    S = pr["site"]
+    items = [site_entry(sku, o, lab, pr) for sku, o, lab in SITE_SET]
+    out = {
+        "_comment": "Себестоимость из движка для сайта (решение владельца 14.11, 22:55). R01E — оценка, не для изготовления. "
+                    "Не вошло: крепёж, ручки, уголки, упаковка. total_complete = false — чего-то нет в прайсе, total — "
+                    "нижняя граница (см. missing).",
+        "generated_by": "tools/eng/export_cost.py --site",
+        "prices": str(PRICES.relative_to(ROOT)), "prices_date": pr["date"],
+        "assumptions": {
+            "batch": f"плита, кромка, распил — партия {S['batch']} изделий (листы делятся по площади, те же декоры)",
+            "drilling": f"{S['drill_machine']['price']} ₸ за станковое отверстие — {S['drill_machine']['src']}; "
+                        + S["drill_machine"]["rule"],
+            "assembly": f"{S['assembly']['price']} ₸ — {S['assembly']['src']}",
+            "delivery": f"{S['delivery']['price']} ₸ — {S['delivery']['src']}",
+            "markup": S["markup"]["src"],
+            "decors": "по умолчанию: корпус Белый 110 (корпус) SM, фасады Дуб Бунратти 4069",
+        },
+        "items": items,
+    }
+    Path(path).write_text(json.dumps(out, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    return out
+
+
 def to_md(s, c):
     from eng import bazis as BZ
     L = [f"# Себестоимость {BZ.designation(s)} · снимок {c['hash']}", "",
@@ -193,6 +294,13 @@ def to_md(s, c):
 
 if __name__ == "__main__":
     a = sys.argv[1:]
+    if a and a[0] == "--site":                    # выгрузка для сайта: docs/экономика/себестоимость_движок.json
+        out = site_export(a[1] if len(a) > 1 else SITE_OUT)
+        for it in out["items"]:
+            tg = lambda v: f"{v:,}".replace(",", " ")
+            print(f"{it['label']:28s} {it['level'] or '—':9s} {tg(it['total']):>8} ₸ "
+                  f"{'' if it['total_complete'] else '(нижняя граница)':16s}  цена сайта ×1,5: {tg(it['site_price'])} ₸")
+        sys.exit(0)
     batch, md = 1, None
     for flag in ("--batch", "--md"):
         if flag in a:
