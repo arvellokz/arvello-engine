@@ -123,11 +123,7 @@ def build(out):
                              f"доставки; присадка у поставщика — опция {tg(cst['drill'])} ₸)")
         else:
             notes.append("себестоимость: модель на базовом профиле — смета после перевода на ДСП Центр (ENG-005 п. 6)")
-        samet = any(r.get("sys") == "samet" for r in s3["derived"].get("drawers", []))
-        if sku == "ARV-NST-101" and samet:      # ENG-005 п. 2: инструкции A4 нарисованы под Blum MOVENTO — не выдаём
-            notes.append("инструкция сборщику A4 и пример ящика A3 — переделываются под Samet (старые, под Blum MOVENTO, "
-                         "из выпуска убраны; не выдавать)")
-        elif sku == "ARV-NST-101":
+        if sku == "ARV-NST-101":                # инструкции A4 и пример ящика — под систему направляющих модели
             a4n = f"{stem}_инструкция_A4.pdf"
             D1, r1 = C.write(str(out / a4n), o)
             files.append((a4n, D1["s"]["hash"], r1))

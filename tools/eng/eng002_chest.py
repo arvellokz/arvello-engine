@@ -13,6 +13,7 @@
 from __future__ import annotations
 
 import sys
+import textwrap
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -36,6 +37,7 @@ def chest_data(opts):
     D["P"] = {p["id"]: p for p in s["parts"]}
     D["cpos"], D["view_errors"], D["zooms"], D["used"] = pos, [], [], {}
     D["changer"] = any(p["id"].startswith("CH-") for p in s["parts"])
+    D["slide"] = D["r"].get("sys") == "samet"         # ENG-005 п. 2: направляющие по профилю (не Blum)
     return D
 
 
@@ -117,7 +119,9 @@ def page_cover(D, n, total):
     s, nd = D["s"], D["nd"]
     d = s["derived"]
     pg.text(14, 270, "КОМОД ARV-NST-101", size=20, weight="bold")
-    pg.text(14, 260, f"{d['width']:g} × {d['depth']:g} × {d['height']:g} · {kit13.cfg_ru(s, short=True)}", size=9)
+    for i, ln in enumerate(textwrap.wrap(f"{d['width']:g} × {d['depth']:g} × {d['height']:g} · {kit13.cfg_ru(s, short=True)}",
+                                         95)):
+        pg.text(14, 262 - i * 4.5, ln, size=8.5)
     pg.text(14, 254, "Инструкция для сборщика Arvello. Пример ENG-002 — не утверждён.", size=8, color="#444")
     # опрокидывание
     pg.ax.add_patch(Rectangle((14, 196), 182, 50, fc="#fbe3df", ec=RED, lw=1.6))
@@ -130,18 +134,22 @@ def page_cover(D, n, total):
                           (["Пеленальный столик — только на закреплённом к стене комоде (В-106)."] if D["changer"] else [])):
         pg.text(46, 226 - 7 - i * 6, t, size=8.0)
     pg.text(14, 186, "Наборы (детали подписаны номером позиции на наклейке)", size=9.5, weight="bold")
+    S_ = G._prof(D) if D["slide"] else None
     rows = [["Корпус", "боковины, дно, крышка, 2 стойки, задняя стенка + крепёж", "1"],
             ["Цоколь", "4 детали цоколя + шканты, конфирматы", "1"],
             ["Ящик", "5 деталей короба + фасад + крепёж + замки (на ОДИН ящик)", f"{nd}"],
-            ["Корпус: Blum", "направляющие MOVENTO, TIP-ON BLUMOTION, синхронизация", f"{nd} компл."],
+            ([f"Корпус: {S_['brand']}", f"направляющие {S_['series']}, шурупы Ø3,5", f"{nd} пар"] if S_ else
+             ["Корпус: Blum", "направляющие MOVENTO, TIP-ON BLUMOTION, синхронизация", f"{nd} компл."]),
             ["Стена", "уголки и крепёж по типу стены", "1"]] + \
            ([["Столик", "основание, 3 бортика + крепёж, матрас", "1"]] if D["changer"] else [])
     pg.table(14, 181, ["Набор", "Что внутри", "Кол."], rows, [32, 132, 18], row_h=6.0, size=7.8)
     pg.text(14, 132, "Инструмент", size=9.5, weight="bold")
-    pg.text(14, 126, "шестигранник 4 · отвёртка PH2 · дрель с битами · сверло Ø3 · шаблон Blum T65.1000.02 ·", size=8)
+    pg.text(14, 126, "шестигранник 4 · отвёртка PH2 · дрель с битами · сверло Ø3 · " +
+            ("уровень (направляющие) ·" if S_ else "шаблон Blum T65.1000.02 ·"), size=8)
     pg.text(14, 121, "рулетка 3 м · уровень · угольник · мягкая подложка; крепёж к стене — по типу стены", size=8)
     pg.text(14, 108, "Порядок", size=9.5, weight="bold")
-    order = ["К1–К9 · корпус, цоколь", "К10 · СТЕНА", "К11–К12 · направляющие", f"Я1–Я10 · ящики ×{nd}",
+    order = ["К1–К9 · корпус, цоколь", "К10 · СТЕНА", "К11–К12 · направляющие",
+             f"Я1–Я{G.steps_for(D)} · ящики ×{nd}",
              "К13–К14 · схема, проверка"] + (["С1–С2 · столик"] if D["changer"] else [])
     for i, t in enumerate(order):
         x = 14 + (i % 3) * 62
@@ -151,11 +159,16 @@ def page_cover(D, n, total):
     for k in range(6):
         pg.line(14 + k * 10, 72, 14 + k * 10, 74.5 if k % 5 else 76, dict(lw=0.8, color="k", ls="-"))
     pg.text(70, 73, "50 мм — проверка печати 100 % (крепёж на наборах — в натуральную величину)", size=7.5, va="center")
-    pg.text(14, 58, "Метки: [М] — наше значение по модели · [Д] — документ Blum · [О] — проверить на первом изделии.",
-            size=7.5, color="#444")
+    pg.text(14, 58, "Метки: [М] — наше значение по модели · [Д] — документ " + (S_["brand"] if S_ else "Blum") +
+            " · [О] — проверить на первом изделии.", size=7.5, color="#444")
     t = TECH
-    pg.text(14, 52, f"Значения Arvello по умолчанию [М]: паз под дно {kit13.n_(16 + t['groove_w_add'])}, зазор дна "
-            f"{kit13.n_(t['bottom_clear'])} на сторону; крючок и замки — сборщик по шаблону.", size=7.5, color="#444")
+    if S_:
+        for i, ln in enumerate(textwrap.wrap(f"Значения Arvello по умолчанию [М]: {S_['assumed']}; дно ящика утоплено на 13.",
+                                             105)):
+            pg.text(14, 52 - i * 4.5, ln, size=7.5, color="#444")
+    else:
+        pg.text(14, 52, f"Значения Arvello по умолчанию [М]: паз под дно {kit13.n_(16 + t['groove_w_add'])}, зазор дна "
+                f"{kit13.n_(t['bottom_clear'])} на сторону; крючок и замки — сборщик по шаблону.", size=7.5, color="#444")
     return pg
 
 
@@ -206,7 +219,8 @@ def page_set_carcass(D, n, total):
     pg.text(92, y, "болт стяжки S200 (условно)", size=8, va="center")
     pg.text(12, 40, f"Расходник: клей ПВА D3 (поз. {hp['GLUE-PVA']}) — {kit13.n_(H['GLUE-PVA']['qty'])} кг, для шкантов (К1, К2, К9а).",
             size=7.5)
-    pg.text(12, 34, "Направляющие и TIP-ON BLUMOTION — набор «Корпус: Blum» (раздел 3); крепёж ящиков — в наборах «Ящик».",
+    pg.text(12, 34, (f"Направляющие — набор «Корпус: {G._prof(D)['brand']}» (шаг К11)" if D["slide"] else
+                     "Направляющие и TIP-ON BLUMOTION — набор «Корпус: Blum» (раздел 3)") + "; крепёж ящиков — в наборах «Ящик».",
             size=7.5)
     return pg
 
@@ -376,7 +390,56 @@ def page_back(D, n, total):
     return pg
 
 
+def page_runners_s(D, n, total):
+    """К11–К12 для направляющих по профилю: разметка шурупов на стенке колонны (из модели), шаги ящиков, установка."""
+    pg = G.Page(D, n, total, "Направляющие")
+    P, r, hp, nd = D["P"], D["r"], D["hpos"], D["nd"]
+    S_ = G._prof(D)
+    drs = D["s"]["derived"]["drawers"]
+    G.step(pg, 12, 279, "К11", prefix="", title=f"Направляющие {S_['brand']} {S_['series']}: {nd} пар, "
+           f"по {len(r['pts'])} шурупа на направляющую")
+    S = P["SIDE-L"]
+    marks = [h for h in D["s"]["holes"] if h["part"] == "SIDE-L" and h["kind"] == "runner_mark"]
+    sc = 0.12
+    x0, y0 = 22, 162
+    pg.rect(x0, y0, x0 + (S["y1"] - S["y0"]) * sc, y0 + (S["z1"] - S["z0"]) * sc, dict(lw=1.0, color="k", ls="-"),
+            fill="#f3f3f3")
+    for h in marks:
+        pg.ax.add_patch(Circle((x0 + (h["y"] - S["y0"]) * sc, y0 + (h["z"] - S["z0"]) * sc), 1.0, fc=RED, ec="k", lw=0.4,
+                               zorder=12))
+    for z in sorted({h["z"] for h in marks}):
+        v = y0 + (z - S["z0"]) * sc
+        pg.ax.add_patch(Rectangle((x0 + S_["front_off"] * sc, v - 2), r["NL"] * sc, 4, fc="#cfe0f5", ec=BLUE, lw=0.6,
+                                  zorder=8, alpha=0.7))
+        pg.text(x0 + (S["y1"] - S["y0"]) * sc + 3, v, f"ось {kit13.n_(round(z - S['z0'], 1))} от низа боковины", size=7,
+                va="center")
+    pg.text(x0, y0 - 5, f"боковина Л, вид изнутри; перед — слева; красные точки — разметка шурупов [Д: {S_['series']}]",
+            size=7)
+    pts = sorted({round(h["y"] - S["y0"], 1) for h in marks})
+    pg.text(x0, y0 - 10, "от передней кромки корпуса: " + " / ".join(kit13.n_(v) for v in pts) +
+            f" (направляющая на {S_['front_off']} от кромки)", size=7.5, weight="bold")
+    nm = len([h for h in D["s"]["holes"] if h["kind"] == "runner_mark"])
+    use(D, "SLIDE-SCREW-S", nm, "К11")
+    fl, rb0 = drs[0]["floor"], drs[0]["rb"]
+    pitch = drs[1]["rb"] - drs[0]["rb"]
+    pg.text(x0, y0 - 16, f"нижняя: низ направляющей {kit13.n_(round(rb0 - S['z0'], 1))} = дно {kit13.n_(fl - S['z0'])} + "
+            f"подъём {kit13.n_(rb0 - fl)} над крепежом стоек [М]; ось шурупов +{S_['screw_axis']} [М] (10–12 [Д])",
+            size=6.8)
+    pg.text(x0, y0 - 21, f"остальные — с шагом фасадов {kit13.n_(round(pitch, 1))} [М]", size=6.8)
+    G.count_badge(pg, 16, 126, nm, hp["SLIDE-SCREW-S"], "шуруп Ø3,5 · без сверления, по разметке")
+    G.check_box(pg, 16, 116, 184, ["все колонки одинаково: направляющая Л — на левую стенку колонны, П — на правую",
+                                   "направляющие ставят ПОСЛЕ сборки корпуса; передний конец — на 2 от кромки [Д]",
+                                   "направляющие одного ящика — на одной высоте (уровень)"])
+    G.step(pg, 12, 86, "К12", prefix="", title="Проверить ход направляющих до установки ящиков")
+    G.check_box(pg, 16, 74, 184, ["каждая направляющая выдвигается до упора без заеданий",
+                                  "артикул и длина на упаковке = спецификации (поз. " + str(hp["SLIDES"]) + ") [О]"] +
+                ([f"зазор фасад — корпус {kit13.n_(r.get('gap', 0))} под нажатие — на шаге фасада [М]"] if S_["push"] else []))
+    return pg
+
+
 def page_runners(D, n, total):
+    if D["slide"]:
+        return page_runners_s(D, n, total)
     pg = G.Page(D, n, total, "Направляющие")
     P, r, hp, nd, H = D["P"], D["r"], D["hpos"], D["nd"], D["H"]
     G.step(pg, 12, 279, "К11", prefix="", title=f"Направляющие MOVENTO: {nd} пар, по 6 саморезов на профиль")
@@ -425,7 +488,8 @@ def page_runners(D, n, total):
 def page_drawer_map(D, n, total):
     pg = G.Page(D, n, total, "Ящики: схема")
     nd = D["nd"]
-    G.step(pg, 12, 279, "К13", prefix="", title=f"Ящики: {nd} шт. — шаги Я1–Я10, затем в проём по схеме")
+    G.step(pg, 12, 279, "К13", prefix="", title=f"Ящики: {nd} шт. — шаги Я1–Я{G.steps_for(D)}, затем в проём "
+           "по схеме")
     d = D["s"]["derived"]
     drs = d["drawers"]
     P = D["P"]
@@ -444,7 +508,7 @@ def page_drawer_map(D, n, total):
     pg.text(x0 + W * sc + 6, y0 + Hc * sc - 20, "Ставить снизу вверх,", size=8)
     pg.text(x0 + W * sc + 6, y0 + Hc * sc - 25, "по одному.", size=8)
     G.check_box(pg, 16, 136, 184, ["комод уже закреплён к стене (К10) — только после этого ставить ящики",
-                                   "первый ящик — целиком с фасадом и проверкой (Я10), потом остальные"])
+                                   f"первый ящик — целиком с фасадом и проверкой (Я{G.steps_for(D)}), потом остальные"])
     return pg
 
 
@@ -452,8 +516,12 @@ def page_final(D, n, total):
     pg = G.Page(D, n, total, "Итоговая проверка")
     nd = D["nd"]
     G.step(pg, 12, 279, "К14", prefix="", title=f"Все {nd} ящиков на месте: итоговая проверка")
-    G.check_box(pg, 16, 266, 184, ["зазоры фасадов: 3 между, 1,5 по краям, 2,5 до корпуса [М][Д]",
-                                   "каждый ящик: нажатие открывает, мягко закрывается, ничего не задевает",
+    g_ = D["r"].get("gap", 2.5)
+    push = (not D["slide"]) or G._prof(D)["push"]
+    G.check_box(pg, 16, 266, 184, ["зазоры фасадов: 3 между, 1,5 по краям, " + (f"{kit13.n_(g_)} до корпуса [М]" if g_ else
+                                   "вплотную к корпусу"),
+                                   "каждый ящик: " + ("нажатие открывает" if push else "открывается за ручку") +
+                                   ", мягко закрывается, ничего не задевает",
                                    "комод не качается и не отходит от стены (К10)",
                                    "крышка и фасады чистые; лишний крепёж не остался"])
     return pg
@@ -629,6 +697,8 @@ def verify_counts(D):
     nd = D["nd"]
     box = {"CONF-7x50": len(E.joint_holes(D, "BOX", "conf_face")) * nd, "SCREW-4x25D": len(E.joint_holes(D, "BOT-", "screw_face")) * nd,
            "SCREW-4x25": len(E.joint_holes(D, "FRONT", "front_screw")) * nd}
+    if D.get("handle_screws"):                         # ручки уровней «эконом» / «стандарт» — шаг фасада Я7
+        box["SCREW-M4x22"] = D["handle_screws"] * nd
     bad = []
     need = {h["fastener"] for h in D["s"]["holes"] if h.get("fastener")} | set(D["used"])
     for fid in sorted(need):
@@ -645,7 +715,7 @@ def write(path, opts):
     # порядок (проверка 13.11): корпус и цоколь → СТЕНА → направляющие → схема ящиков → ящики Я1–Я10 → итог → столик
     makers = [page_cover, page_set_carcass, page_pre, page_housings, page_stands, page_top, page_back, page_plinth, page_wall,
               page_runners, page_drawer_map]
-    makers += [("drawer", m) for m in G.PAGES]
+    makers += [("drawer", m) for m in G.pages_for(D)]
     makers += [page_final] + ([page_changer] if D["changer"] else [])
     lab = labels(D)
     per = 44

@@ -132,11 +132,31 @@ a_ = [x for x in sc2["derived"]["wall_angles"] if x.get("inside")][0]
 a_.update(z0=a_["z0"] - 100, z1=a_["z1"] - 100, y0=a_["y0"] - 50, y1=a_["y1"] - 50)
 ok("негатив: уголок в объёме верхнего ящика — ошибка", wa(sc2) == "ошибка", wa(sc2))
 # полный комплект A3 на каждом уровне — все проверки (БАЗИС, verify13, verify_new)
+kitS = {}
 for lv in MN.NST_LEVELS:
     s3, ch3, figs = kit13.write_kit("ARV-NST-101", str(Path(tempfile.mkdtemp()) / "k.pdf"), {**O, "level": lv, "changer": "yes"})
     for f_ in figs:
         kit13.plt.close(f_)
+    kitS[lv] = s3
     ok(f"комплект A3 со столиком, {lv}: все проверки пройдены", all(c[1] for c in ch3), [c[0] for c in ch3 if not c[1]][:3])
+# инструкции сборщику (A4 комода, A4 ящика, пример ящика A3) — на каждом уровне, все проверки
+from eng import eng002_chest as C_, eng002_drawer as E_, eng002_guide as G_  # noqa: E402
+from eng.eng002_kit import a4_vs_a3, pdf_text  # noqa: E402
+for lv in MN.NST_LEVELS:
+    o_ = {**O, "level": lv, "changer": "yes"}
+    d_ = Path(tempfile.mkdtemp())
+    D1, r1 = C_.write(str(d_ / "c.pdf"), o_)
+    D2, r2 = G_.write(str(d_ / "g.pdf"), o_)
+    D3, _ = E_.write(str(d_ / "e.pdf"), o_)
+    bad = [x[0] for x in r1 + r2 if not x[1]] + D3["view_errors"]
+    ok(f"инструкции, {lv}: A4 комода, A4 ящика, пример A3 — проверки пройдены", not bad, bad[:3])
+    s_ = kitS[lv]
+    txt = pdf_text(d_ / "c.pdf") + pdf_text(d_ / "g.pdf") + pdf_text(d_ / "e.pdf")
+    ok(f"инструкции, {lv}: A4 = A3 (зенковка, крепёж)", not a4_vs_a3(pdf_text(d_ / "c.pdf"), s_), a4_vs_a3(pdf_text(d_ / "c.pdf"), s_))
+    ok(f"инструкции, {lv}: Blum / MOVENTO / TIP-ON в тексте нет", not any(w in txt for w in ("Blum", "MOVENTO", "TIP-ON", "T65")))
+    ok(f"инструкции, {lv}: артикул направляющей профиля в тексте", SP[MN.NST_LEVELS[lv]]["codes"][500] in txt)
+    ok(f"инструкции, {lv}: ручка — только у уровней с ручкой", ("Ручка" in txt or "ручки" in txt.lower()) ==
+       (not SP[MN.NST_LEVELS[lv]]["push"]) or SP[MN.NST_LEVELS[lv]]["push"])
 # Blum — опция (данные не удалены)
 MN.NST_SLIDES = "blum"
 sb = kit13.make("ARV-NST-101", {**O, "changer": "no"})

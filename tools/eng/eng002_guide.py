@@ -255,7 +255,7 @@ def figure(pg, D, box, items, **kw):
 
 
 # ------------------------------------------------------------------ вид снизу (ящик перевёрнут на стол, перед — к себе)
-def bottom_view(pg, D, box, holes=(), zones=(), title="вид на дно ящика: ящик перевёрнут, перед — к себе"):
+def bottom_view(pg, D, box, holes=(), zones=(), title="вид на дно ящика: ящик перевёрнут, перед — к себе", walls_seen=False):
     """Ортогональный вид на наружную нижнюю пласть дна. Ящик перевёрнут через переднюю кромку на стол: лево осталось
     слева, перед — внизу листа. Видны: торцы боковин (низ), дно между боковинами; стенки стоят на дне — их не видно
     (пунктир). Крепёж — только отверстия со входом снизу (dir «+z»), иначе ошибка в D["view_errors"]."""
@@ -274,7 +274,10 @@ def bottom_view(pg, D, box, holes=(), zones=(), title="вид на дно ящи
     for S in (SL, SR):
         R_((S["x0"], S["y0"]), (S["x1"], S["y1"]), "#d9d9d9", z=5)                         # низ боковин
     for W in (F, B):
-        R_((W["x0"], W["y0"]), (W["x1"], W["y1"]), "none", ls=(0, (3, 2)), lw=0.6, z=6)   # стенки — за дном
+        if walls_seen:                                                                     # короб TANDEM: стенки до низа
+            R_((W["x0"], W["y0"]), (W["x1"], W["y1"]), "#d9d9d9", z=6)
+        else:
+            R_((W["x0"], W["y0"]), (W["x1"], W["y1"]), "none", ls=(0, (3, 2)), lw=0.6, z=6)   # стенки — за дном
     for zn in zones:
         R_((zn[0], zn[1]), (zn[2], zn[3]), "#cfe0f5", ls=(0, (3, 2)), lw=1.1, z=7)
     for h in holes:
@@ -593,7 +596,281 @@ def page_box8(D, n, total):
     return pg
 
 
-PAGES = [page_set, page_box1, page_box2, page_box3, page_box4, page_box5, page_box6, page_box7, page_box8]
+PAGES_BLUM = [page_set, page_box1, page_box2, page_box3, page_box4, page_box5, page_box6, page_box7, page_box8]
+
+
+# ================================================================== ящик на скрытых направляющих по профилю (Samet)
+# ENG-005 п. 2 (14.11): короб как TANDEM — боковины, стенки на всю высоту, дно между ними на конфирматах; задний Ø6 сверлит
+# цех; замки Lock-Fix — по документу производителя, по месту. Данные — профиль cab.SLIDE_PROFILES[r["slide"]].
+def _prof(D):
+    from eng.cab import SLIDE_PROFILES
+    return SLIDE_PROFILES[D["r"]["slide"]]
+
+
+def _conf_of(D, k):
+    return [h for h in E.joint_holes(D, "", "conf_face") if h["part"] == D["p"][k]["id"]]
+
+
+def page_set_s(D, n, total):
+    pg = Page(D, n, total, "Набор «Ящик»")
+    p, pos, H, hp, nd = D["p"], D["pos"], D["H"], D["hpos"], D["nd"]
+    S_ = _prof(D)
+    pg.ax.add_patch(Rectangle((10, 252), 190, 30, fc="#fff3e0", ec="k", lw=1.2))
+    pg.text(16, 274, "ЯЩИК", size=20, weight="bold", va="center")
+    pg.text(16, 262, f"собрать 1 → проверить с фасадом → ещё {nd - 1}", size=10, va="center")
+    pg.text(16, 255.5, f"Всё ниже — на ОДИН ящик; ×{nd} — число таких наборов, крепёж не умножать.", size=7.5, va="center")
+    ob = E.Oblique(pg, (138, 255, 196, 280), [p[k] for k in ("SL", "SR", "F", "B", "BOT")], sgn=1)
+    ob.draw([(p[k], E.DONE, {}) for k in ("SL", "SR", "F", "B", "BOT")])
+    pg.text(125, 267, f"×{nd}", size=20, weight="bold", va="center", ha="center")
+    pg.text(12, 245, "Детали (номер — на наклейке детали)", size=9, weight="bold")
+    cells = [("SL", "боковина Л"), ("SR", "боковина П"), ("BOT", "дно"), ("F", "стенка передняя"),
+             ("B", "стенка задняя (2 отв. Ø6)"), ("FR", "фасад")]
+    for i, (k, nm) in enumerate(cells):
+        x, y = 12 + (i % 3) * 64, 210 - (i // 3) * 34
+        b = p[k]
+        ob = E.Oblique(pg, (x + 10, y, x + 40, y + 26), [b], sgn=1 if k != "SR" else -1)
+        ob.draw([(b, E.HL, {})])
+        E.pos_ball(pg, x + 4, y + 22, pos[k], r=3.6)
+        pg.text(x + 25, y - 3, f"1× {nm}", size=7.5, va="center", ha="center")
+        let = side_letter(b["name"])
+        if let:
+            sticker(pg, x + 40, y + 6, pos[k], let)
+    pg.text(12, 166, "Крепёж — в натуральную величину (головки условно)", size=9, weight="bold")
+    fx = [("CONF-7x50", len(E.joint_holes(D, "BOX", "conf_face")), "конфирмат 7 × 50", "conf"),
+          ("SCREW-4x25", len(E.joint_holes(D, "FRONT", "front_screw")), "саморез 4 × 25 — фасад", "screw")]
+    for i, (hid, q, nm, kind) in enumerate(fx):
+        y = 155 - i * 14
+        d, L = fdims(hid)
+        screw_shape(pg.ax, 14, y, d, L, 0.0, kind, 1.0)
+        pg.text(70, y, f"{q}×", size=13, weight="bold", va="center")
+        E.pos_ball(pg, 84, y, hp[hid], r=3.6)
+        pg.text(90, y, nm, size=8, va="center")
+    pg.text(12, 120, f"Фурнитура ящика: замок {S_['brand']} Л + П — 1 пара (поз. {hp['SLIDE-LOCK']}): {S_['lock'].split(' (')[0]}.",
+            size=7.5)
+    pg.text(12, 115, f"Направляющие {S_['brand']} {S_['series']} — набор «Корпус», шаги К11–К12, не здесь.", size=7.5)
+    pg.line(14, 102, 64, 102, dict(lw=1.2, color="k", ls="-"))
+    for k in range(6):
+        pg.line(14 + k * 10, 102, 14 + k * 10, 104.5 if k % 5 else 106, dict(lw=0.8, color="k", ls="-"))
+    pg.text(70, 103, "50 мм — проверка печати: должно совпасть с линейкой", size=7.5, va="center")
+    pg.text(12, 90, "Инструмент", size=9, weight="bold")
+    pg.text(12, 84, "шестигранник 4 · отвёртка PH2 · рулетка · угольник · мягкая подложка", size=8)
+    pg.text(12, 72, "Как работать", size=9, weight="bold")
+    pg.text(12, 66, "детали сверить по номерам до начала · первый ящик — целиком с фасадом и проверкой,", size=8)
+    pg.text(12, 60, "только потом остальные", size=8)
+    pg.text(12, 46, f"[Д] — документ производителя ({S_['ref'].split(' (')[0]}); [М] — наше значение; [О] — проверить.",
+            size=7, color="#444")
+    return pg
+
+
+def page_s1(D, n, total):
+    pg = Page(D, n, total, "Ящик · шаги 1–2")
+    p, pos, hp = D["p"], D["pos"], D["hpos"]
+    step(pg, 12, 279, 1, f"Стенки {pos['F']}, {pos['B']} и дно {pos['BOT']} — к боковине {pos['SL']}")
+    Fm, Bm, Tm = E.moved(p["F"], dz=110), E.moved(p["B"], dz=110), E.moved(p["BOT"], dz=60)
+    ob = figure(pg, D, (16, 186, 196, 268), [(p["SL"], E.DONE, {}), (Fm, E.HL, {}), (Bm, E.HL, {}), (Tm, E.HL, {})], sgn=1)
+    for w, wm in ((p["F"], Fm), (p["B"], Bm), (p["BOT"], Tm)):
+        xc, yc = (w["x0"] + w["x1"]) / 2, (w["y0"] + w["y1"]) / 2
+        ob.arrow((xc, yc, wm["z0"] - 5), (xc, yc, w["z0"] + 25))
+    E.pos_ball(pg, *ob.p(Fm["x1"], Fm["y0"], Fm["z1"] + 10), pos["F"], r=3.6)
+    E.pos_ball(pg, *ob.p(Bm["x1"], Bm["y1"], Bm["z1"] + 10), pos["B"], r=3.6)
+    E.pos_ball(pg, *ob.p(Tm["x1"], (Tm["y0"] + Tm["y1"]) / 2, Tm["z1"] + 10), pos["BOT"], r=3.6)
+    sticker(pg, *ob.p(p["SL"]["x0"], p["SL"]["y1"], p["SL"]["z1"] + 40), pos["SL"], "Л")
+    rec = p["BOT"]["z0"] - p["SL"]["z0"]
+    check_box(pg, 16, 180, 184, [f"передняя {pos['F']} — с 4 отв. Ø4,5 (к фасаду); задняя {pos['B']} — с 2 отв. Ø6 снизу (штифты)",
+                                 f"дно — между стенками, {kit13_n(rec)} от нижней кромки боковины [М]; низ стенок = низ боковины"])
+    ch = _conf_of(D, "SL")
+    step(pg, 12, 150, 2, f"{len(ch)} конфирматов через боковину {pos['SL']} — снаружи")
+    shown = [p[k] for k in ("SL", "F", "B", "BOT")]
+    ob2 = figure(pg, D, (16, 60, 120, 140), [(q, E.HL if q is p["SL"] else E.DONE, {}) for q in shown], sgn=-1)
+    ob2.fasteners(ch)
+    E._check_view(D, ob2, "A4 шаг 2")
+    count_badge(pg, 16, 52, len(ch), hp["CONF-7x50"], "конфирмат 7 × 50 · шестигранник 4")
+    zinfo = zoom(pg, D, ch[0], 160, 100, R=30, win=34, label="сечение по конфирмату (из модели)")
+    D["zooms"].append(("A4 шаг 2", ch[0], zinfo))
+    check_box(pg, 16, 40, 184, ["головки заподлицо, без перекоса; стенки и дно прижаты к боковине"])
+    return pg
+
+
+def page_s2(D, n, total):
+    pg = Page(D, n, total, "Ящик · шаг 3")
+    p, pos, hp = D["p"], D["pos"], D["hpos"]
+    ch = _conf_of(D, "F") + _conf_of(D, "B")
+    step(pg, 12, 279, 3, f"{len(ch)} конфирмата через стенки {pos['F']} и {pos['B']} в торец дна {pos['BOT']}")
+    shown = [p[k] for k in ("SL", "F", "B", "BOT")]
+    ob = figure(pg, D, (16, 150, 196, 262), [(q, E.HL if q in (p["F"], p["B"]) else E.DONE, {}) for q in shown], sgn=1)
+    ob.fasteners(_conf_of(D, "F"))
+    E._check_view(D, ob, "A4 шаг 3")
+    count_badge(pg, 16, 140, len(ch), hp["CONF-7x50"], "конфирмат 7 × 50 · снаружи стенок · шестигранник 4")
+    h0 = _conf_of(D, "F")[0]
+    zinfo = zoom(pg, D, h0, 150, 100, R=30, win=34, label="сечение: стенка + дно (из модели)")
+    D["zooms"].append(("A4 шаг 3", h0, zinfo))
+    check_box(pg, 16, 125, 100, ["дно — по всей ширине без щели", "к стенкам и боковине"])
+    pg.text(16, 82, "Конфирматы передней стенки закроет фасад; задней — смотрят назад.", size=7.5)
+    return pg
+
+
+def page_s3(D, n, total):
+    pg = Page(D, n, total, "Ящик · шаг 4")
+    p, pos, hp = D["p"], D["pos"], D["hpos"]
+    S_ = _prof(D)
+    ch = _conf_of(D, "SR")
+    step(pg, 12, 279, 4, f"Боковина {pos['SR']} и {len(ch)} конфирматов — снаружи")
+    shown = [p[k] for k in ("SL", "F", "B", "BOT", "SR")]
+    ob = figure(pg, D, (16, 150, 196, 262), [(q, E.HL if q is p["SR"] else E.DONE, {}) for q in shown], sgn=1)
+    ob.fasteners(ch)
+    E._check_view(D, ob, "A4 шаг 4")
+    sticker(pg, 120, 146, pos["SR"], "П")
+    pg.text(136, 146, "— наклейка правой боковины", size=7, va="center")
+    count_badge(pg, 16, 140, len(ch), hp["CONF-7x50"], "конфирмат 7 × 50 · шестигранник 4")
+    zinfo = zoom(pg, D, ch[0], 150, 100, R=30, win=34, label="сечение по конфирмату (из модели)")
+    D["zooms"].append(("A4 шаг 4", ch[0], zinfo))
+    skw = p["SR"]["x0"] - p["SL"]["x1"]
+    check_box(pg, 16, 125, 100, [f"внутренняя ширина спереди и", f"сзади {kit13_n(skw)} ±0,5 [Д]",
+                                 f"(проём − {S_['diw']}, {S_['brand']})", "диагонали — разность ≤ 1 [М]"])
+    return pg
+
+
+def page_s4(D, n, total):
+    pg = Page(D, n, total, "Ящик · шаг 5")
+    p, pos, r = D["p"], D["pos"], D["r"]
+    S_ = _prof(D)
+    all5 = [p[k] for k in ("SL", "SR", "F", "B", "BOT")]
+    bt, SL, SR, Bw = p["BOT"], p["SL"], p["SR"], p["B"]
+    rr = [h for h in D["s"]["holes"] if h["kind"] == "slide_rear" and h["part"] == Bw["id"]]
+    rq = S_["rear"]
+    step(pg, 12, 279, 5, "Проверить задние отверстия Ø6 и поставить замки Lock-Fix")
+    ob = figure(pg, D, (30, 190, 180, 262), [(q, E.DONE, {}) for q in all5], sgn=-1, ys=-1)
+    for h in rr:
+        x, y = ob.p(h["x"], h["y"], h["z"])
+        pg.ax.add_patch(Circle((x, y), 2.0, fc=RED, ec="k", lw=0.6, zorder=12))
+    x, y = ob.p(rr[0]["x"], rr[0]["y"], rr[0]["z"])
+    E.callout(pg, x, y, x - 60, y + 22, f"Ø{rq['d']} гл. {rq['depth']} — сверлит цех", 7.5, RED)
+    pg.text(105, 184, "вид сзади на ящик", size=7.5, ha="center", style="italic")
+    check_box(pg, 16, 176, 184, [f"в задней стенке {pos['B']} — 2 отверстия Ø{rq['d']} гл. {rq['depth']}: {rq['from_bottom']} от низа,",
+                                 f"{rq['from_side']} от боковины [Д: {S_['series']}]; нет — сообщить в цех, по месту не сверлить"])
+    zones = [(SL["x1"], bt["y0"], SL["x1"] + 75, bt["y0"] + 90), (SR["x0"] - 75, bt["y0"], SR["x0"], bt["y0"] + 90)]
+    P_ = bottom_view(pg, D, (22, 70, 138, 128), zones=zones, title="ящик дном вверх, перед — к себе (дно утоплено)",
+                     walls_seen=True)
+    for (zx0, zy0, zx1, zy1), t in zip(zones, ("Л", "П")):
+        u, v = P_((zx0 + zx1) / 2, (zy0 + zy1) / 2)
+        pg.text(u, v, t, size=9, weight="bold", color=BLUE, ha="center", va="center", zorder=12)
+    flip_icon(pg, 150, 140)
+    pg.text(144, 120, "замки Л и П — у передних", size=7.5, color=BLUE)
+    pg.text(144, 115, "углов, под дном", size=7.5, color=BLUE)
+    for i_, ln in enumerate(S_["lock"].split(" (")[0].split(": ")):
+        pg.text(144, 106 - i_ * 4, ln + (":" if i_ == 0 else ""), size=6.5)
+    check_box(pg, 16, 56, 184, ["положение и шурупы замков — по документу и упаковке производителя, по месту [Д][О];",
+                                "синие зоны — где работать, а не координаты отверстий"])
+    return pg
+
+
+def _cabinet_s(D, ext=0.0):
+    """Колонна корпуса у первого ящика: стенки и направляющие (условно, не контур производителя)."""
+    r, s = D["r"], D["s"]
+    S_ = _prof(D)
+    P = {q["id"]: q for q in s["parts"]}
+    cl, cr = P[r["colL"]], P[r["colR"]]
+    rb = r["rb"]
+    z0, z1 = r["floor"], D["p"]["SL"]["z1"] + 60
+    walls = [{**cl, "z0": z0, "z1": z1}, {**cr, "z0": z0, "z1": z1}]
+    y0 = cl["y0"] + S_["front_off"]
+    prof = []
+    for wall, sg, nm in ((cl["x1"], 1, "PRL"), (cr["x0"], -1, "PRR")):
+        xa, xb = sorted((wall, wall + sg * (S_["diw"] / 2)))
+        prof.append({"id": nm, "x0": xa, "x1": xb, "y0": y0 - ext, "y1": y0 + r["NL"] - ext, "z0": rb, "z1": rb + 12})
+        prof.append({"id": nm + "W", "x0": min(wall, wall + sg * 3), "x1": max(wall, wall + sg * 3),
+                     "y0": y0, "y1": y0 + r["NL"], "z0": rb, "z1": rb + 30})
+    return walls, prof
+
+
+def page_s5(D, n, total):
+    pg = Page(D, n, total, "Ящик · шаг 6")
+    p, r = D["p"], D["r"]
+    S_ = _prof(D)
+    step(pg, 12, 279, 6, "Ящик — на выдвинутые направляющие, штифты в Ø6, опустить до щелчка")
+    ext = 220
+    walls, prof = _cabinet_s(D, ext)
+    box = [p[k] for k in ("SL", "SR", "F", "B", "BOT")]
+    up = [E.moved(q, dy=-ext, dz=70) for q in box]
+    items = [(w, "#ececec", {}) for w in walls] + [(q, "#cfe0f5", {}) for q in prof] + [(q, E.HL, {}) for q in up]
+    ob = figure(pg, D, (16, 120, 196, 262), items, sgn=1)
+    for S in (up[0], up[1]):
+        for yy in (S["y0"] + 60, S["y1"] - 40):
+            xm = (S["x0"] + S["x1"]) / 2
+            ob.arrow((xm, yy, S["z0"] - 4), (xm, yy, S["z0"] - 52))
+    pr = prof[0]
+    x, y = ob.p(pr["x1"], pr["y0"], pr["z1"])
+    E.callout(pg, x, y, x - 6, y - 18, f"направляющая выдвинута (условно, не контур {S_['brand']})", 7.5, BLUE)
+    pg.text(16, 112, "1) выдвинуть обе направляющие до упора   2) поставить ящик: штифты направляющих — в задние Ø6",
+            size=7.5)
+    pg.text(16, 106, "3) опустить переднюю часть — замки Л и П щёлкают   4) задвинуть ящик", size=7.5)
+    lock_zoom(pg, 160, 74)
+    check_box(pg, 16, 96, 104, ["оба замка щёлкнули;", "ящик не снимается без", "нажатия на замки;",
+                                "ход до конца без касаний"])
+    pg.text(16, 30, f"Направляющие {S_['brand']} {S_['series']} уже в корпусе: набор «Корпус», шаг К11.", size=7.5)
+    return pg
+
+
+def page_s6(D, n, total):
+    pg = Page(D, n, total, "Ящик · шаг 7")
+    p, pos, hp, nd, r = D["p"], D["pos"], D["hpos"], D["nd"], D["r"]
+    S_ = _prof(D)
+    fr, Fw = p["FR"], p["F"]
+    fs = E.joint_holes(D, "FRONT", "front_screw")
+    step(pg, 12, 279, 7, f"Фасад {pos['FR']} на выдвинутом ящике: {len(fs)} самореза изнутри")
+    ext = 300
+    walls, prof = _cabinet_s(D, ext)
+    walls = [{**w, "y1": w["y0"] + 160} for w in walls]
+    shown = [E.moved(p[k], dy=-ext) for k in ("SL", "SR", "F", "BOT")]
+    frm = E.moved(fr, dy=-ext)
+    items = [(w, "#ececec", {}) for w in walls] + [(q, "#cfe0f5", {}) for q in prof if not q["id"].endswith("W")] + \
+            [(q, E.DONE, {}) for q in shown] + [(frm, E.HL, {})]
+    ob = figure(pg, D, (16, 150, 128, 262), items, sgn=1, ys=-1)
+    fsm = [{**h, "y": h["y"] - ext} for h in fs]
+    ob.fasteners(fsm)
+    E._check_view(D, ob, "A4 шаг 7")
+    pg.text(72, 144, "ящик выдвинут; вид изнутри ящика (задняя стенка не показана)", size=6.8, ha="center", style="italic")
+    zinfo = zoom(pg, D, fs[0], 162, 215, R=30, win=40, label="сечение: стенка + фасад (из модели)",
+                 keys=("SL", "SR", "F", "BOT", "FR"), face=(0.98, 0.72, "лицо"))
+    D["zooms"].append(("A4 шаг 7", fs[0], zinfo))
+    count_badge(pg, 16, 133, len(fs), hp["SCREW-4x25"], "саморез 4 × 25 · PH2 · изнутри")
+    pg.text(16, 127, "в готовые отверстия Ø4,5 с зенковкой изнутри короба", size=7)
+    pair_box(pg, 16, 74, 100, 50, front_ok, front_bad, "изнутри — лицо чистое", "через лицо фасада")
+    gap = Fw["y0"] - fr["y1"]
+    eng = fdims("SCREW-4x25")[1] - (Fw["y1"] - Fw["y0"]) - gap
+    g_ = r.get("gap", 0)
+    check_box(pg, 122, 126, 78, ["выставить по зазорам: 3 между", "фасадами, 1,5 по краям,",
+                                 (f"{kit13_n(g_)} до корпуса (нажатие) [М]" if g_ else "вплотную к корпусу"),
+                                 f"вход в фасад {eng:g}, до лица {fr['y1'] - fr['y0'] - eng:g} [М]"])
+    if r.get("hz") is not None:
+        D.setdefault("handle_screws", len(E.joint_holes(D, "HANDLE", "handle")))
+        pg.text(122, 86, f"Ручка: {D['handle_screws']} винта М4 × 22 через фасад", size=6.8, weight="bold")
+        pg.text(122, 82, "в готовые отверстия Ø5 (сверлит цех).", size=6.8)
+    pg.text(122, 74, "Удержать фасад: 2 полоски двустороннего", size=6.8)
+    pg.text(122, 70, "скотча на переднюю стенку короба [М][О].", size=6.8)
+    pg.text(122, 64, f"Регулировка — по инструкции {S_['brand']}", size=6.8)
+    pg.text(122, 60, "в упаковке [Д][О].", size=6.8)
+    pg.ax.add_patch(Rectangle((16, 22), 184, 34, fc="#fff3e0", ec="k", lw=1.2))
+    pg.text(22, 47, "ПЕРВЫЙ ящик проверить целиком:", size=9, weight="bold")
+    pg.text(22, 40, ("нажатие открывает · " if S_["push"] else "ручка, ") + "мягко закрывается · фасад не задевает соседние",
+            size=8)
+    P_ = STEP_PREFIX["p"]
+    pg.text(22, 32, f"Всё в порядке → повторить шаги {P_}1–{P_}7 ещё {nd - 1} раз(а).", size=9, weight="bold")
+    pg.text(22, 26, "Нет — остановиться и сообщить Arvello.", size=8)
+    return pg
+
+
+PAGES_SLIDE = [page_set_s, page_s1, page_s2, page_s3, page_s4, page_s5, page_s6]
+PAGES = PAGES_BLUM
+
+
+def pages_for(D):
+    return PAGES_SLIDE if D["r"].get("sys") == "samet" else PAGES_BLUM
+
+
+def steps_for(D):
+    """Число шагов сборки ящика (Я1…ЯN): у Blum — 10, у ящика на направляющих по профилю — 7."""
+    return 7 if D["r"].get("sys") == "samet" else 10
 
 
 def verify_guide(D, pages):
@@ -612,8 +889,9 @@ def write(path, opts):
     D["view_errors"], D["zooms"] = [], []
     pages = []
     with PdfPages(path) as pdf:
-        for i, mk in enumerate(PAGES, 1):
-            pg = mk(D, i, len(PAGES))
+        PG = pages_for(D)
+        for i, mk in enumerate(PG, 1):
+            pg = mk(D, i, len(PG))
             pg.fig.canvas.draw()
             pages.append(pg)
             pdf.savefig(pg.fig)
