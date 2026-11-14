@@ -143,12 +143,13 @@ def _movento_tob(b):
     b.derived["drawer_system"] = "MOVENTO TIP-ON BLUMOTION"
 
 
-def _sections_var(b, W, n, H, PL, top, D, color, pattern, push=False, inner_drawers=False):
+def _sections_var(b, W, n, H, PL, top, D, color, pattern, push=False, inner_drawers=False, fcol=None):
     """Секции одинаковой ширины W/n на регулируемых опорах + антресоли до H.
     pattern — H (штанга и полка над ней), S (полки: 2 жёсткие + съёмные, внизу ящики по опции)."""
     sw = W / n
     gap = PUSH_GAP if push else 0
-    yc0, yc1 = TF + gap, D - TB
+    fcol = fcol or color                       # фасады — свой декор (14.11), иначе как корпус
+    yc0, yc1 = b.TF + gap, D - b.TB
     yc = (yc0 + yc1) / 2
     pullout = D < 500
     hat = min(top - 300, 1840)                # низ полки над штангой: штанга не выше ≈ 1,78 м
@@ -217,10 +218,10 @@ def _sections_var(b, W, n, H, PL, top, D, color, pattern, push=False, inner_draw
                       pilot=(3, 8), at=yc)
         left = i % 2 == 0
         side = c["L"] if left else c["R"]
-        b.doors(pre, c, [side], [(x0 + GAP / 2, x0 + sw - GAP / 2, PL + GAP / 2, top - GAP / 2)], color,
+        b.doors(pre, c, [side], [(x0 + GAP / 2, x0 + sw - GAP / 2, PL + GAP / 2, top - GAP / 2)], fcol,
                 handle=None if push else "v320", hz_from_top=(top - PL) - (1100 - PL), lefts=[left], nh_rule=_hinges)
         ms = m["L"] if left else m["R"]
-        b.doors(pre + "M-", m, [ms], [(x0 + GAP / 2, x0 + sw - GAP / 2, top + GAP / 2, H - GAP / 2)], color,
+        b.doors(pre + "M-", m, [ms], [(x0 + GAP / 2, x0 + sw - GAP / 2, top + GAP / 2, H - GAP / 2)], fcol,
                 handle=None if push else "bar128", hz_from_top=(H - top) - 60, lefts=[left], nh_rule=_hinges)
     # цоколь: лицевой на клипсах к опорам + два торцевых
     _KX._plinth(b, "PLINTH", 0, W, yc0 + 40, PL, color, legs=legs_x)
@@ -281,16 +282,26 @@ def wrd101_top(H):
     return int(round((2040 + (H - 2400) * 0.6) / 10) * 10)
 
 
+WRD_PROFILE = "dspc"          # ENG-005 п. 6 (14.11): шкаф — по материалам ДСП Центра (cab.SUPPLY)
+
+
 def wardrobe_ceiling(o):
     W, H, D = int(o["width"]), int(o["height"]), int(o["depth"])
-    color, handle, fill = o["color"], o["handle"], o["fill"]
+    handle, fill = o["handle"], o["fill"]
+    # ENG-005 п. 6 (14.11): шкаф — по материалам ДСП Центра; цвет — декоры базы: корпус и фасады отдельно
+    color, fcol = o.get("body", "K110"), o.get("front", "K4069")
+    for k_, v_ in (("корпус", color), ("фасады", fcol)):
+        if v_ not in cab.DSPC_DECORS:
+            raise ValueError(f"{k_}: декор «{v_}» — не из базы ДСП Центра (cab.DSPC_DECORS)")
     PL = LEG_H
     top = wrd101_top(H)
     n = -(-W // 600)
     b = Build("ARV-WRD-101", REV, NEW_STATUS, {"width": W, "height": H, "depth": D, "handle": handle, "fill": fill,
-                                                 "color": color})
+                                                 "body": color, "front": fcol}, profile=WRD_PROFILE)
+    TF, TB = b.TF, b.TB
     pattern = "".join("H" if i % 2 == 0 else "S" for i in range(n))
-    _sections_var(b, W, n, H, PL, top, D, color, pattern, push=(handle == "push"), inner_drawers=(fill == "drawers"))
+    _sections_var(b, W, n, H, PL, top, D, color, pattern, push=(handle == "push"), inner_drawers=(fill == "drawers"),
+                  fcol=fcol)
     b.derived.update(width=W, depth=D, height=H, plinth=PL)
     _check(b, "Ширина = число секций × ширина секции", W, n * (W / n))
     _check(b, "Высота = опоры + секция + антресоль", H, PL + (top - PL) + (H - top))
@@ -300,9 +311,17 @@ def wardrobe_ceiling(o):
                 "закрывает планка, В-102).",
                 f"Корпус ЛДСП 16 на Minifix, на регулируемых опорах {PL} (±15), цоколь на клипсах (В-37).",
                 "В секциях с полками 2 полки жёсткие, остальные съёмные на полкодержателях (В-103).",
-                "Двери ЛДСП 18 на петлях (кандидат, В-20): выше 2000 — 5 петель; " +
+                f"Двери ЛДСП {TF} на петлях (кандидат, В-20): выше 2000 — 5 петель; " +
                 (f"без ручек, TIP-ON; корпус отступает от двери на {PUSH_GAP} (В-104)." if handle == "push"
                  else "ручки 320 у свободной кромки, на антресоли 128.")]
+    if b.profile == "dspc":
+        b.notes.append(f"Материалы — по базе ДСП Центра (ENG-005 п. 6): ЛДСП 16 везде, двери {TF}; кромка ПВХ 2 × 19 на "
+                       f"дверях и видимых торцах, ПВХ 1 × 19 на остальном; ХДФ {TB}. Петли и внутренние ящики — пока Blum: "
+                       "по петлям Samet нет данных для чертежа, профиля внутреннего ящика Samet нет.")
+        for k_, v_ in (("корпуса", color), ("фасадов", fcol)):
+            if not cab.DSPC_DECORS[v_][3]:
+                b.warnings.append(f"Кромка в цвет декора {k_} «{cab.DSPC_DECORS[v_][0]}» у ДСП Центра не проверена — "
+                                  "проверить наличие до заказа.")
     if D < 500:
         b.notes.append("Глубина 450: одежда на выдвижной штанге вдоль глубины (В-101).")
     if fill == "drawers":

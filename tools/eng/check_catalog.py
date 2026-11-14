@@ -26,7 +26,7 @@ from test_catalog import variants  # noqa: E402
 
 PRICES = json.loads((ROOT / "catalog/prices.json").read_text(encoding="utf-8"))
 REVS = json.loads((ROOT / "catalog/revisions.json").read_text(encoding="utf-8"))
-EXPECTED_VARIANTS = 9586   # 14.11: комод — уровень фурнитуры (3) × корпус × фасады (16 × 16) × ширина × столик = 3072
+EXPECTED_VARIANTS = 8530   # 14.11: оси декора (корпус, фасады) — на представителях K110 / K4069 (check_values); комод 48, шкаф 7872
 
 
 def _expected_rev(sku):

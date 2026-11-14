@@ -11,7 +11,7 @@ matplotlib.use("Agg")
 from eng import kit13, models_new as MN, cab  # noqa: E402
 from eng.verify_new import ERR, OK, verify_new  # noqa: E402
 
-BASE = dict(width=2400, height=2800, depth=450, handle="push", fill="drawers", color="O")
+BASE = dict(width=2400, height=2800, depth=450, handle="push", fill="drawers", body="K110", front="K4069")
 res = []
 
 

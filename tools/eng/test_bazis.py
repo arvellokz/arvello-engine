@@ -120,7 +120,7 @@ st, _ = wall_before_drawers(["7. Установить на место и зак�
                              "8. Короба: дно"], 3)
 res.append(("число уголков ≠ спецификации", "wall_before_drawers", st == ERR))
 # шкаф: те же правила проходят
-s2, ch2 = build("ARV-WRD-101", dict(width=2400, height=2800, depth=450, handle="push", fill="drawers", color="O"), "wrd")
+s2, ch2 = build("ARV-WRD-101", dict(width=2400, height=2800, depth=450, handle="push", fill="drawers", body="K110", front="K4069"), "wrd")
 bz2 = [c for c in ch2 if c[0].startswith("БАЗИС")]
 res.append(("шкаф: все правила БАЗИС пройдены", f"{len(bz2)} правил", all(c[1] for c in bz2)))
 res.append(("шкаф: остальные проверки комплекта", "", all(c[1] for c in ch2)))

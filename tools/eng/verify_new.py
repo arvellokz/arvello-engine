@@ -419,7 +419,8 @@ def verify_new(s, texts):
     add("Разные позиции — разные названия (цех не перепутает при раскрое и маркировке)", st, t)
 
     # 9. Текстура дубовых дверей — одним направлением (вертикально)
-    gr = {d["parts_ext"].get(p["id"], {}).get("grain") for p in doors if p["finish"] == "O"}
+    from eng.cab import GRAIN_FINS
+    gr = {d["parts_ext"].get(p["id"], {}).get("grain") for p in doors if p["finish"] in GRAIN_FINS}
     if gr:
         add("Текстура дверей одного направления (вертикально)", OK if gr == {"z"} else ERR,
             "все вертикально" if gr == {"z"} else f"направления: {', '.join(sorted(g or '—' for g in gr))}")

@@ -25,7 +25,7 @@ from eng import kit13  # noqa: E402
 
 DOC_VERSION = "ENG-002 вид 5 + ENG-003 распил (13.11.2026)"
 BASE = {"width": "1200", "level": "comf", "body": "K110", "front": "K4069"}
-WRD = {"width": "2400", "height": "2800", "depth": "450", "handle": "push", "fill": "drawers", "color": "O"}
+WRD = {"width": "2400", "height": "2800", "depth": "450", "handle": "push", "fill": "drawers", "body": "K110", "front": "K4069"}
 
 
 def pdf_text(path):

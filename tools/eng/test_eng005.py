@@ -77,9 +77,37 @@ p = b.part("Z", "Фасад", 0, 0, 0, 500, 16, 300, "LDSP16", "O", "fronts", ed
 ok("ядро: ABS 2 → ПВХ 2, ПВХ 0,4 → ПВХ 1, O → K4069", p.edges == {"-x": "PVC2", "+x": "PVC1"} and p.finish == "K4069")
 
 # старые модели и шкаф — на базовом профиле (не тронуты профилем ДСП Центра)
-w = kit13.make("ARV-WRD-101", {"width": "2400", "height": "2800", "depth": "450", "handle": "push", "fill": "drawers", "color": "O"})
-ok("шкаф WRD-101: профиль базовый, двери ЛДСП 18", w["derived"]["supplier"]["profile"] == "base" and
-   {p["material"] for p in w["parts"] if "DOOR" in p["id"]} == {"LDSP18"})
+w = kit13.make("ARV-WRD-101", {"width": "2400", "height": "2800", "depth": "450", "handle": "push", "fill": "drawers", "body": "K110", "front": "K4069"})
+# шкаф WRD-101 — на профиле ДСП Центра (ENG-005 п. 6, 14.11)
+WB = [p for p in w["parts"] if p["kind"] == "board"]
+wx = w["derived"]["parts_ext"]
+ok("шкаф WRD-101: профиль ДСП Центр, проверка 18 пройдена", w["derived"]["supplier"]["profile"] == "dspc" and
+   supplier_ok(w)[0] == OK, supplier_ok(w))
+ok("шкаф: двери ЛДСП 16, ХДФ 3", {p["material"] for p in WB if "DOOR" in p["id"]} == {"LDSP16"} and
+   {p["material"] for p in WB if p["material"].startswith("HDF")} == {"HDF3"})
+ok("шкаф: кромка только ПВХ 2 и ПВХ 1", {t_ for p in WB for t_ in wx[p["id"]]["edges"].values()} <= {"PVC2", "PVC1"})
+ok("шкаф: двери — декор фасадов (K4069), корпус и цоколь — K110",
+   {p["finish"] for p in WB if "DOOR" in p["id"]} == {"K4069"} and
+   {p["finish"] for p in WB if p["id"].startswith(("PLINTH", "S1-SIDE"))} == {"K110"})
+ok("шкаф: текстура дверей вертикально", {wx[p["id"]]["grain"] for p in WB if "DOOR" in p["id"]} == {"z"})
+from eng.core import bom  # noqa: E402
+ok("шкаф: все детали помещаются в лист 2750 × 1830", not any(r["oversize"] for r in bom(w)["sheets"]))
+ww = kit13.make("ARV-WRD-101", {"width": "2400", "height": "2800", "depth": "450", "handle": "push", "fill": "drawers",
+                                "body": "K3114", "front": "K4430"})
+ok("шкаф: декоры K3114 / K4430 — корпус и двери в своих декорах, предупреждение о кромке",
+   {p["finish"] for p in ww["parts"] if "DOOR" in p["id"]} == {"K4430"} and
+   sum("не проверена" in x for x in ww.get("warnings", [])) == 2)
+try:
+    kit13.make("ARV-WRD-101", {"width": "2400", "height": "2800", "depth": "450", "handle": "push", "fill": "drawers",
+                               "body": "W"})
+    ok("шкаф: негатив — декор не из базы → ошибка", False)
+except Exception:
+    ok("шкаф: негатив — декор не из базы → ошибка", True)
+MN.WRD_PROFILE = "base"
+wb = kit13.make("ARV-WRD-101", {"width": "2400", "height": "2800", "depth": "450", "handle": "push", "fill": "drawers"})
+MN.WRD_PROFILE = "dspc"
+ok("шкаф на базовом профиле: двери ЛДСП 18 (профиль отделим)", {p["material"] for p in wb["parts"] if "DOOR" in p["id"]}
+   == {"LDSP18"})
 # опция цвета — декоры базы ДСП Центра (14.11): другой декор фасадов и корпуса; кромка в цвет не проверена — предупреждение
 sw = kit13.make("ARV-NST-101", {**O, "changer": "no", "body": "K3114", "front": "K4446"})
 ok("декоры K3114 / K4446: фасады и корпус в своих декорах", {p["finish"] for p in sw["parts"] if "FRONT" in p["id"]} == {"K4446"}

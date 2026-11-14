@@ -20,7 +20,8 @@ PRICES = json.loads((ROOT / "catalog/prices.json").read_text(encoding="utf-8"))
 
 
 def variants(p):
-    axes = [(a["key"], a.get("site_values", a["values"])) for a in p["axes"]]
+    # check_values (14.11): оси декора проверяются на представителях — декор не меняет геометрию
+    axes = [(a["key"], a.get("check_values", a.get("site_values", a["values"]))) for a in p["axes"]]
     if p.get("builder", "").startswith("floating_bed"):
         axes.append(("view", ["full", "skeleton"]))
     for combo in itertools.product(*[v for _, v in axes]):
