@@ -748,9 +748,13 @@ def sheet_nodes(c):
             if pl:
                 notes = [f"Ø{n_(h['d'])} насквозь с зенковкой;", f"засверловка Ø{n_(pl['d'])} гл. {n_(pl['depth'])}."]
         if L == "Ж" and any(r.get("sys") == "samet" for r in s["derived"].get("drawers", [])):
-            tit = "Направляющая Samet Smart Slide"
-            notes = ["Шуруп Ø3,5 по разметке, без сверления:", "37 / +32 / +96 / +96 / +32 от конца", "направляющей, она на 2 от края корпуса;",
-                     "ось 11 над низом проёма [М] (10–12);", "сзади в ящике Ø6 гл. 10 (Samet стр. 6–8)."]
+            from eng.cab import SLIDE_PROFILES
+            r_ = next(r for r in s["derived"]["drawers"] if r.get("sys") == "samet")
+            S_ = SLIDE_PROFILES[r_["slide"]]
+            tit = f"Направляющая {S_['brand']} {S_['series']}"
+            notes = ["Шуруп Ø3,5 по разметке, без сверления:", " / ".join(str(v) for v in r_["pts"]) + " от конца",
+                     f"направляющей, она на {S_['front_off']} от края корпуса;",
+                     f"ось {S_['screw_axis']} над низом проёма [М] (10–12);", "сзади в ящике Ø6 гл. 10 (Lock-Fix)."]
         elif L == "Ж" and any(r.get("sys") == "movento" for r in s["derived"].get("drawers", [])):
             tit = "Профиль Blum MOVENTO 760H"
             notes = ["Саморез Blum 609.1500 Ø3,5 × 15 по", "разметке, без сверления; ось 38 над", "низом профиля, профиль на 1 выше",
@@ -944,11 +948,14 @@ def control_new(c):
         box = (f"{k}. Короба: дно в пазы боковин, передняя и задняя стенки — на дно, конфирматы (узел В); дно к стенкам"
                " саморезами 4 × 25 снизу (узел Н)." if drs[0].get("sys") == "movento" else f"{k}. Короба на конфирматах (узел В).")
         if drs[0].get("sys") == "samet":
+            from eng.cab import SLIDE_PROFILES
             out += ["Ящики",
                     box + " Задние Ø6 гл. 10 под штифт направляющей — сверлит цех (таблица задней стенки); замки "
-                    "SmartLock — сборщик по каталогу Samet, по месту; первый ящик собрать и проверить с фасадом.",
-                    f"{k + 1}. Направляющие Samet NS {drs[0]['NL']} — шурупами Ø3,5 по разметке (узел Ж), после сборки корпуса: "
-                    "передний конец на 2 от края корпуса, ось 11 над низом проёма [М]; нижняя — с подъёмом "
+                    "Lock-Fix — сборщик по документу производителя, по месту; первый ящик собрать и проверить с фасадом.",
+                    f"{k + 1}. Направляющие {SLIDE_PROFILES[drs[0]['slide']]['brand']} NS {drs[0]['NL']} — шурупами Ø3,5 по "
+                    "разметке (узел Ж), после сборки корпуса: "
+                    f"передний конец на {SLIDE_PROFILES[drs[0]['slide']]['front_off']} от края корпуса, ось 11 над низом проёма [М]; "
+                    "нижняя — с подъёмом "
                     f"{n_(drs[0].get('lift', 0))} над дном (над крепежом стоек) [М]; установить ящики."]
             return out, k + 2
         out += ["Ящики",
@@ -1237,13 +1244,14 @@ def questions_for(s):
         sm = [r for r in drs if r.get("sys") == "samet"]
         if sm:
             r0 = sm[0]
-            from eng.cab import SAMET
-            t = (f"Samet Smart Slide full | Power, {SAMET['name'][r0['samet_kind']]}, арт. "
-                 f"{SAMET['codes'][r0['samet_kind']][r0['NL']]} (каталог стр. 9): DIW = CIW − 45 = {n_(r0['inner_w'])}, "
-                 f"DD = NS − 10 = {r0['box_l']}, глубина корпуса ≥ NS + 3 ({n_(r0['Dc'])} ≥ {r0['NL'] + 3}), боковина ≤ 18, "
-                 f"низ ящика ≥ {SAMET['under'][r0['samet_kind']]} над низом проёма, над ящиком ≥ 7 (стр. 6–8); шурупы "
-                 f"{' / '.join(str(v) for v in r0['pts'])} от конца направляющей, она на 2 от края корпуса (стр. 6, 8); "
-                 "сзади Ø6 гл. 10, 11 от низа, 7 от боковины (рис. BB стр. 6). Допущения [М] — В-108.")
+            from eng.cab import SLIDE_PROFILES
+            S_ = SLIDE_PROFILES[r0["slide"]]
+            t = (f"{S_['name']}, арт. {S_['codes'][r0['NL']]} ({S_['ref']}): внутренняя ширина = проём − {S_['diw']} = "
+                 f"{n_(r0['inner_w'])}, длина = NS − {S_['dd']} = {r0['box_l']}, глубина корпуса ≥ NS + {S_['cd']} "
+                 f"({n_(r0['Dc'])} ≥ {r0['NL'] + S_['cd']}), боковина ≤ {S_['side_max']}, низ ящика ≥ {S_['under']} над низом "
+                 f"проёма, над ящиком ≥ {S_['top_min']}; шурупы {' / '.join(str(v) for v in r0['pts'])} от конца направляющей, "
+                 f"она на {S_['front_off']} от края корпуса; сзади Ø6 гл. 10, 11 от низа, 7 от боковины. Допущения [М] — В-108."
+                 + (f" {S_['code_note'][0].upper()}{S_['code_note'][1:]}." if S_["code_note"] else ""))
         dec.append(("В-4", t))
         if any(r.get("sys") == "movento" for r in drs):
             dec.append(("В-107", "MOVENTO закрыт данными Blum 12.11: места саморезов — каталог 2024/25 с. 428 и DXF Blum; точка 28 у "
@@ -1271,8 +1279,9 @@ def tech_req(s, c):
     if d.get("drawers"):
         r = d["drawers"][0]
         if r.get("sys") == "samet":
-            t += [f"4. Ящики Samet Smart Slide NS {r['NL']}: направляющие по разметке (узел Ж), сзади Ø6 гл. 10;",
-                  "   замки SmartLock — по каталогу Samet, по месту."]
+            from eng.cab import SLIDE_PROFILES
+            t += [f"4. Ящики: {SLIDE_PROFILES[r['slide']]['name']}, NS {r['NL']} — по разметке (узел Ж), сзади Ø6 гл. 10;",
+                  "   замки Lock-Fix — по документу производителя, по месту."]
         else:
             t += [f"4. Ящики Blum {'MOVENTO 760H' if r.get('sys') == 'movento' else '560H'} NL {r['NL']}: профили по точкам NL (узел Ж);",
                   "   крючок и замки — шаблоном T65.1000.02."]

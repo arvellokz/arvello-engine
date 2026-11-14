@@ -11,7 +11,7 @@ from eng import models_new as _MNs  # noqa: E402
 _MNs.NST_SLIDES = "blum"   # 14.11: тест — про Blum MOVENTO / пазы; Samet — test_samet.py
 from eng import cab, kit13, models_new as MN  # noqa: E402
 
-BASE = dict(width=1200, handle="push", changer="yes", body="K110", front="K4069")
+BASE = dict(width=1200, level="comf", changer="yes", body="K110", front="K4069")
 res = []
 
 

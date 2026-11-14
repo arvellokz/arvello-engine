@@ -77,44 +77,70 @@ TECH = {
 }
 MOVENTO["bottom_clear"] = TECH["bottom_clear"]
 
-# Samet Smart Slide full | Power — скрытые направляющие полного выдвижения (ENG-005 п. 2, 14.11). Только каталог
-# производителя: docs/фурнитура/samet/ (PDF «84312140 smartslide full power», стр. 6–9; выписка README.md).
-#   стр. 6 / 7 / 8: DIW = CIW − 45 (±0,5); DD = NS − 10 (+0 / −2); CD = NS + мин. 3; боковина ящика ≤ 18; над ящиком мин. 7;
-#   низ проёма → низ боковины ящика мин. 41 (S-C) / 43 (P-O, P-O + S-C); направляющая от переднего края корпуса 2;
-#   крепёж к корпусу — шуруп Ø3,5 для ДСП или евровинт Ø6; места винтов (стр. 8) от переднего конца направляющей
-#   37, +32, +96, +96, +32 (250–300 — 3 винта, 350–400 — 4, 450–600 — 5); высота оси винтов 10–12 от низа проёма;
-#   Lock-Fix: сзади в ящике Ø6 гл. 10, 11 от низа, 7 от боковины (рисунок BB, стр. 6).
-#   стр. 9: коды. Push-Open + Soft Close (Lock-Fix) — только 350–600; Soft Close (Lock-Fix) — 250–600.
-SAMET = {
-    "series": (250, 300, 350, 400, 450, 500, 550, 600),
-    "codes": {"po_sc": {350: "127230303", 400: "127230304", 450: "127230305", 500: "127230306", 550: "127230307",
-                        600: "127230308"},
-              "sc": {250: "127240231", 300: "127240232", 350: "127240233", 400: "127240234", 450: "127240235",
-                     500: "127240236", 550: "127240237", 600: "127240238"}},
-    "name": {"po_sc": "Push-Open + Soft Close, Lock-Fix", "sc": "Soft Close, Lock-Fix"},
-    "diw": 45, "dd": 10, "cd": 3, "side_max": 18, "top_min": 7, "under": {"po_sc": 43, "sc": 41}, "front_off": 2,
-    "screw_axis": 11,       # [М] каталог: 10–12 от низа проёма — берём середину, сверить пробным ящиком
-    "rear": {"d": 6, "depth": 10, "from_bottom": 11, "from_side": 7},
-    "lock": "SmartLock: правый 12790773, левый 12790774 (каталог стр. 9)",
-    "ref": "Samet Smart Slide full | Power, каталог стр. 6–9 (docs/фурнитура/samet/)",
+# Профили направляющих ящиков (решение 14.11, 02:05): марка не прописывается в построителях — у каждой системы свой
+# профиль; смена профиля пересобирает листы и смету без правки построителя. Данные — только документы производителя:
+#   Smart Slide full | Power — каталог «84312140 smartslide full power», стр. 6–9 (docs/фурнитура/samet/);
+#   Slidea Single — брошюра 84310700 от 26.06.2025, стр. 6–7 (docs/фурнитура/samet/).
+# Поля: diw — ширина проёма минус внутренняя ширина ящика; dd — номинал минус длина ящика; cd — глубина корпуса минус
+# номинал (мин.); side_max — боковина ящика; under — низ проёма → низ боковины ящика (мин.); top_min — над ящиком;
+# front_off — направляющая от переднего края корпуса; screw_axis — ось шурупов над низом проёма; points — места шурупов
+# от переднего конца направляющей по номиналу; rear — задний Ø6 Lock-Fix; codes — артикулы по номиналу.
+_SMART_PTS = {**{ns: (37, 69, 165) for ns in (250, 300)}, **{ns: (37, 69, 165, 261) for ns in (350, 400)},
+              **{ns: (37, 69, 165, 261, 293) for ns in (450, 500, 550, 600)}}
+_REAR = {"d": 6, "depth": 10, "from_bottom": 11, "from_side": 7}
+SLIDE_PROFILES = {
+    "samet-slidea-sc": {
+        "brand": "Samet", "series": "Slidea Single", "name": "Samet Slidea Single, мягкое закрывание, Lock-Fix 16 мм",
+        "level": "эконом", "push": False, "extension": "неполное выдвижение",
+        "diw": 42, "dd": 10, "cd": 5, "side_max": 16, "front_off": 2, "screw_axis": 11, "rear": _REAR,
+        # брошюра стр. 6: низ проёма → дно «min. 25», к правому краю «min. 34» — берём больший минимум 34 для низа ящика [М]
+        "under": 34,
+        "top_min": 7,          # [М] в брошюре Slidea не указан — как у Smart Slide (min. 7)
+        "points": {250: (37, 69, 133), **{ns: (37, 69, 165) for ns in (300, 350, 400)}, 450: (37, 69, 165, 261),
+                   500: (37, 69, 165, 261), 550: (37, 69, 165, 261, 325), 600: (37, 69, 165, 261, 325)},
+        "codes": {250: "12722821", 300: "12722822", 350: "12722823", 400: "12722824", 450: "12722825", 500: "12722826",
+                  550: "12722827", 600: "12722828"},
+        "code_note": "у продавца (artmebel.kz) эконом 450 — код 12722325, в брошюре 2025 его нет (там 12722825): уточнить",
+        "lock": "Lock System: правый 12790791, левый 12790792 (брошюра стр. 7)",
+        "ref": "Samet Slidea Single, брошюра 84310700 от 26.06.2025, стр. 6–7 (docs/фурнитура/samet/)",
+        "assumed": "низ ящика 34 (в брошюре min. 25 / min. 34), над ящиком 7 (в брошюре нет), ось шурупов 11 (10–12)"},
+    "samet-smart-sc": {
+        "brand": "Samet", "series": "Smart Slide full | Power", "name": "Samet Smart Slide full, мягкое закрывание, Lock-Fix",
+        "level": "стандарт", "push": False, "extension": "полное выдвижение",
+        "diw": 45, "dd": 10, "cd": 3, "side_max": 18, "front_off": 2, "screw_axis": 11, "rear": _REAR,
+        "under": 41, "top_min": 7, "points": _SMART_PTS,
+        "codes": {250: "127240231", 300: "127240232", 350: "127240233", 400: "127240234", 450: "127240235",
+                  500: "127240236", 550: "127240237", 600: "127240238"},
+        "code_note": "", "lock": "SmartLock: правый 12790773, левый 12790774 (каталог стр. 9)",
+        "ref": "Samet Smart Slide full | Power, каталог стр. 6, 8, 9 (docs/фурнитура/samet/)",
+        "assumed": "ось шурупов 11 (каталог 10–12)"},
+    "samet-smart-posc": {
+        "brand": "Samet", "series": "Smart Slide full | Power",
+        "name": "Samet Smart Slide full, нажатием + мягкое закрывание, Lock-Fix",
+        "level": "комфорт", "push": True, "extension": "полное выдвижение",
+        "diw": 45, "dd": 10, "cd": 3, "side_max": 18, "front_off": 2, "screw_axis": 11, "rear": _REAR,
+        "under": 43, "top_min": 7, "points": _SMART_PTS,
+        "codes": {350: "127230303", 400: "127230304", 450: "127230305", 500: "127230306", 550: "127230307",
+                  600: "127230308"},
+        "code_note": "", "lock": "SmartLock: правый 12790773, левый 12790774 (каталог стр. 9)",
+        "ref": "Samet Smart Slide full | Power, каталог стр. 7–9 (docs/фурнитура/samet/)",
+        "assumed": "ось шурупов 11 (каталог 10–12); зазор фасад — корпус под нажатие 2,5 (в каталоге нет)"},
 }
 
 
-def samet_points(NS):
-    """Места винтов от переднего конца направляющей (каталог стр. 8)."""
-    if NS <= 300:
-        return (37, 69, 165)
-    if NS <= 400:
-        return (37, 69, 165, 261)
-    return (37, 69, 165, 261, 293)
+def slide_points(prof, NS):
+    """Места шурупов от переднего конца направляющей по документу производителя."""
+    return SLIDE_PROFILES[prof]["points"][NS]
 
 
-def pick_samet(depth, kind):
-    """Наибольший номинал NS ряда Samet данного вида: NS + 3 ≤ глубина корпуса (каталог стр. 6–8)."""
-    ok = [ns for ns in SAMET["codes"][kind] if ns + SAMET["cd"] <= depth]
+def pick_slide(depth, prof):
+    """Наибольший номинал ряда профиля: NS + cd ≤ глубина корпуса (документ производителя)."""
+    P = SLIDE_PROFILES[prof]
+    ok = [ns for ns in P["codes"] if ns + P["cd"] <= depth]
     if not ok:
-        raise ValueError(f"глубина корпуса {depth}: направляющая Samet ({SAMET['name'][kind]}) не помещается")
+        raise ValueError(f"глубина корпуса {depth}: направляющая {P['name']} не помещается")
     return max(ok)
+
 
 # Профиль материалов поставщика (ENG-005 п. 1, решение владельца 14.11: ориентир — ДСП Центр, Алматы). Профиль меняет
 # толщину фасада и ХДФ (геометрия строится от них), заменяет кромку и декоры на то, что есть в базе поставщика.
@@ -655,26 +681,25 @@ class Build:
             self.buy("HANDLE-128", "Ручка-скоба", "межосевое 128, чёрная матовая (как «Самал»)", nd, "кандидат", "", "шт")
         return recs
 
-    def samet_drawers(self, pre, c, colL, colR, floor_z, ceil_z, fronts, color, inner_fin, push=True, gap=0,
+    def slide_drawers(self, pre, c, colL, colR, floor_z, ceil_z, fronts, color, inner_fin, prof, gap=0,
                       handle=None, box_max=None):
-        """Ящики на Samet Smart Slide full | Power (каталог стр. 6–9): push — Push-Open + Soft Close, иначе Soft Close с
-        ручкой. Короб как у TANDEM («Самал»): боковины, передняя и задняя стенки на всю высоту, дно между ними с утоплением
-        RECESS [М]; размеры — только по каталогу: DIW = CIW − 45, DD = NS − 10, NS + 3 ≤ глубина корпуса."""
-        kind = "po_sc" if push else "sc"
-        S_ = SAMET
+        """Ящики на скрытых направляющих по профилю prof (SLIDE_PROFILES). Короб как у TANDEM («Самал»): боковины, передняя
+        и задняя стенки на всю высоту, дно между ними с утоплением RECESS [М]; размеры — только из профиля: внутренняя
+        ширина = проём − diw, длина = NS − dd, NS — наибольший с NS + cd ≤ глубина корпуса."""
+        S_ = SLIDE_PROFILES[prof]
         yc0, yc1 = colL.y0, colL.y1
         Dc = yc1 - yc0
-        NS = pick_samet(Dc, kind)
+        NS = pick_slide(Dc, prof)
         CIW = colR.x0 - colL.x1
         DIW = CIW - S_["diw"]
         if T > S_["side_max"]:
-            raise ValueError(f"боковина ящика {T} > {S_['side_max']} (Samet)")
+            raise ValueError(f"боковина ящика {T} > {S_['side_max']} ({S_['name']})")
         bx0 = colL.x1 + (CIW - DIW) / 2 - T
         bx1 = colR.x0 - (CIW - DIW) / 2 + T
         front_t = self.TF
         by0 = min(yc0, front_t)                  # короб — от тыльной стороны фасада
         by1 = by0 + NS - S_["dd"]
-        pts = samet_points(NS)
+        pts = slide_points(prof, NS)
         f0 = fronts[0][2]
         # нижняя направляющая — над крепежом из торцов вертикалей у дна (болт Minifix Ø8 гл. 32, шкант гл. 20): шуруп
         # направляющей (ось 11 над низом проёма) иначе попадает в болт. Подъём — наше значение [М], минимальный.
@@ -695,13 +720,13 @@ class Build:
                 limit = min(limit, hz - 4 - 2)
             return limit, hz
         # короба колонки — одной высоты (по самому тесному проёму) [М]: одна позиция деталей на все ящики
-        BH = min(math.floor((lim(i)[0] - (rbs[i] + S_["under"][kind])) / 10) * 10 for i in range(len(fronts)))
+        BH = min(math.floor((lim(i)[0] - (rbs[i] + S_["under"])) / 10) * 10 for i in range(len(fronts)))
         if box_max:
             BH = min(BH, box_max)
         for i, (fx0, fx1, fz0, fz1) in enumerate(fronts):
             n = i + 1
             rb = rbs[i]
-            z0 = rb + S_["under"][kind]
+            z0 = rb + S_["under"]
             limit, hz = lim(i)
             bh = BH
             if bh < 60:
@@ -730,8 +755,8 @@ class Build:
             # Lock-Fix, задний крючок (рисунок BB): Ø6 гл. 10 в задней стенке, 11 от низа ящика, 7 от боковины
             rr = S_["rear"]
             for xr in (sl.x1 + rr["from_side"], sr.x0 - rr["from_side"]):
-                self.hole(bp.id, f"J-{k}-SAMET-REAR", "slide_rear", xr, by1, z0 + rr["from_bottom"], "-y", rr["d"], rr["depth"],
-                          None, note="Samet Lock-Fix: штифт направляющей (каталог стр. 6, рис. BB)")
+                self.hole(bp.id, f"J-{k}-SLIDE-REAR", "slide_rear", xr, by1, z0 + rr["from_bottom"], "-y", rr["d"], rr["depth"],
+                          None, note=f"{S_['brand']} Lock-Fix: штифт направляющей ({S_['ref'].split(' (')[0]})")
             zs = [z0 + 55, z0 + bh - 15] if bh >= 100 else [z0 + 55]
             for x in (bx0 + T + 40, bx1 - T - 40):
                 for z in zs:
@@ -750,22 +775,24 @@ class Build:
                 for yy in pts:
                     self.hole(Sd.id, f"J-{pre}RUNNER-{n}-{'L' if dr == '-x' else 'R'}", "runner_mark", xf,
                               yc0 + S_["front_off"] + yy, rb + S_["screw_axis"], dr, 3.5, 0, "SLIDE-SCREW-S",
-                              note="разметка, без сверления (Samet стр. 8; высота 10–12 — взято 11 [М])")
+                              note=f"разметка, без сверления ({S_['brand']}; высота 10–12 — взято 11 [М])")
             recs.append({"pre": pre, "n": n, "NL": NS, "tipon": False, "LW": CIW, "rb": rb, "z0": z0, "h": bh,
                          "box_w": bx1 - bx0, "inner_w": DIW, "box_l": NS - S_["dd"], "Dc": Dc, "colL": colL.id,
                          "colR": colR.id, "floor": floor_z, "ceil": ceil_z, "front": fr.id, "hz": hz, "pts": list(pts),
                          "box": [sl.id, sr.id, fp.id, bp.id, bt.id], "limit_top": limit, "through": False, "notch": None,
-                         "front_t": front_t, "setback_front": False, "sys": "samet", "samet_kind": kind, "gap": gap, "lift": lift,
+                         "front_t": front_t, "setback_front": False, "sys": "samet", "slide": prof, "gap": gap, "lift": lift,
                          "bottom_clear": None, "load": None})
         nd = len(fronts)
         self.derived["drawers"] += recs
         self.derived["modules"].add("samet")
-        self.derived["drawer_system"] = f"Samet Smart Slide full | Power, {S_['name'][kind]}"
-        code = S_["codes"][kind][NS]
-        self.buy("SLIDES", f"Направляющая Samet Smart Slide full | Power, {S_['name'][kind]} (пара Л/П)",
-                 f"Samet {code}, NS {NS}, полное выдвижение ({S_['ref']}); ящик DD = NS − 10 = {NS - S_['dd']}, "
-                 f"DIW = CIW − 45 = {_ru(DIW)}", nd, "по документу", "нагрузка в каталоге не указана", "компл")
-        self.buy("SLIDE-LOCK", "Замок ящика Samet SmartLock (Л + П)", S_["lock"] + "; крепить по рисунку AA стр. 6 по месту",
+        self.derived["drawer_system"] = S_["name"]
+        code = S_["codes"][NS]
+        self.buy("SLIDES", f"Направляющая {S_['name']} (пара Л/П)",
+                 f"{S_['brand']} {code}, NS {NS}, {S_['extension']} ({S_['ref']}); ящик длиной NS − {S_['dd']} = "
+                 f"{NS - S_['dd']}, внутренняя ширина проём − {S_['diw']} = {_ru(DIW)}", nd,
+                 "по документу" if not S_["code_note"] else "уточнить",
+                 S_["code_note"] or "нагрузка в документе не указана", "компл")
+        self.buy("SLIDE-LOCK", f"Замок ящика {S_['brand']} (Л + П)", S_["lock"] + "; крепить по документу, по месту",
                  nd, "по документу", "входит ли в комплект направляющих — уточнить у поставщика", "компл")
         if handle:
             self.buy("HANDLE-128", "Ручка-скоба", "межосевое 128, чёрная матовая (как «Самал»)", nd, "кандидат", "", "шт")

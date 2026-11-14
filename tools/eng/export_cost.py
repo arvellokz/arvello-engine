@@ -126,23 +126,23 @@ def cost(s, prices=None, batch=1):
     # фурнитура
     drs = s["derived"].get("drawers", [])
     nd = len(drs)
-    # ENG-005 п. 2: уровни «эконом» / «стандарт» (MILAT) — нет данных производителя: пусто. «Комфорт» — то, что в модели
-    # (Samet), по артикулу модели; нет цены артикула — «нет цены».
+    # ENG-005 п. 2: направляющие — по профилю модели (cab.SLIDE_PROFILES), цена по артикулу; нет цены — «нет цены»
     slides, slide_note = {}, ""
-    for lv in ("эконом", "стандарт"):
-        slides[lv] = dict(nd=nd, name=pr["slides"][lv]["name"], src=pr["slides"][lv]["src"], price=None, sum=None)
     sm = [r for r in drs if r.get("sys") == "samet"]
     if sm:
-        codes = sorted({cab.SAMET["codes"][r["samet_kind"]][r["NL"]] for r in sm})
+        S_ = cab.SLIDE_PROFILES[sm[0]["slide"]]
+        codes = sorted({cab.SLIDE_PROFILES[r["slide"]]["codes"][r["NL"]] for r in sm})
         p_ = [pr["slides"]["samet"].get(c_) for c_ in codes]
-        nm = f"Samet {cab.SAMET['name'][sm[0]['samet_kind']]} NS {sm[0]['NL']}, арт. {', '.join(codes)}"
+        nm = f"{S_['name']} NS {sm[0]['NL']}, арт. {', '.join(codes)}"
         if all(p_):
-            slides["комфорт"] = dict(nd=nd, name=nm, src=p_[0]["src"], price=p_[0]["price"], sum=nd * p_[0]["price"])
+            slides[S_["level"]] = dict(nd=nd, name=nm, src=p_[0]["src"], price=p_[0]["price"], sum=nd * p_[0]["price"])
         else:
-            slides["комфорт"] = dict(nd=nd, name=nm, src="—", price=None, sum=None)
-            slide_note = f"нет цены артикула {', '.join(codes)} (в прайсе только 127230305 — 450 мм): уточнить"
+            slides[S_["level"]] = dict(nd=nd, name=nm, src="—", price=None, sum=None)
+            slide_note = f"нет цены артикула {', '.join(codes)} в прайсе: уточнить"
+        if S_["code_note"]:
+            slide_note = (slide_note + "; " if slide_note else "") + S_["code_note"]
     elif drs:
-        slides["комфорт"] = dict(nd=nd, name="Blum (в модели) — цены нет", src="—", price=None, sum=None)
+        slides["Blum"] = dict(nd=nd, name="Blum (в модели) — цены нет", src="—", price=None, sum=None)
     hw_nopr = [f"{h['name']} × {n_(h['qty'])} {h.get('uom', 'шт')}" for h in s["hardware"] if h["id"] not in SLIDE_IDS]
     dspc = sum(x["sum"] for x in lines)
     totals = {lv: (round(dspc + x["sum"]) if x["sum"] is not None else None) for lv, x in slides.items()}
@@ -151,6 +151,17 @@ def cost(s, prices=None, batch=1):
                 edge_m={f"{t}|{f}": round(m, 2) for (t, f), m in em.items()}, holes=hd, drill=drill,
                 drill_missing=drill_missing, slides=slides, slide_note=slide_note, totals=totals, hw_nopr=hw_nopr, missing=missing, batch=batch,
                 hash=s["hash"], sku=s["sku"])
+
+
+def level_totals(sku, options, prices=None):
+    """Итог по трём уровням фурнитуры: модель собирается на каждом уровне (ящик у профилей разный по ширине)."""
+    out = {}
+    for lv in ("eco", "std", "comf"):
+        s_ = kit13.make(sku, {**options, "level": lv})
+        c_ = cost(s_, prices)
+        (name, x), = c_["slides"].items()
+        out[name] = dict(total=c_["totals"][name], slides=x, dspc=c_["dspc"], note=c_["slide_note"])
+    return out
 
 
 def to_md(s, c):
@@ -168,8 +179,8 @@ def to_md(s, c):
     for lv, x in c["slides"].items():
         L.append(f"| {lv} | {x['name']} ({x['src']}) | {x['nd']} | {n_(x['price']) if x['price'] else '—'} | "
                  f"**{n_(c['totals'][lv]) if c['totals'][lv] is not None else 'нет данных'}** |")
-    L += ["Уровни «эконом» и «стандарт» (MILAT): документов производителя нет — в чертёж не ставятся, цена не считается."
-          + (f" **{c['slide_note']}**." if c["slide_note"] else "")]
+    if c["slide_note"]:
+        L += [f"**{c['slide_note'][0].upper()}{c['slide_note'][1:]}.**"]
     L += ["", f"**Присадка у поставщика (опция; по умолчанию сверлит сборщик):** {n_(c['drill'])} ₸ — отверстия "
           + ", ".join(f"Ø{n_(d)} × {q}" for d, q in c["holes"].items()) + "."]
     if c["drill_missing"]:

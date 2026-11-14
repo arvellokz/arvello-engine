@@ -14,7 +14,7 @@ MN.NST_SLIDES = "blum"      # 14.11 (ENG-005 п. 2): инструкции A4 н�
 from eng import eng002_drawer as E  # noqa: E402
 from eng.sheetlib import Sheet  # noqa: E402
 
-OPTS = {"width": "1200", "handle": "push", "changer": "yes", "body": "K110", "front": "K4069"}
+OPTS = {"width": "1200", "level": "comf", "changer": "yes", "body": "K110", "front": "K4069"}
 res = []
 D = E.drawer_data(OPTS)
 p = D["p"]

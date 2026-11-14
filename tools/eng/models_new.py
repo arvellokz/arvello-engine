@@ -337,21 +337,29 @@ _MR.KQ2.update(KQ3)
 
 
 NST_PROFILE = "dspc"          # ENG-005 п. 1 (14.11): комод — по материалам ДСП Центра (cab.SUPPLY)
-# ENG-005 п. 2 (14.11): направляющие — Samet Smart Slide full | Power (данные производителя, docs/фурнитура/samet/).
-# «blum» — прежний вариант MOVENTO / TANDEM (данные Blum сохранены). MILAT — нет документов производителя, в чертёж нет.
-NST_SLIDES = "samet"
-SAMET_PUSH_GAP = 2.5          # [М] зазор фасад — корпус под Push-Open: в каталоге Samet full | Power не указан (В-108)
+# ENG-005 п. 2 (14.11, 02:00 / 02:05): уровень фурнитуры — опция «level» комода; уровень → профиль направляющих
+# (cab.SLIDE_PROFILES). Построитель марку не знает: смена профиля здесь пересобирает листы и смету.
+# «blum» — прежний вариант MOVENTO / TANDEM (данные Blum сохранены, опция).
+NST_SLIDES = "profile"
+NST_LEVELS = {"eco": "samet-slidea-sc", "std": "samet-smart-sc", "comf": "samet-smart-posc"}
+PUSH_FRONT_GAP = 2.5          # [М] зазор фасад — корпус под нажатие: в каталоге Samet full | Power не указан (В-108)
 KQ3_SAMET = {
-    "В-108": ("Samet Smart Slide full | Power: зазор фасад — корпус для Push-Open (принято 2,5 [М]), высота оси шурупов "
-              "10–12 от низа проёма (принято 11 [М]), утопление дна 13 [М] (на сечении каталога «12»), крепление SmartLock "
-              "(рисунок AA стр. 6) — сверить по инструкции монтажа Samet и пробным ящиком", "ящики", "Arvello",
-              "инструкция монтажа Samet, пробный ящик"),
+    "В-108": ("Направляющие (профиль cab.SLIDE_PROFILES): допущения [М] — {assumed}; утопление дна 13 (на сечении Samet «12»); "
+              "крепление замков Lock-Fix по месту — сверить по инструкции монтажа и пробным ящиком", "ящики", "Arvello",
+              "инструкция монтажа производителя, пробный ящик"),
 }
 
 
 def chest6(o):
     """Комод 2 × 3 ящика на цоколе; ручки или нажатие (MOVENTO TIP-ON BLUMOTION); опция — съёмный пеленальный столик."""
-    W, handle, changer = int(o["width"]), o["handle"], o["changer"] == "yes"
+    W, changer = int(o["width"]), o["changer"] == "yes"
+    samet = NST_SLIDES == "profile"
+    level = o.get("level", "comf")
+    if samet:
+        prof = NST_LEVELS[level]
+        handle = "push" if cab.SLIDE_PROFILES[prof]["push"] else "bar"   # без ручки — только с открыванием нажатием
+    else:
+        handle = o.get("handle", "push")
     # цвет — реальные декоры ДСП Центра (14.11): корпус (+ цоколь, столик) и фасады отдельно; короба и ХДФ — белые
     color, fcol = o.get("body", "K110"), o.get("front", "K4069")
     for k_, v_ in (("корпус", color), ("фасады", fcol)):
@@ -360,13 +368,12 @@ def chest6(o):
     H, PL = 880, 60
     D = 530 if changer else 500                  # со столиком глубже: матрас 700 × 500 ложится целиком (внутри 514)
     push = handle == "push"
-    samet = NST_SLIDES == "samet"
     if samet:
-        gap = SAMET_PUSH_GAP if push else 0
+        gap = PUSH_FRONT_GAP if push else 0
     else:
         gap = (2.5 if USE_MOVENTO_TOB else TIPON_GAP) if push else 0   # зазор фасад — корпус под TIP-ON
-    b = Build("ARV-NST-101", REV, NEW_STATUS, {"width": W, "handle": handle, "changer": o["changer"], "body": color,
-                                                "front": fcol}, profile=NST_PROFILE)
+    b = Build("ARV-NST-101", REV, NEW_STATUS, {"width": W, **({"level": level} if samet else {"handle": handle}),
+                                                "changer": o["changer"], "body": color, "front": fcol}, profile=NST_PROFILE)
     TF, TB = b.TF, b.TB
     yc0, yc1 = TF + gap, D - TB
     # стойка двойная (2 × 16): саморезы профилей Blum 4 × 15 с двух сторон одной плиты 16 встретились бы
@@ -386,7 +393,7 @@ def chest6(o):
             fr.append((x0 + (GAP / 2 if k == 1 else GAP / 2), x1 - GAP / 2, z + GAP / 2, z + h - GAP / 2))
             z += h
         if samet:
-            b.samet_drawers(f"C{k}-", c, cl, cr, fl, ce, fr, fcol, "INNER", push=push, gap=gap,
+            b.slide_drawers(f"C{k}-", c, cl, cr, fl, ce, fr, fcol, "INNER", prof, gap=gap,
                             handle=None if push else "bar128", box_max=150)
             continue
         mov = push and USE_MOVENTO_TOB
@@ -451,9 +458,9 @@ def chest6(o):
     _check(b, "Высота = цоколь + боковина", H, PL + (c["L"].z1 - c["L"].z0))
     _check(b, "Глубина = фасад + зазор + корпус + ХДФ", D, TF + gap + (yc1 - yc0) + TB)
     b.notes += [f"Комод {W} × {D} × {H}: 2 колонки по 3 ящика, " + (
-                f"Samet Smart Slide full | Power, {'Push-Open + Soft Close (нажатие и мягкое закрытие)' if push else 'Soft Close с ручками'}"
-                f", NS {b.derived['drawers'][0]['NL']} (каталог Samet стр. 6–9); уровни «эконом» и «стандарт» (MILAT) — "
-                "нет данных производителя, в чертёж не ставятся." if samet else
+                f"{cab.SLIDE_PROFILES[prof]['name']} ({cab.SLIDE_PROFILES[prof]['level']}), NS {b.derived['drawers'][0]['NL']}"
+                f" ({cab.SLIDE_PROFILES[prof]['ref'].split(' (')[0]})" + ("; без ручек, открывание нажатием." if push else
+                "; ручки 128.") if samet else
                 "Blum MOVENTO 760H + TIP-ON BLUMOTION (нажатие и мягкое закрытие); короб — дно в пазах боковин."
                 if push and USE_MOVENTO_TOB else "Blum TANDEM со встроенным TIP-ON (нажатие)." if push else
                 "Blum TANDEM BLUMOTION с ручками (мягкое закрытие)."),
@@ -470,7 +477,9 @@ def chest6(o):
                               "(Blum — на замену, ENG-005 п. 2).")
     _MR._kq(b, "В-48")
     if samet:
-        _MR.KQ2.update(KQ3_SAMET)
+        q = KQ3_SAMET["В-108"]
+        b.derived.setdefault("kq_text", {})["В-108"] = (q[0].format(assumed=cab.SLIDE_PROFILES[prof]["assumed"]),) + q[1:]
+        _MR.KQ2["В-108"] = b.derived["kq_text"]["В-108"]
         _MR._kq(b, "В-108")
     return b
 

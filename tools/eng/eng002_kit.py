@@ -24,7 +24,7 @@ from eng import export_cutting as X  # noqa: E402
 from eng import kit13  # noqa: E402
 
 DOC_VERSION = "ENG-002 вид 5 + ENG-003 распил (13.11.2026)"
-BASE = {"width": "1200", "handle": "push", "body": "K110", "front": "K4069"}
+BASE = {"width": "1200", "level": "comf", "body": "K110", "front": "K4069"}
 WRD = {"width": "2400", "height": "2800", "depth": "450", "handle": "push", "fill": "drawers", "color": "O"}
 
 
@@ -111,10 +111,16 @@ def build(out):
             files.append((cn, s3["hash"], [("смета собрана", True, "")]))      # нет цены — пробел сметы, не ошибка чертежа
             notes += [f"себестоимость: нет цены — {m}" for m in cst["missing"]]
             tg = lambda v: f"{round(v):,}".replace(",", " ")
-            notes.append(f"себестоимость: плита + кромка + распил {tg(cst['dspc'])} ₸; с направляющими "
-                         + ", ".join(f"{lv} {tg(v) + ' ₸' if v is not None else '— нет данных'}" for lv, v in cst["totals"].items())
-                         + " (без крепежа, сборки, "
-                         f"доставки; присадка у поставщика — опция {tg(cst['drill'])} ₸)")
+            if sku == "ARV-NST-101":                # три уровня фурнитуры — модель собирается на каждом (ENG-005 п. 2)
+                lt = EC.level_totals(sku, o)
+                notes.append(f"себестоимость (плита, кромка, распил + направляющие; без крепежа, сборки, доставки): "
+                             + ", ".join(f"{lv} {tg(x['total']) + ' ₸' if x['total'] is not None else '— нет цены'}"
+                                         for lv, x in lt.items())
+                             + f"; присадка у поставщика — опция {tg(cst['drill'])} ₸")
+                notes += [f"себестоимость, {lv}: {x['note']}" for lv, x in lt.items() if x["note"]]
+            else:
+                notes.append(f"себестоимость: плита + кромка + распил {tg(cst['dspc'])} ₸ (без фурнитуры, крепежа, сборки, "
+                             f"доставки; присадка у поставщика — опция {tg(cst['drill'])} ₸)")
         else:
             notes.append("себестоимость: модель на базовом профиле — смета после перевода на ДСП Центр (ENG-005 п. 6)")
         samet = any(r.get("sys") == "samet" for r in s3["derived"].get("drawers", []))

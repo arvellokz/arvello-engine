@@ -15,7 +15,7 @@ from eng.testutil import finish  # noqa: E402
 from eng.verify_new import ERR, OK, supplier_ok  # noqa: E402
 
 res = []
-O = {"width": "1200", "handle": "push"}
+O = {"width": "1200", "level": "comf"}
 
 
 def ok(name, cond, info=""):

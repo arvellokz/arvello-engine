@@ -19,7 +19,7 @@ from eng import models_new as MN  # noqa: E402
 from eng.testutil import finish  # noqa: E402
 
 res = []
-O = {"width": "1200", "handle": "push", "changer": "no", "body": "K4069", "front": "K4069"}
+O = {"width": "1200", "level": "comf", "changer": "no", "body": "K4069", "front": "K4069"}
 
 
 def ok(name, cond, info=""):
@@ -45,8 +45,12 @@ c = EC.cost(s)
 ok("комод: всё сопоставлено", not c["missing"], c["missing"])
 ok("комод: 3 листа (без чёрного)", len(c["sheets"]) == 3, c["sheets"])
 ok("комод: дешевле сметы на чёрный лист + распил (≈ 18 600)", 18000 < cb["dspc"] - c["dspc"] < 19500, cb["dspc"] - c["dspc"])
-ok("комод: эконом и стандарт (MILAT) — пусто, нет данных производителя", c["totals"]["эконом"] is None and
-   c["totals"]["стандарт"] is None and "нет данных производителя" in c["slides"]["эконом"]["name"])
+lt = EC.level_totals("ARV-NST-101", O)
+ok("комод: три уровня Samet по ценам прайса (эконом 3 307, стандарт 6 925, комфорт 10 816 × 6)",
+   [x["slides"]["price"] for x in lt.values()] == [3307, 6925, 10816] and
+   all(x["total"] == round(x["dspc"] + 6 * x["slides"]["price"]) for x in lt.values()), {k: x["total"] for k, x in lt.items()})
+ok("комод: эконом < стандарт < комфорт", lt["эконом"]["total"] < lt["стандарт"]["total"] < lt["комфорт"]["total"])
+ok("эконом: пометка о коде продавца 12722325 — «уточнить»", "12722325" in lt["эконом"]["note"])
 ok("комод без столика: комфорт — Samet 127230305 по цене прайса", "127230305" in c["slides"]["комфорт"]["name"] and
    c["totals"]["комфорт"] == round(c["dspc"] + 6 * 10816))
 ok("комод: направляющих = ящиков (6)", all(x["nd"] == 6 for x in c["slides"].values()))

@@ -47,7 +47,7 @@ def neg(tag, s, prefix, mutate):
     res.append((f"{tag}", prefix, got is False))
 
 
-s, checks = build("ARV-NST-101", dict(width=1200, handle="push", changer="yes", body="K110", front="K4069"), "nst")
+s, checks = build("ARV-NST-101", dict(width=1200, level="comf", changer="yes", body="K110", front="K4069"), "nst")
 bz_rules = [c for c in checks if c[0].startswith("БАЗИС")]
 res.append(("комод: все правила БАЗИС пройдены", f"{len(bz_rules)} правил", all(c[1] for c in bz_rules)))
 P = s["_bazis"][0]["panels"]

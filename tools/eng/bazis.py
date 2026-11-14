@@ -141,7 +141,7 @@ def operations(s, P):
                     f"{'нижнего' if along_u else 'левого'} края (база A)", "цех"])
     box = [r for r in s["derived"].get("drawers", []) if p["id"] in r["box"][:2]]
     if box and samet:
-        ops.append([str(len(ops) + 1), "замки Samet SmartLock", "по рисунку AA каталога Samet, по месту [М]", "сборщик"])
+        ops.append([str(len(ops) + 1), "замки направляющих (Lock-Fix)", "по документу производителя, по месту [М]", "сборщик"])
     elif box:
         ops.append([str(len(ops) + 1), "крючок, замки Blum", "по шаблону T65.1000.02 после сборки короба [М]", "сборщик"])
     return ops

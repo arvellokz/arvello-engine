@@ -141,52 +141,55 @@ def verify(s, report=None, texts=None, known_q=()):
                     coll.append(f"{pid}:{a['kind']}/{b['kind']}")
     add("Отверстия в детали не пересекаются (кроме болт—корпус эксцентрика; саморез профиля — 15)", not coll,
         "нет" if not coll else coll[:4])
-    # ---- ящики Samet Smart Slide full | Power (каталог стр. 6–9, ENG-005 п. 2)
+    # ---- ящики на скрытых направляющих по профилю (cab.SLIDE_PROFILES; ENG-005 п. 2, документы производителя)
     sm = [r for r in d.get("drawers", []) if r.get("sys") == "samet"]
     if sm:
-        from .cab import SAMET, samet_points
+        from .cab import SLIDE_PROFILES
         e, em = [], []
         for r in sm:
+            S_ = SLIDE_PROFILES[r["slide"]]
             sl, sr, fp, bp, bt = (parts[i] for i in r["box"])
             tag = f"{r['pre']}{r['n']}"
-            if r["NL"] not in SAMET["codes"][r["samet_kind"]]:
-                e.append(f"{tag}: NS {r['NL']} нет в ряду {SAMET['name'][r['samet_kind']]}")
-            if r["Dc"] < r["NL"] + SAMET["cd"]:
-                e.append(f"{tag}: глубина {r['Dc']:g} < NS + 3")
-            bigger = [ns for ns in SAMET["codes"][r["samet_kind"]] if ns > r["NL"] and ns + SAMET["cd"] <= r["Dc"]]
+            if r["NL"] not in S_["codes"]:
+                e.append(f"{tag}: NS {r['NL']} нет в ряду {S_['name']}")
+            if r["Dc"] < r["NL"] + S_["cd"]:
+                e.append(f"{tag}: глубина {r['Dc']:g} < NS + {S_['cd']}")
+            bigger = [ns for ns in S_["codes"] if ns > r["NL"] and ns + S_["cd"] <= r["Dc"]]
             if bigger:
                 e.append(f"{tag}: NS {r['NL']} не наибольший (помещается {bigger[0]})")
-            if abs((sl["y1"] - sl["y0"]) - (r["NL"] - SAMET["dd"])) > 0.01:
-                e.append(f"{tag}: длина ящика {sl['y1'] - sl['y0']:g} ≠ NS − 10")
-            if abs((sr["x0"] - sl["x1"]) - (r["LW"] - SAMET["diw"])) > 0.5:
-                e.append(f"{tag}: DIW {sr['x0'] - sl['x1']:g} ≠ CIW − 45")
-            if sl["x1"] - sl["x0"] > SAMET["side_max"]:
-                e.append(f"{tag}: боковина > 18")
-            if r["z0"] - r["rb"] < SAMET["under"][r["samet_kind"]] - 0.01:
-                e.append(f"{tag}: низ ящика над низом проёма < {SAMET['under'][r['samet_kind']]}")
+            if abs((sl["y1"] - sl["y0"]) - (r["NL"] - S_["dd"])) > 0.01:
+                e.append(f"{tag}: длина ящика {sl['y1'] - sl['y0']:g} ≠ NS − {S_['dd']}")
+            if abs((sr["x0"] - sl["x1"]) - (r["LW"] - S_["diw"])) > 0.5:
+                e.append(f"{tag}: внутренняя ширина {sr['x0'] - sl['x1']:g} ≠ проём − {S_['diw']}")
+            if sl["x1"] - sl["x0"] > S_["side_max"]:
+                e.append(f"{tag}: боковина > {S_['side_max']}")
+            if r["z0"] - r["rb"] < S_["under"] - 0.01:
+                e.append(f"{tag}: низ ящика над низом проёма < {S_['under']}")
             if r["limit_top"] - (r["z0"] + r["h"]) < -0.01:
-                e.append(f"{tag}: над ящиком < 7")
+                e.append(f"{tag}: над ящиком < {S_['top_min']}")
             m = [h for h in s["holes"] if h["kind"] == "runner_mark" and h["joint"].startswith(f"J-{r['pre']}RUNNER-{r['n']}-")]
             col = parts[r["colL"]]
-            want = sorted(col["y0"] + SAMET["front_off"] + y for y in samet_points(r["NL"]))
+            want = sorted(col["y0"] + S_["front_off"] + y for y in S_["points"].get(r["NL"], ()))
             for side in "LR":
                 ms = sorted(h["y"] for h in m if h["joint"].endswith(f"-{side}"))
                 if ms != [round(y, 2) for y in want]:
                     em.append(f"{tag}{side}: шурупы {ms} ≠ {want}")
-            if any(abs(h["z"] - r["rb"] - SAMET["screw_axis"]) > 0.01 for h in m):
-                em.append(f"{tag}: ось шурупов ≠ низ проёма + {SAMET['screw_axis']}")
+            if any(abs(h["z"] - r["rb"] - S_["screw_axis"]) > 0.01 for h in m):
+                em.append(f"{tag}: ось шурупов ≠ низ проёма + {S_['screw_axis']}")
+            rq = S_["rear"]
             rr = [h for h in s["holes"] if h["kind"] == "slide_rear" and h["part"] == bp["id"]]
-            if len(rr) != 2 or any(abs(h["z"] - r["z0"] - SAMET["rear"]["from_bottom"]) > 0.01 or h["d"] != 6
-                                   or h["depth"] != 10 for h in rr) or \
-                    sorted(round(h["x"], 2) for h in rr) != [round(sl["x1"] + 7, 2), round(sr["x0"] - 7, 2)]:
-                em.append(f"{tag}: задние Ø6 гл. 10 (11 от низа, 7 от боковины)")
-        add("Samet: NS — наибольший из ряда с NS + 3 ≤ глубины; ящик NS − 10, DIW = CIW − 45, боковина ≤ 18, "
-            "низ ящика ≥ 43 / 41 над низом проёма, над ящиком ≥ 7 (каталог стр. 6–9)", not e, f"{len(sm)} ящ." if not e else e[:4])
-        add("Samet: шурупы 37 / +32 / +96 / +96 / +32 от конца направляющей (2 от края корпуса), ось 11 [М]; сзади Ø6 гл. 10 "
-            "(каталог стр. 6, 8)", not em, f"{len(sm)} ящ." if not em else em[:4])
+            if len(rr) != 2 or any(abs(h["z"] - r["z0"] - rq["from_bottom"]) > 0.01 or h["d"] != rq["d"]
+                                   or h["depth"] != rq["depth"] for h in rr) or \
+                    sorted(round(h["x"], 2) for h in rr) != [round(sl["x1"] + rq["from_side"], 2),
+                                                            round(sr["x0"] - rq["from_side"], 2)]:
+                em.append(f"{tag}: задние Ø{rq['d']} гл. {rq['depth']} ({rq['from_bottom']} от низа, {rq['from_side']} от боковины)")
+        add("Направляющие по профилю: NS — наибольший с NS + cd ≤ глубины; длина ящика, внутренняя ширина, боковина, "
+            "низ ящика над проёмом, над ящиком — по документу производителя", not e, f"{len(sm)} ящ." if not e else e[:4])
+        add("Направляющие по профилю: места шурупов от конца направляющей (отступ от края корпуса), ось [М]; задний Ø6 "
+            "Lock-Fix", not em, f"{len(sm)} ящ." if not em else em[:4])
         hq = lambda k: hw.get(k, {}).get("qty", 0)
         nm = sum(1 for h in s["holes"] if h["kind"] == "runner_mark" and h.get("fastener") == "SLIDE-SCREW-S")
-        add("Samet: комплектность — пары направляющих = замки SmartLock = ящики; шурупы = разметке",
+        add("Направляющие по профилю: комплектность — пары направляющих = замки = ящики; шурупы = разметке",
             hq("SLIDES") == hq("SLIDE-LOCK") == len(sm) and hq("SLIDE-SCREW-S") == nm, f"{hq('SLIDES')} / {hq('SLIDE-LOCK')} / {nm}")
     # ---- ящики Blum
     drs = [r for r in d.get("drawers", []) if r.get("sys") != "samet"]

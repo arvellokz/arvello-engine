@@ -123,7 +123,7 @@ python3 tools/eng/kit13.py ARV-NST-101 out.pdf width=1200 handle=push changer=ye
 | `tools/eng/fonts.py`, `fonts/` | шрифт листов из репозитория |
 | `tools/eng/export_parts.py` | CSV деталей и покупных для любой модели |
 | `tools/eng/cab.py` `SUPPLY` | профили материалов поставщика (ENG-005 п. 1): `base` — как до 14.11; `dspc` — ДСП Центр (ЛДСП 16 везде, фасад 16, ХДФ 3, ПВХ 2 / 1 × 19, Бунратти 4069, Белый 110, цоколь в цвет корпуса). Комод — `models_new.NST_PROFILE`. Тест `test_eng005.py` |
-| `tools/eng/cab.py` `SAMET`, `samet_drawers` | ящики на Samet Smart Slide full | Power (ENG-005 п. 2): данные — `docs/фурнитура/samet/`; комод — `models_new.NST_SLIDES = "samet"` ("blum" — прежний MOVENTO); тест `test_samet.py`. Инструкции A4 (`eng002_chest/guide/drawer`) пока только под Blum |
+| `tools/eng/cab.py` `SLIDE_PROFILES`, `slide_drawers` | направляющие — сменным профилем (решение 14.11 02:05): `samet-slidea-sc` (эконом), `samet-smart-sc` (стандарт), `samet-smart-posc` (комфорт); данные — `docs/фурнитура/samet/`. Комод: опция `level` (eco / std / comf) → `models_new.NST_LEVELS`; `NST_SLIDES = "blum"` — прежний MOVENTO. Тест `test_samet.py` |
 | `tools/eng/export_cost.py` | себестоимость из модели (ENG-005 п. 5): `python3 tools/eng/export_cost.py SKU key=value … [--batch N] [--md out.md]`; цены — `docs/поставщики/dspc/прайс_2026-11-14.json`; тест `test_cost.py` (= смете ДСП Центра 74 065 ₸) |
 | `tools/eng/export_cutting.py` | таблица распила .xlsx (ENG-003): `python3 tools/eng/export_cutting.py SKU out.xlsx key=value … [--csv выпуск.csv]` |
 | `catalog/` | оси конфигурации моделей, ревизии |
